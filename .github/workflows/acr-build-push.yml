@@ -1,11 +1,11 @@
 name: Build, Push & Deploy to Azure Container Apps
 
-  on:
+  on:#
     push:
       branches: [main]
     workflow_dispatch:
 
-  permissions:
+  permissions:#
     contents: read
     id-token: write
 
