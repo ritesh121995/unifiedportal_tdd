@@ -15,17 +15,23 @@ const app: Express = express();
 // and other middleware can correctly read the client IP from X-Forwarded-For.
 app.set("trust proxy", 1);
 
-// Restrict CORS to the configured allowed origin, or reflect the same-origin
-// request in development. In production the ALLOWED_ORIGIN env var should be
-// set to the exact App Service / Replit domain so cross-site requests are blocked.
 const allowedOrigin = process.env.ALLOWED_ORIGIN;
+const isProduction = process.env.NODE_ENV === "production";
+const bodyLimit = process.env.REQUEST_BODY_LIMIT ?? "2mb";
 const apiCors = cors({
-  origin: allowedOrigin
-    ? (origin, cb) => {
-        if (!origin || origin === allowedOrigin) cb(null, true);
-        else cb(new Error("CORS: origin not allowed"));
-      }
-    : true,
+  origin(origin, cb) {
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+
+    if (allowedOrigin) {
+      cb(null, origin === allowedOrigin);
+      return;
+    }
+
+    cb(null, isProduction ? false : true);
+  },
   credentials: true,
 });
 
@@ -56,7 +62,7 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: bodyLimit }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", apiCors, router);

@@ -72,6 +72,14 @@ async function sendWebhookNotification(requestTitle: string, actor: string, stat
   }
 }
 
+function parseRequestId(value: string | string[] | undefined): number {
+  if (typeof value !== "string") {
+    return Number.NaN;
+  }
+
+  return Number.parseInt(value, 10);
+}
+
 // GET /api/requests
 router.get("/", async (req, res) => {
   const user = req.user!;
@@ -353,7 +361,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
 
 // GET /api/requests/:id
 router.get("/:id", async (req, res) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const [row] = await db
     .select()
     .from(architectureRequestsTable)
@@ -365,8 +373,8 @@ router.get("/:id", async (req, res) => {
 
 // DELETE /api/requests/:id — admin only
 router.delete("/:id", requireRole("admin"), async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const id = parseRequestId(req.params.id);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   await db.delete(requestEventsTable).where(eq(requestEventsTable.requestId, id));
   const [deleted] = await db
     .delete(architectureRequestsTable)
@@ -378,7 +386,7 @@ router.delete("/:id", requireRole("admin"), async (req, res) => {
 
 // GET /api/requests/:id/events
 router.get("/:id/events", async (req, res) => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const events = await db
     .select()
     .from(requestEventsTable)
@@ -390,8 +398,8 @@ router.get("/:id/events", async (req, res) => {
 // POST /api/requests/:id/comment — any authenticated user
 router.post("/:id/comment", async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const id = parseRequestId(req.params.id);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const { comment } = req.body as { comment?: string };
   if (!comment?.trim()) { res.status(400).json({ error: "Comment cannot be empty" }); return; }
 
@@ -408,8 +416,8 @@ router.post("/:id/comment", async (req, res) => {
 // POST /api/requests/:id/clone — duplicate a request
 router.post("/:id/clone", requireRole("requestor"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const id = parseRequestId(req.params.id);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const [source] = await db
     .select()
@@ -452,7 +460,7 @@ router.post("/:id/clone", requireRole("requestor"), async (req, res) => {
 // PATCH /api/requests/:id/review
 router.patch("/:id/review", requireRole("enterprise_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { action, comments } = req.body as { action: "approve" | "reject"; comments?: string };
 
   if (!["approve", "reject"].includes(action)) {
@@ -489,7 +497,7 @@ router.patch("/:id/review", requireRole("enterprise_architect"), async (req, res
 // PATCH /api/requests/:id/triage
 router.patch("/:id/triage", requireRole("enterprise_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
 
   const [row] = await db
     .update(architectureRequestsTable)
@@ -512,7 +520,7 @@ router.patch("/:id/triage", requireRole("enterprise_architect"), async (req, res
 // PATCH /api/requests/:id/request-modification  (EA only)
 router.patch("/:id/request-modification", requireRole("enterprise_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { notes } = req.body as { notes?: string };
 
   const [row] = await db
@@ -538,7 +546,7 @@ router.patch("/:id/request-modification", requireRole("enterprise_architect"), a
 // PATCH /api/requests/:id/resubmit  (requestor / owner only)
 router.patch("/:id/resubmit", async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { note } = req.body as { note?: string };
 
   const existing = await db.query.architectureRequestsTable.findFirst({
@@ -567,7 +575,7 @@ router.patch("/:id/resubmit", async (req, res) => {
 // PATCH /api/requests/:id/risk-review
 router.patch("/:id/risk-review", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { action, comments } = req.body as { action: "approve" | "reject"; comments?: string };
 
   if (!["approve", "reject"].includes(action)) {
@@ -604,7 +612,7 @@ router.patch("/:id/risk-review", requireRole("cloud_architect"), async (req, res
 // PATCH /api/requests/:id/devsecops-review
 router.patch("/:id/devsecops-review", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { action, comments } = req.body as { action: "approve" | "reject"; comments?: string };
 
   if (!["approve", "reject"].includes(action)) {
@@ -641,7 +649,7 @@ router.patch("/:id/devsecops-review", requireRole("cloud_architect"), async (req
 // PATCH /api/requests/:id/finops-activate
 router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
 
   const existing = await db.query.architectureRequestsTable.findFirst({ where: eq(architectureRequestsTable.id, id) });
   if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
@@ -675,7 +683,7 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
 // PATCH /api/requests/:id/start-tdd
 router.patch("/:id/start-tdd", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { environmentCidrs } = req.body as { environmentCidrs?: Record<string, string> };
 
   const [existing] = await db
@@ -711,7 +719,7 @@ router.patch("/:id/start-tdd", requireRole("cloud_architect"), async (req, res) 
 // PATCH /api/requests/:id/complete-tdd
 router.patch("/:id/complete-tdd", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
-  const id = parseInt(req.params.id, 10);
+  const id = parseRequestId(req.params.id);
   const { tddSubmissionId, reviewNotes } = req.body as { tddSubmissionId?: number; reviewNotes?: string | null };
 
   const [existing] = await db

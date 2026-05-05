@@ -3,6 +3,7 @@ import pg from "pg";
 import * as schema from "./schema";
 
 const { Pool } = pg;
+const DISABLE_SSL_MODES = new Set(["disable", "allow"]);
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -10,12 +11,20 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const isAzure = process.env.DATABASE_URL.includes("azure.com");
-const isProduction = process.env.NODE_ENV === "production";
+function shouldUseSsl(connectionString: string): boolean {
+  const url = new URL(connectionString);
+  const sslMode = url.searchParams.get("sslmode")?.toLowerCase();
+
+  if (sslMode) {
+    return !DISABLE_SSL_MODES.has(sslMode);
+  }
+
+  return process.env.NODE_ENV === "production" || url.hostname.includes("azure.com");
+}
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isAzure || isProduction ? { rejectUnauthorized: false } : false,
+  ssl: shouldUseSsl(process.env.DATABASE_URL),
 });
 
 export const db = drizzle(pool, { schema });

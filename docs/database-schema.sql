@@ -188,18 +188,11 @@ CREATE TABLE IF NOT EXISTS portal_settings (
 
 
 -- ============================================================================
--- SEED: default admin user
---   Email:    enterprise@mccain.com
---   Password: McCain@123     (bcrypt hash, cost factor 10)
+-- BOOTSTRAP ADMIN
 -- ============================================================================
-INSERT INTO users (name, email, password_hash, role)
-VALUES (
-    'Enterprise Admin',
-    'enterprise@mccain.com',
-    '$2b$10$051yA7IAoJtlx.xtCT6YfOuP7vNJiOXoVfpXf1O2MOyzKIvaZSC7G',
-    'admin'
-)
-ON CONFLICT (email) DO NOTHING;
+-- The application creates the first admin at startup only when the users table
+-- is empty and BOOTSTRAP_ADMIN_PASSWORD is provided. Do not store a static
+-- bootstrap password or hash in database scripts.
 
 COMMIT;
 

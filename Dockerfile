@@ -6,10 +6,10 @@
 #   1. deps        — install all pnpm workspace dependencies (cached layer)
 #   2. build-api   — compile Express API server via esbuild → self-contained bundle
 #   3. build-web   — compile React frontend via Vite → static files
-#   4. runtime     — ultra-slim final image (~120 MB, no node_modules)
+#   4. runtime     — ultra-slim final image
 #
 # The runtime image contains only:
-#   /app/dist/     — esbuild-bundled Node.js server (fully self-contained)
+#   /app/dist/     — esbuild-bundled Node.js server
 #   /app/public/   — built React SPA (served as static files by Express)
 #
 # Build for linux/amd64 (required for Azure Container Apps):
@@ -17,11 +17,11 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ─── Stage 1: Install all workspace dependencies ────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /workspace
 
 # Install pnpm (match version used in development)
-RUN npm install -g pnpm@9 --ignore-scripts
+RUN npm install -g pnpm@10 --ignore-scripts
 
 # Copy workspace config files first — changes here invalidate the dep cache
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -69,15 +69,16 @@ ENV VITE_API_URL=""
 RUN BASE_PATH=/ pnpm --filter @workspace/tdd-generator run build
 
 # ─── Stage 4: Minimal runtime image ─────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
+
+RUN apk add --no-cache wget
 
 # Create a non-root user — never run containers as root in production
 RUN addgroup -g 1001 -S mccain \
  && adduser  -u 1001 -S mccain -G mccain
 
 # Copy the pre-built API bundle from build-api stage.
-# The esbuild output is fully self-contained — no node_modules needed.
 COPY --from=build-api --chown=mccain:mccain \
   /workspace/artifacts/api-server/dist ./dist
 
@@ -105,4 +106,4 @@ ENV NODE_ENV=production \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:8080/api/healthz || exit 1
 
-CMD ["node", "--enable-source-maps", "dist/index.mjs"]
+CMD ["node", "dist/index.mjs"]

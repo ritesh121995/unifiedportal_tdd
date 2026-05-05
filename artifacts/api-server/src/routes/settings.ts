@@ -19,6 +19,14 @@ async function setSetting(key: string, value: string): Promise<void> {
     .onConflictDoUpdate({ target: portalSettingsTable.key, set: { value, updatedAt: new Date() } });
 }
 
+function getRouteParam(value: string | string[] | undefined): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return null;
+}
+
 router.get("/", requireRole("admin"), async (_req, res) => {
   const rows = await db.select().from(portalSettingsTable);
   const settings: Record<string, string> = {};
@@ -27,15 +35,17 @@ router.get("/", requireRole("admin"), async (_req, res) => {
 });
 
 router.put("/:key", requireRole("admin"), async (req, res) => {
-  const { key } = req.params;
+  const key = getRouteParam(req.params.key);
   const { value } = req.body as { value?: string };
+  if (!key) { res.status(400).json({ error: "Invalid key" }); return; }
   if (value === undefined) { res.status(400).json({ error: "value is required" }); return; }
   await setSetting(key, value);
   res.json({ ok: true, key, value });
 });
 
 router.delete("/:key", requireRole("admin"), async (req, res) => {
-  const { key } = req.params;
+  const key = getRouteParam(req.params.key);
+  if (!key) { res.status(400).json({ error: "Invalid key" }); return; }
   await db.delete(portalSettingsTable).where(eq(portalSettingsTable.key, key));
   res.json({ ok: true });
 });
