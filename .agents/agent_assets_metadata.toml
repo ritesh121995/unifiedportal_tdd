@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "A3LyeUFQqwa_vh4x8byxI"
+uri = "file://docs/database-schema.txt"
+type = "text"
+title = "Database Schema (PlantUML)"
+
+[[outputs]]
+id = "FT9BBjrBMpvc4qRcv4Mci"
+uri = "file://docs/database-schema-sql.txt"
+type = "text"
+title = "PostgreSQL Schema Script (database-schema.sql)"

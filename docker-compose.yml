@@ -1,0 +1,94 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# McCain Unified Onboarding Portal — docker-compose for local testing
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Usage:
+#   docker compose up --build          # Build image + start all services
+#   docker compose up -d               # Start in background
+#   docker compose logs -f app         # Tail app logs
+#   docker compose down -v             # Stop + remove volumes
+#
+# The portal will be available at: http://localhost:8080
+# Login: enterprise@mccain.com / McCain@123
+# ═══════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: mccain-portal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portaldb
+      POSTGRES_USER: portaluser
+      POSTGRES_PASSWORD: portalpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portaluser -d portaldb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── McCain Portal (API + Frontend) ───────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      # Force linux/amd64 for Azure Container Apps compatibility
+      platforms:
+        - linux/amd64
+    container_name: mccain-portal-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # ── Server ──────────────────────────────────────────────────
+      NODE_ENV: production
+      PORT: "8080"
+
+      # ── Auth ────────────────────────────────────────────────────
+      AUTH_MODE: password
+      # Generate a real secret for production: openssl rand -hex 64
+      JWT_SECRET: local-dev-jwt-secret-change-in-production
+
+      # ── Database ────────────────────────────────────────────────
+      DATABASE_URL: postgresql://portaluser:portalpass@db:5432/portaldb?sslmode=disable
+
+      # ── Azure OpenAI (fill in your values) ──────────────────────
+      # AZURE_OPENAI_ENDPOINT: https://<resource>.openai.azure.com/
+      # AZURE_OPENAI_API_KEY: <your-key>
+      # AZURE_OPENAI_DEPLOYMENT: gpt-4o
+
+      # ── Standard OpenAI (alternative) ───────────────────────────
+      # OPENAI_API_KEY: sk-...
+
+      # ── CORS (blank = same-origin, correct for single-container) ─
+      ALLOWED_ORIGIN: ""
+
+      # ── Optional: Azure IaC deployment feature ───────────────────
+      # AZURE_TENANT_ID: <tenant>
+      # AZURE_CLIENT_ID: <client-id>
+      # AZURE_CLIENT_SECRET: <secret>
+      # AZURE_SUBSCRIPTION_ID: <subscription>
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/healthz"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: mccain-portal-network

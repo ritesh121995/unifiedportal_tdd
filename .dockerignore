@@ -1,0 +1,63 @@
+# ── Node modules (reinstalled inside Docker) ────────────────────
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# ── Build outputs (rebuilt inside Docker) ────────────────────────
+**/dist/
+artifacts/api-server/public/
+artifacts/tdd-generator/dist/
+
+# ── Local dev files ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ── Git ──────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── IDE / editor ─────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
+logs/
+/tmp/
+
+# ── OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Replit-specific ───────────────────────────────────────────────
+.replit
+replit.nix
+.cache/
+.local/
+.upm/
+
+# ── Test / docs ───────────────────────────────────────────────────
+*.test.ts
+*.spec.ts
+**/*.test.ts
+**/*.spec.ts
+docs/
+
+# ── ZIP archives ─────────────────────────────────────────────────
+*.zip
+
+# ── TypeScript caches ─────────────────────────────────────────────
+**/*.tsbuildinfo
+.cache/typescript/
+
+# ── Mockup sandbox (dev-only tool, not needed in production) ─────
+artifacts/mockup-sandbox/
+
+# ── Attached assets (screenshots, uploads) ───────────────────────
+attached_assets/

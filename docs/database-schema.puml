@@ -1,0 +1,162 @@
+@startuml McCain Unified Onboarding Portal — Database Schema
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam shadowing false
+skinparam linetype ortho
+skinparam roundcorner 6
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #1B2A4E
+    HeaderBackgroundColor #FFCD00
+    HeaderFontColor #1B2A4E
+    HeaderFontStyle bold
+    ArrowColor #1B2A4E
+    FontName Inter
+}
+
+title <font color=#1B2A4E><b>McCain Unified Onboarding Portal</b></font>\n<font color=#5A6473>PostgreSQL Schema (Drizzle ORM)</font>
+
+' ─── USERS ────────────────────────────────────────────────
+entity "users" as users {
+    * **id** : serial <<PK>>
+    --
+    * name : text
+    * email : text <<unique>>
+    * password_hash : text
+    * role : text  <i>(admin | enterprise_architect | cloud_architect | requestor)</i>
+    * created_at : timestamp
+    * updated_at : timestamp
+}
+
+' ─── ARCHITECTURE REQUESTS ───────────────────────────────
+entity "architecture_requests" as ar {
+    * **id** : serial <<PK>>
+    --
+    .. Project Overview ..
+    * title : text
+    * application_name : text
+    * application_type : text
+    * business_unit : text
+    * line_of_business : text
+    * priority : text
+    * description : text
+    * business_justification : text
+    * target_environments : text[]
+    * azure_regions : text[]
+    dtslt_leader : text
+    expected_user_base : text
+    target_go_live_date : date
+    deployment_model : text
+    .. Requestor ..
+    * requestor_id : int <<FK→users>>
+    * requestor_name : text
+    * requestor_email : text
+    .. Lifecycle Status ..
+    * status : text
+    .. Phase 1 — EA Review ..
+    ea_reviewer_id : int <<FK→users>>
+    ea_reviewer_name : text
+    ea_reviewed_at : timestamp
+    ea_comments : text
+    .. Phase 2 — Risk / Security ..
+    risk_reviewer_id : int <<FK→users>>
+    risk_reviewer_name : text
+    risk_reviewed_at : timestamp
+    risk_comments : text
+    .. Phase 3 — Cloud Architect / TDD ..
+    ca_assignee_id : int <<FK→users>>
+    ca_assignee_name : text
+    tdd_submission_id : int <<FK→tdd_submissions>>
+    .. Phase 4 — DevSecOps ..
+    devsecops_approver_id : int <<FK→users>>
+    devsecops_approver_name : text
+    devsecops_approved_at : timestamp
+    devsecops_comments : text
+    .. Phase 5 — FinOps ..
+    finops_activated_at : timestamp
+    finops_activated_by : text
+    .. TDD Pre-fill Data ..
+    tdd_form_data : jsonb
+    --
+    * created_at : timestamp
+    * updated_at : timestamp
+}
+
+' ─── TDD SUBMISSIONS ─────────────────────────────────────
+entity "tdd_submissions" as tdd {
+    * **id** : serial <<PK>>
+    --
+    * application_name : text
+    * organization : text
+    * line_of_business : text
+    * requestor_email : text
+    * environments : text[]
+    * form_data : jsonb
+    generated_content : text
+    blob_path_markdown : text
+    blob_path_docx : text
+    blob_path_pdf : text
+    * storage_provider : text  <i>(default: postgresql)</i>
+    * status : text  <i>(draft | …)</i>
+    * created_at : timestamp
+    * updated_at : timestamp
+}
+
+' ─── REQUEST EVENTS (audit trail) ────────────────────────
+entity "request_events" as ev {
+    * **id** : serial <<PK>>
+    --
+    * request_id : int <<FK→architecture_requests>>
+    * actor_name : text
+    * actor_role : text
+    * event_type : text
+    * description : text
+    * created_at : timestamp
+}
+
+' ─── CONVERSATIONS (AI assistant) ────────────────────────
+entity "conversations" as conv {
+    * **id** : serial <<PK>>
+    --
+    * title : text
+    * created_at : timestamptz
+}
+
+' ─── MESSAGES ────────────────────────────────────────────
+entity "messages" as msg {
+    * **id** : serial <<PK>>
+    --
+    * conversation_id : int <<FK→conversations>>  <i>ON DELETE CASCADE</i>
+    * role : text  <i>(user | assistant | system)</i>
+    * content : text
+    * created_at : timestamptz
+}
+
+' ─── PORTAL SETTINGS (key/value config) ─────────────────
+entity "portal_settings" as ps {
+    * **id** : serial <<PK>>
+    --
+    * key : text <<unique>>
+    * value : text
+    * updated_at : timestamp
+}
+
+' ─── RELATIONSHIPS ───────────────────────────────────────
+users  ||--o{ ar  : "requestor"
+users  ||--o{ ar  : "ea_reviewer"
+users  ||--o{ ar  : "risk_reviewer"
+users  ||--o{ ar  : "ca_assignee"
+users  ||--o{ ar  : "devsecops_approver"
+ar     ||--o{ ev  : "audit trail"
+ar     |o--o| tdd : "generates"
+conv   ||--o{ msg : "contains"
+
+legend right
+  | <#FFCD00>   | Table header |
+  | <b>PK</b>  | Primary key |
+  | <b>FK</b>  | Foreign key (logical or enforced) |
+  | <i>jsonb</i> | JSON column |
+  | <i>text[]</i> | PostgreSQL array column |
+endlegend
+
+@enduml

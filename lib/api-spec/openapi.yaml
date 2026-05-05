@@ -1,0 +1,371 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: tdd
+    description: TDD document generation
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /tdd/generate:
+    post:
+      operationId: generateTdd
+      tags: [tdd]
+      summary: Generate a TDD document from form data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TddFormData"
+      responses:
+        "200":
+          description: SSE stream of generated TDD content
+          content:
+            text/event-stream: {}
+  /tdd/export:
+    post:
+      operationId: exportTdd
+      tags: [tdd]
+      summary: Export a generated TDD document as PDF or Word
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TddExportRequest"
+      responses:
+        "200":
+          description: Exported document file (base64 encoded)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TddExportResponse"
+  /tdd/subnet-analysis:
+    post:
+      operationId: analyzeCidr
+      tags: [tdd]
+      summary: Analyze a CIDR block and recommend subnets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CidrAnalysisRequest"
+      responses:
+        "200":
+          description: Subnet recommendations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CidrAnalysisResponse"
+  /tdd/naming-preview:
+    post:
+      operationId: previewNaming
+      tags: [tdd]
+      summary: Preview resource naming conventions based on form values
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NamingPreviewRequest"
+      responses:
+        "200":
+          description: Naming convention previews
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NamingPreviewResponse"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    TddFormData:
+      type: object
+      properties:
+        infrastructureSupportManager:
+          type: string
+        applicationSupportManager:
+          type: string
+        itOwner:
+          type: string
+        businessOwner:
+          type: string
+        solution:
+          type: string
+        organization:
+          type: string
+        lineOfBusiness:
+          type: string
+        requestorEmail:
+          type: string
+        applicationName:
+          type: string
+        environmentsRequired:
+          type: array
+          items:
+            type: string
+            enum: [Dev, QA, UAT, Prod]
+        billingCompanyCode:
+          type: string
+        billingPlant:
+          type: string
+        billingCostObject:
+          type: string
+        billingGlAccount:
+          type: string
+        budgetTrackerReference:
+          type: string
+        categoryOwner:
+          type: string
+        glAccountOwnerEmail:
+          type: string
+        technologyOwnerEmail:
+          type: string
+        businessOwnerEmail:
+          type: string
+        networkPosture:
+          type: string
+          enum: [Internet-Facing, Internal-Only, Hybrid]
+        azureRegions:
+          type: array
+          items:
+            type: string
+            enum: [canadacentral, canadaeast]
+        keyStakeholders:
+          type: string
+        applicationArchitecture:
+          type: string
+        applicationFlow:
+          type: string
+        applicationOverview:
+          type: string
+        networkCidr:
+          type: string
+        environmentCidrs:
+          type: object
+          description: Per-environment CIDR blocks keyed by environment name (e.g. Dev, QA, Prod)
+          additionalProperties:
+            type: string
+        applicationType:
+          type: string
+          enum: [Migration, Greenfield]
+        workloadTier:
+          type: string
+          enum: ["Tier 0", "Tier 1", "Tier 2", "Tier 3"]
+        haEnabled:
+          type: boolean
+        drEnabled:
+          type: boolean
+        frontendStack:
+          type: string
+        backendStack:
+          type: string
+        databaseStack:
+          type: string
+        scalabilityRequirements:
+          type: string
+        availabilityTarget:
+          type: string
+        rto:
+          type: string
+        rpo:
+          type: string
+        architectureDiagramBase64:
+          type: string
+          description: Base64-encoded architecture diagram image (PNG/JPG/WebP) for AI vision analysis
+        architectureDiagramName:
+          type: string
+          description: Original filename of the uploaded architecture diagram
+        monitoringRequiredFor:
+          type: array
+          items:
+            type: string
+          description: Environments that require full monitoring/observability
+      required:
+        - infrastructureSupportManager
+        - applicationSupportManager
+        - itOwner
+        - businessOwner
+        - solution
+        - organization
+        - lineOfBusiness
+        - requestorEmail
+        - applicationName
+        - environmentsRequired
+        - billingCompanyCode
+        - billingPlant
+        - billingCostObject
+        - billingGlAccount
+        - budgetTrackerReference
+        - categoryOwner
+        - glAccountOwnerEmail
+        - technologyOwnerEmail
+        - businessOwnerEmail
+        - networkPosture
+        - azureRegions
+        - applicationArchitecture
+        - applicationFlow
+        - applicationOverview
+        - applicationType
+    TddExportRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: The markdown content of the generated TDD
+        format:
+          type: string
+          enum: [pdf, docx]
+        applicationName:
+          type: string
+      required:
+        - content
+        - format
+        - applicationName
+    TddExportResponse:
+      type: object
+      properties:
+        fileBase64:
+          type: string
+        fileName:
+          type: string
+        mimeType:
+          type: string
+      required:
+        - fileBase64
+        - fileName
+        - mimeType
+    CidrAnalysisRequest:
+      type: object
+      properties:
+        cidr:
+          type: string
+        environments:
+          type: array
+          items:
+            type: string
+        applicationName:
+          type: string
+        organization:
+          type: string
+        lineOfBusiness:
+          type: string
+      required:
+        - cidr
+        - environments
+        - applicationName
+        - organization
+        - lineOfBusiness
+    SubnetInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        cidr:
+          type: string
+        purpose:
+          type: string
+        size:
+          type: integer
+      required:
+        - name
+        - cidr
+        - purpose
+        - size
+    CidrAnalysisResponse:
+      type: object
+      properties:
+        vnetCidr:
+          type: string
+        totalHosts:
+          type: integer
+        subnets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubnetInfo"
+        recommendations:
+          type: array
+          items:
+            type: string
+      required:
+        - vnetCidr
+        - totalHosts
+        - subnets
+        - recommendations
+    NamingPreviewRequest:
+      type: object
+      properties:
+        organization:
+          type: string
+        lineOfBusiness:
+          type: string
+        applicationName:
+          type: string
+        environments:
+          type: array
+          items:
+            type: string
+        region:
+          type: string
+      required:
+        - organization
+        - lineOfBusiness
+        - applicationName
+        - environments
+        - region
+    NamingConvention:
+      type: object
+      properties:
+        subscriptionName:
+          type: string
+        resourceGroupFoundation:
+          type: string
+        resourceGroupDb:
+          type: string
+        vnetName:
+          type: string
+        subnetName:
+          type: string
+        serviceNameExample:
+          type: string
+      required:
+        - subscriptionName
+        - resourceGroupFoundation
+        - resourceGroupDb
+        - vnetName
+        - subnetName
+        - serviceNameExample
+    NamingPreviewResponse:
+      type: object
+      properties:
+        environments:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/NamingConvention"
+      required:
+        - environments
