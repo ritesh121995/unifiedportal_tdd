@@ -68,14 +68,21 @@ async function runStartupMigrations() {
   }
 }
 
-seedUsersIfEmpty();
-runStartupMigrations();
+async function startServer(): Promise<void> {
+  await runStartupMigrations();
+  await seedUsersIfEmpty();
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
+  app.listen(port, (err) => {
+    if (err) {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
+    }
 
-  logger.info({ port }, "Server listening");
+    logger.info({ port }, "Server listening");
+  });
+}
+
+startServer().catch((err) => {
+  logger.error({ err }, "Server startup failed");
+  process.exit(1);
 });

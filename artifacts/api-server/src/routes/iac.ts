@@ -5,6 +5,27 @@ import { sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 const router = Router();
+const PRIVATE_ADDRESS_PREFIXES = new Set([
+  "10.",
+  "192.168.",
+  "172.16.",
+  "172.17.",
+  "172.18.",
+  "172.19.",
+  "172.20.",
+  "172.21.",
+  "172.22.",
+  "172.23.",
+  "172.24.",
+  "172.25.",
+  "172.26.",
+  "172.27.",
+  "172.28.",
+  "172.29.",
+  "172.30.",
+  "172.31.",
+]);
+const BLOCKED_RDP_SOURCES = new Set(["0.0.0.0/0"]);
 
 async function getSetting(key: string): Promise<string | null> {
   const rows = await db.execute(sql`SELECT value FROM portal_settings WHERE key = ${key} LIMIT 1`);
@@ -21,7 +42,7 @@ async function appendLog(deploymentId: number, line: string) {
   `);
 }
 
-async function setStatus(deploymentId: number, status: string, extra: Record<string, unknown> = {}) {
+async function setStatus(deploymentId: number, status: string, extra: { error?: string; resources?: Record<string, unknown> } = {}) {
   const completedAt = ["succeeded", "failed"].includes(status) ? new Date() : null;
   if (completedAt) {
     await db.execute(sql`
@@ -31,14 +52,14 @@ async function setStatus(deploymentId: number, status: string, extra: Record<str
     await db.execute(sql`UPDATE iac_deployments SET status = ${status} WHERE id = ${deploymentId}`);
   }
   if (extra.error) {
-    await db.execute(sql`UPDATE iac_deployments SET error = ${extra.error as string} WHERE id = ${deploymentId}`);
+    await db.execute(sql`UPDATE iac_deployments SET error = ${extra.error} WHERE id = ${deploymentId}`);
   }
   if (extra.resources) {
     await db.execute(sql`UPDATE iac_deployments SET resources = ${JSON.stringify(extra.resources)}::jsonb WHERE id = ${deploymentId}`);
   }
 }
 
-async function runAzureDeployment(deploymentId: number, opts: {
+interface AzureDeploymentOptions {
   tenantId: string;
   clientId: string;
   clientSecret: string;
@@ -47,8 +68,21 @@ async function runAzureDeployment(deploymentId: number, opts: {
   appName: string;
   region: string;
   adminPassword: string;
-}) {
-  const { tenantId, clientId, clientSecret, subscriptionId, resourceGroup, appName, region, adminPassword } = opts;
+  allowedRdpSource: string;
+}
+
+async function runAzureDeployment(deploymentId: number, opts: AzureDeploymentOptions) {
+  const {
+    tenantId,
+    clientId,
+    clientSecret,
+    subscriptionId,
+    resourceGroup,
+    appName,
+    region,
+    adminPassword,
+    allowedRdpSource,
+  } = opts;
   const appShort = appName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "app";
   const pfx = `mf-${appShort}-demo`;
 
@@ -97,7 +131,7 @@ async function runAzureDeployment(deploymentId: number, opts: {
     await (await netClient.networkSecurityGroups.beginCreateOrUpdate(resourceGroup, nsgName, {
       location: region, tags,
       securityRules: [
-        { name: "AllowRDP", priority: 1001, direction: "Inbound", access: "Allow", protocol: "Tcp", sourcePortRange: "*", destinationPortRange: "3389", sourceAddressPrefix: "*", destinationAddressPrefix: "*" },
+        { name: "AllowRDP", priority: 1001, direction: "Inbound", access: "Allow", protocol: "Tcp", sourcePortRange: "*", destinationPortRange: "3389", sourceAddressPrefix: allowedRdpSource, destinationAddressPrefix: "*" },
         { name: "DenyAllInbound", priority: 4096, direction: "Inbound", access: "Deny", protocol: "*", sourcePortRange: "*", destinationPortRange: "*", sourceAddressPrefix: "*", destinationAddressPrefix: "*" },
       ],
     })).pollUntilDone();
@@ -175,12 +209,18 @@ async function runAzureDeployment(deploymentId: number, opts: {
 
 router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), async (req, res) => {
   try {
-    const { appName, region = "canadacentral", requestId, adminPassword } = req.body as {
-      appName: string; region?: string; requestId?: number; adminPassword: string;
+    const { appName, region = "canadacentral", requestId, adminPassword, allowedRdpSource } = req.body as {
+      appName: string; region?: string; requestId?: number; adminPassword: string; allowedRdpSource?: string;
     };
 
     if (!appName || !adminPassword) {
       res.status(400).json({ error: "appName and adminPassword are required" });
+      return;
+    }
+
+    const rdpSource = normalizeRdpSource(allowedRdpSource);
+    if (!rdpSource) {
+      res.status(400).json({ error: "allowedRdpSource must be a public CIDR, for example 203.0.113.10/32." });
       return;
     }
 
@@ -206,7 +246,7 @@ router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), as
 
     void runAzureDeployment(deploymentId, {
       tenantId, clientId, clientSecret, subscriptionId,
-      resourceGroup, appName, region, adminPassword,
+      resourceGroup, appName, region, adminPassword, allowedRdpSource: rdpSource,
     }).catch(() => {});
 
     res.json({ deploymentId, resourceGroup, status: "pending" });
@@ -216,11 +256,11 @@ router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), as
   }
 });
 
-router.get("/deploy/:id", authenticate, async (req, res) => {
+router.get("/deploy/:id", authenticate, requireRole("admin", "cloud_architect"), async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.execute(sql`
-      SELECT id, request_id, subscription_id, resource_group, app_name, region, status, resources, log, error, started_at, completed_at
+      SELECT id, request_id, resource_group, app_name, region, status, resources, log, error, started_at, completed_at
       FROM iac_deployments WHERE id = ${Number(id)} LIMIT 1
     `);
     if (!result.rows[0]) {
@@ -234,7 +274,7 @@ router.get("/deploy/:id", authenticate, async (req, res) => {
   }
 });
 
-router.get("/deployments", authenticate, async (_req, res) => {
+router.get("/deployments", authenticate, requireRole("admin", "cloud_architect"), async (_req, res) => {
   try {
     const result = await db.execute(sql`
       SELECT id, request_id, resource_group, app_name, region, status, resources, error, started_at, completed_at
@@ -246,5 +286,57 @@ router.get("/deployments", authenticate, async (_req, res) => {
     res.status(500).json({ error: "Failed to list deployments" });
   }
 });
+
+function normalizeRdpSource(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const source = value.trim();
+  if (!isValidIpv4Cidr(source)) {
+    return null;
+  }
+
+  if (BLOCKED_RDP_SOURCES.has(source) || hasPrivateAddressPrefix(source)) {
+    return null;
+  }
+
+  return source;
+}
+
+function hasPrivateAddressPrefix(source: string): boolean {
+  for (const prefix of PRIVATE_ADDRESS_PREFIXES) {
+    if (source.startsWith(prefix)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isValidIpv4Cidr(value: string): boolean {
+  const [address, mask] = value.split("/");
+  const maskNumber = mask ? Number.parseInt(mask, 10) : Number.NaN;
+
+  if (!address || Number.isNaN(maskNumber) || maskNumber < 0 || maskNumber > 32) {
+    return false;
+  }
+
+  const octets = address.split(".");
+  if (octets.length !== 4) {
+    return false;
+  }
+
+  return octets.every(isValidIpv4Octet);
+}
+
+function isValidIpv4Octet(value: string): boolean {
+  if (!/^\d{1,3}$/.test(value)) {
+    return false;
+  }
+
+  const octet = Number.parseInt(value, 10);
+  return octet >= 0 && octet <= 255;
+}
 
 export default router;

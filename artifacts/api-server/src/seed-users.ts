@@ -5,29 +5,54 @@
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
-import { eq, count } from "drizzle-orm";
+import { count } from "drizzle-orm";
 
-const DEFAULT_USERS = [
-  {
-    name: "Enterprise Admin",
-    email: "enterprise@mccain.com",
-    password: "McCain@123",
-    role: "admin",
-  },
-];
+const DEFAULT_ADMIN_EMAIL = "enterprise@mccain.com";
+const DEFAULT_ADMIN_NAME = "Enterprise Admin";
+const DEFAULT_ADMIN_ROLE = "admin";
+const MIN_PRODUCTION_PASSWORD_LENGTH = 16;
 
 export async function seedUsersIfEmpty(): Promise<void> {
   try {
     const [{ value }] = await db.select({ value: count() }).from(usersTable);
     if (Number(value) > 0) return; // already seeded
-    for (const u of DEFAULT_USERS) {
-      const passwordHash = await bcrypt.hash(u.password, 10);
-      await db.insert(usersTable).values({ name: u.name, email: u.email, passwordHash, role: u.role });
-      console.log(`[seed] Created user: ${u.email} (${u.role})`);
-    }
+    const password = getBootstrapAdminPassword();
+    if (!password) return;
+    const passwordHash = await bcrypt.hash(password, 10);
+    await db.insert(usersTable).values({
+      name: process.env.BOOTSTRAP_ADMIN_NAME ?? DEFAULT_ADMIN_NAME,
+      email: (process.env.BOOTSTRAP_ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL).toLowerCase(),
+      passwordHash,
+      role: DEFAULT_ADMIN_ROLE,
+    });
+    console.log(`[seed] Created bootstrap admin user: ${process.env.BOOTSTRAP_ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL}`);
   } catch (err) {
-    console.warn("[seed] Could not seed users (DB may not be reachable):", (err as Error).message);
+    const message = err instanceof Error ? err.message : "Unknown seed error";
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(message);
+    }
+    console.warn("[seed] Could not seed users (DB may not be reachable):", message);
   }
+}
+
+function getBootstrapAdminPassword(): string | null {
+  const configuredPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (configuredPassword && configuredPassword.length >= MIN_PRODUCTION_PASSWORD_LENGTH) {
+    return configuredPassword;
+  }
+
+  if (isProduction) {
+    throw new Error("BOOTSTRAP_ADMIN_PASSWORD must be set to at least 16 characters for first production startup.");
+  }
+
+  if (configuredPassword) {
+    return configuredPassword;
+  }
+
+  console.warn("[seed] BOOTSTRAP_ADMIN_PASSWORD not set; skipping bootstrap admin seed.");
+  return null;
 }
 
 // Allow running directly: pnpm --filter @workspace/api-server run seed

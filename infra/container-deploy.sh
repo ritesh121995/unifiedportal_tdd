@@ -9,7 +9,7 @@
 #   3.  Builds the Docker image and pushes it to ACR
 #   4.  Creates a Log Analytics workspace (required by Container Apps)
 #   5.  Creates an Azure Container Apps Environment
-#   6.  Creates the Container App with all environment variables
+#   6.  Creates the Container App with secret references for sensitive values
 #   7.  Prints the live URL
 #
 # Prerequisites:
@@ -19,7 +19,8 @@
 #
 # Usage:
 #   chmod +x infra/container-deploy.sh
-#   cp infra/container-deploy.sh.env infra/.deploy.env   # fill in values
+#   cp infra/container-deploy.env.example infra/.deploy.env   # fill in values
+#   source infra/.deploy.env
 #   ./infra/container-deploy.sh
 #
 # Estimated cost (Canada Central, ~$15–25/month):
@@ -37,12 +38,13 @@ LOCATION="canadacentral"
 ACR_NAME="mccainportalacr"            # Must be globally unique, lowercase, 5-50 chars
 APP_NAME="mccain-portal"              # Container App name
 ENVIRONMENT_NAME="mccain-portal-env"  # Container Apps environment name
-IMAGE_TAG="latest"
+IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M%S)}"
 
 # ── ❷  Secrets — set as environment variables before running ─────────────
 # Required:
 : "${DATABASE_URL:?Set DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require}"
 : "${JWT_SECRET:?Set JWT_SECRET to a random 64-char hex string (openssl rand -hex 64)}"
+: "${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD for first startup, then rotate it after login}"
 
 # Azure OpenAI (choose one AI provider):
 AZURE_OPENAI_ENDPOINT="${AZURE_OPENAI_ENDPOINT:-}"
@@ -91,8 +93,6 @@ az acr create \
   --output none 2>/dev/null || log "ACR already exists, skipping..."
 
 ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
-ACR_USERNAME=$(az acr credential show --name "$ACR_NAME" --query username -o tsv)
-ACR_PASSWORD=$(az acr credential show --name "$ACR_NAME" --query "passwords[0].value" -o tsv)
 ok "Container Registry: $ACR_LOGIN_SERVER"
 
 # ── Step 3: Build and push Docker image ──────────────────────────────────
@@ -107,9 +107,7 @@ docker build \
 ok "Image built: $IMAGE_NAME"
 
 log "Pushing image to ACR..."
-echo "$ACR_PASSWORD" | docker login "$ACR_LOGIN_SERVER" \
-  --username "$ACR_USERNAME" \
-  --password-stdin
+az acr login --name "$ACR_NAME" --output none
 
 docker push "$IMAGE_NAME"
 ok "Image pushed to ACR"
@@ -146,23 +144,36 @@ az containerapp env create \
 ok "Container Apps environment ready"
 
 # ── Step 6: Build environment variable list ───────────────────────────────
+SECRET_ARGS=(
+  "jwt-secret=$JWT_SECRET"
+  "database-url=$DATABASE_URL"
+  "bootstrap-admin-password=$BOOTSTRAP_ADMIN_PASSWORD"
+)
+
 ENV_VARS=(
   "NODE_ENV=production"
   "PORT=8080"
   "AUTH_MODE=password"
-  "JWT_SECRET=$JWT_SECRET"
-  "DATABASE_URL=$DATABASE_URL"
+  "JWT_SECRET=secretref:jwt-secret"
+  "DATABASE_URL=secretref:database-url"
+  "BOOTSTRAP_ADMIN_PASSWORD=secretref:bootstrap-admin-password"
   "ALLOWED_ORIGIN=$ALLOWED_ORIGIN"
 )
 
 if [[ -n "$AZURE_OPENAI_ENDPOINT" ]]; then
   ENV_VARS+=("AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT")
-  ENV_VARS+=("AZURE_OPENAI_API_KEY=$AZURE_OPENAI_API_KEY")
+  if [[ -z "$AZURE_OPENAI_API_KEY" ]]; then
+    warn "AZURE_OPENAI_ENDPOINT is set but AZURE_OPENAI_API_KEY is empty."
+  else
+    SECRET_ARGS+=("azure-openai-api-key=$AZURE_OPENAI_API_KEY")
+    ENV_VARS+=("AZURE_OPENAI_API_KEY=secretref:azure-openai-api-key")
+  fi
   ENV_VARS+=("AZURE_OPENAI_DEPLOYMENT=$AZURE_OPENAI_DEPLOYMENT")
   ENV_VARS+=("AZURE_OPENAI_API_VERSION=$AZURE_OPENAI_API_VERSION")
   log "Using Azure OpenAI: $AZURE_OPENAI_ENDPOINT"
 elif [[ -n "$OPENAI_API_KEY" ]]; then
-  ENV_VARS+=("OPENAI_API_KEY=$OPENAI_API_KEY")
+  SECRET_ARGS+=("openai-api-key=$OPENAI_API_KEY")
+  ENV_VARS+=("OPENAI_API_KEY=secretref:openai-api-key")
   log "Using standard OpenAI API"
 else
   warn "No AI provider configured. Set AZURE_OPENAI_ENDPOINT or OPENAI_API_KEY."
@@ -174,6 +185,12 @@ log "Deploying Container App: $APP_NAME..."
 # Check if app already exists
 if az containerapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
   log "Container App exists — updating image and env vars..."
+  az containerapp secret set \
+    --name "$APP_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --secrets "${SECRET_ARGS[@]}" \
+    --output none
+
   az containerapp update \
     --name "$APP_NAME" \
     --resource-group "$RESOURCE_GROUP" \
@@ -187,8 +204,6 @@ else
     --environment "$ENVIRONMENT_NAME" \
     --image "$IMAGE_NAME" \
     --registry-server "$ACR_LOGIN_SERVER" \
-    --registry-username "$ACR_USERNAME" \
-    --registry-password "$ACR_PASSWORD" \
     --target-port 8080 \
     --ingress external \
     --min-replicas 0 \
@@ -196,6 +211,7 @@ else
     --cpu 0.5 \
     --memory 1.0Gi \
     --env-vars "${ENV_VARS[@]}" \
+    --secrets "${SECRET_ARGS[@]}" \
     --output none
 fi
 
@@ -210,10 +226,6 @@ ok "Deployment complete!"
 bold "══════════════════════════════════════════"
 echo ""
 echo -e "${GREEN}Portal URL:${NC} https://$APP_URL"
-echo ""
-echo -e "${YELLOW}Login credentials:${NC}"
-echo "  Email:    enterprise@mccain.com"
-echo "  Password: McCain@123"
 echo ""
 echo -e "${CYAN}Monitor logs:${NC}"
 echo "  az containerapp logs show --name $APP_NAME --resource-group $RESOURCE_GROUP --follow"

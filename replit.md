@@ -139,21 +139,22 @@ The script: builds multi-stage Docker image → pushes to Azure Container Regist
 
 ```
 Dockerfile (4-stage multi-stage build):
-  Stage 1 — deps        install pnpm workspace deps (cached layer)
-  Stage 2 — build-api   esbuild → self-contained dist/index.mjs
-  Stage 3 — build-web   Vite → React static files
-  Stage 4 — runtime     node:20-alpine + dist/ + public/ only (~120 MB)
-                         runs as non-root user "mccain"
+  Stage 1 - deps        install pnpm workspace deps (cached layer)
+  Stage 2 - build-api   esbuild bundle -> dist/index.mjs
+  Stage 3 - build-web   Vite -> React static files
+  Stage 4 - runtime     node:22-alpine + dist/ + public/ + runtime deps
+                         runs as non-root user "mccain" on port 8080
 ```
 
-No `node_modules` in the final image — esbuild bundles everything.
+The final image keeps runtime `node_modules` for packages that are intentionally
+externalized from the esbuild bundle.
 
 #### Local Docker testing
 
 ```bash
 docker compose up --build    # builds image + spins up Postgres
 # Portal at http://localhost:8080
-# Login: enterprise@mccain.com / McCain@123
+# Login with BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD from docker-compose.yml
 docker compose down -v       # teardown
 ```
 

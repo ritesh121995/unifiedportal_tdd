@@ -2,10 +2,8 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 const DEFAULT_JWT_SECRET = "unified-portal-dev-secret-change-in-prod";
-export const JWT_SECRET = process.env.JWT_SECRET ?? DEFAULT_JWT_SECRET;
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
-  console.warn("[SECURITY] JWT_SECRET env var is not set — using insecure default. Set JWT_SECRET before deploying.");
-}
+const MIN_PRODUCTION_SECRET_LENGTH = 32;
+export const JWT_SECRET = getJwtSecret();
 export const JWT_EXPIRES_IN = "8h";
 export const COOKIE_NAME = "portal_token";
 
@@ -70,4 +68,19 @@ function extractBearerToken(req: Request): string | null {
   const auth = req.headers.authorization;
   if (auth?.startsWith("Bearer ")) return auth.slice(7);
   return null;
+}
+
+function getJwtSecret(): string {
+  const configuredSecret = process.env.JWT_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (configuredSecret && configuredSecret.length >= MIN_PRODUCTION_SECRET_LENGTH) {
+    return configuredSecret;
+  }
+
+  if (isProduction) {
+    throw new Error("JWT_SECRET must be set to at least 32 characters before starting in production.");
+  }
+
+  return configuredSecret ?? DEFAULT_JWT_SECRET;
 }
