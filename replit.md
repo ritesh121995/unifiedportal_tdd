@@ -142,7 +142,7 @@ Dockerfile (4-stage multi-stage build):
   Stage 1 - deps        install pnpm workspace deps (cached layer)
   Stage 2 - build-api   esbuild bundle -> dist/index.mjs
   Stage 3 - build-web   Vite -> React static files
-  Stage 4 - runtime     node:22-alpine + dist/ + public/ + runtime deps
+  Stage 4 — runtime     node:22-bookworm-slim + dist/ + public/
                          runs as non-root user "mccain" on port 8080
 ```
 

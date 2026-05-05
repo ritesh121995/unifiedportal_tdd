@@ -6,7 +6,7 @@
 #   1. deps        — install all pnpm workspace dependencies (cached layer)
 #   2. build-api   — compile Express API server via esbuild → self-contained bundle
 #   3. build-web   — compile React frontend via Vite → static files
-#   4. runtime     — ultra-slim final image
+#   4. runtime     — slim final image
 #
 # The runtime image contains only:
 #   /app/dist/     — esbuild-bundled Node.js server
@@ -17,7 +17,9 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 # ─── Stage 1: Install all workspace dependencies ────────────────────────────
-FROM node:22-alpine AS deps
+# Use Debian slim instead of Alpine. The workspace excludes musl optional
+# native packages, while Vite/Tailwind depend on the glibc lightningcss build.
+FROM node:22-bookworm-slim AS deps
 WORKDIR /workspace
 
 # Install pnpm (match version used in development)
@@ -69,14 +71,12 @@ ENV VITE_API_URL=""
 RUN BASE_PATH=/ pnpm --filter @workspace/tdd-generator run build
 
 # ─── Stage 4: Minimal runtime image ─────────────────────────────────────────
-FROM node:22-alpine AS runtime
+FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 
-RUN apk add --no-cache wget
-
 # Create a non-root user — never run containers as root in production
-RUN addgroup -g 1001 -S mccain \
- && adduser  -u 1001 -S mccain -G mccain
+RUN groupadd --gid 1001 mccain \
+ && useradd --uid 1001 --gid 1001 --create-home --shell /usr/sbin/nologin mccain
 
 # Copy the pre-built API bundle from build-api stage.
 COPY --from=build-api --chown=mccain:mccain \
@@ -104,6 +104,6 @@ ENV NODE_ENV=production \
 # Health check — Azure Container Apps uses this to determine readiness.
 # /api/healthz returns 200 JSON with auth mode and service status.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-  CMD wget -qO- http://localhost:8080/api/healthz || exit 1
+  CMD node -e "fetch('http://127.0.0.1:8080/api/healthz').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["node", "dist/index.mjs"]
