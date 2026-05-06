@@ -33,6 +33,8 @@ export interface RiskInsight {
   severity: "high" | "medium" | "info";
   title: string;
   detail: string;
+  remediation: string;
+  bestPractice: string;
 }
 
 const THIRD_PARTY_MODELS = ["SaaS Solution", "Vendor Tenant", "Other 3rd Party Solution"];
@@ -163,7 +165,7 @@ export function computeRisksAndInsights(f: FormSnapshot): RiskInsight[] {
   const internetFacing = f.networkPosture === "Internet-Facing" || f.networkPosture === "Hybrid";
   const bigCost        = ["Large (500K–1M CAD)", "XLarge (>1M CAD)"].includes(f.costTShirtSize);
 
-  const items: RiskInsight[] = [];
+  const items: Array<Omit<RiskInsight, "remediation" | "bestPractice">> = [];
 
   if (isCloud) {
     items.push({
@@ -325,5 +327,66 @@ export function computeRisksAndInsights(f: FormSnapshot): RiskInsight[] {
     });
   }
 
-  return items;
+  return items.map(enrichRiskInsight);
+}
+
+function enrichRiskInsight(risk: Omit<RiskInsight, "remediation" | "bestPractice">): RiskInsight {
+  const categoryGuidance: Record<string, Pick<RiskInsight, "remediation" | "bestPractice">> = {
+    "AI Risk": {
+      remediation: "Require Responsible AI review, document model purpose and data usage, define human-in-the-loop approval, and capture rollback/manual override steps before production.",
+      bestPractice: "Use Azure OpenAI with private networking where available, approved content filters, prompt/output logging policy, data retention controls, and clear accountability for AI-assisted decisions.",
+    },
+    Availability: {
+      remediation: "Confirm RTO/RPO with the business owner, add HA/DR design where the workload is business critical, and schedule failover testing before go-live.",
+      bestPractice: "Use zone-redundant PaaS SKUs for production, backup policies with tested restore, health probes, autoscale rules, and documented incident runbooks.",
+    },
+    Connectivity: {
+      remediation: "Validate ExpressRoute/VPN routing, DNS, firewall paths, and latency assumptions with Network Architecture before approval.",
+      bestPractice: "Use hub-spoke network patterns, private endpoints, central DNS zones, NSG-as-code, and monitored egress through approved enterprise controls.",
+    },
+    "Cloud Governance": {
+      remediation: "Confirm subscription, resource group, naming, tagging, policy assignment, and owner metadata before provisioning starts.",
+      bestPractice: "Enforce Azure Policy initiatives, management-group inheritance, mandatory tags, budget alerts, and CCoE-approved landing zone patterns.",
+    },
+    "Data & Privacy": {
+      remediation: "Complete data classification, privacy impact assessment where needed, encryption requirements, and retention/deletion sign-off.",
+      bestPractice: "Keep data in approved Canadian regions, use customer-managed or platform-managed encryption by classification, restrict access with RBAC/PIM, and log all privileged access.",
+    },
+    FinOps: {
+      remediation: "Obtain budget owner and FinOps approval, define cost allocation tags, and validate SKU sizing before deployment.",
+      bestPractice: "Use Azure budgets, anomaly alerts, reserved capacity/savings plans where appropriate, right-sizing reviews, and chargeback/showback reporting.",
+    },
+    Integration: {
+      remediation: "Document all integration endpoints, owners, SLAs, retry/error handling, and security controls before approval.",
+      bestPractice: "Prefer API Management or approved integration middleware, managed identities, circuit breakers, idempotent operations, and contract/version governance.",
+    },
+    "Migration Risk": {
+      remediation: "Create a migration runbook with data validation, cutover windows, rollback criteria, and pilot migration evidence.",
+      bestPractice: "Use phased migration, pre-prod rehearsals, reconciliation reports, business sign-off gates, and rollback-tested release plans.",
+    },
+    "Regional Compliance": {
+      remediation: "Validate all data stores, backups, logs, and failover targets remain in approved Canadian regions.",
+      bestPractice: "Restrict deployments through Azure Policy allowed locations and document Canada Central/Canada East residency in the design record.",
+    },
+    Regulatory: {
+      remediation: "Engage Compliance/Legal/Privacy teams, identify applicable controls, and require evidence before production approval.",
+      bestPractice: "Map controls to policy obligations, maintain immutable audit logs, define evidence owners, and schedule periodic compliance reviews.",
+    },
+    Security: {
+      remediation: "Complete threat modelling, IAM/RBAC design, secrets review, vulnerability management, and security architecture sign-off.",
+      bestPractice: "Apply Zero Trust, private access by default, Key Vault for secrets, Defender for Cloud plans, WAF/DDoS controls for internet-facing workloads, and centralized logging.",
+    },
+    "Vendor Risk": {
+      remediation: "Complete vendor risk assessment, DPA/SLA review, data exit strategy, and privileged access review before approval.",
+      bestPractice: "Use vendor due diligence, contractual security clauses, SSO/MFA, least-privilege vendor access, periodic access recertification, and documented exit plans.",
+    },
+  };
+
+  return {
+    ...risk,
+    ...(categoryGuidance[risk.category] ?? {
+      remediation: "Assign an accountable owner, document acceptance criteria, and ensure evidence is captured before approval.",
+      bestPractice: "Use policy-backed controls, auditable approval gates, and measurable operational readiness criteria.",
+    }),
+  };
 }
