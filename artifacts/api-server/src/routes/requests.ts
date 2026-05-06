@@ -3,6 +3,97 @@ import { db } from "@workspace/db";
 import { architectureRequestsTable, requestEventsTable, portalSettingsTable } from "@workspace/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
+import { createOpenAiClientContext, resolveOpenAiModel } from "./tdd/openai-client.js";
+
+interface AiClassificationResult {
+  classification: "simple" | "complex";
+  confidence: "high" | "medium" | "low";
+  reason: string;
+}
+
+async function classifyRequestWithAI(body: {
+  priority: string;
+  applicationType: string;
+  targetEnvironments: string[];
+  azureRegions: string[];
+  expectedUserBase?: string | null;
+  description: string;
+  businessJustification: string;
+  deploymentModel?: string;
+  haEnabled?: boolean;
+  drEnabled?: boolean;
+  securityImpact?: string;
+  regulatoryImpact?: string;
+  integrationImpact?: string;
+  costTShirtSize?: string;
+  availabilityTarget?: string;
+}): Promise<AiClassificationResult> {
+  try {
+    const { client, usesAzure } = createOpenAiClientContext();
+    const model = resolveOpenAiModel(usesAzure);
+
+    const prompt = `You are an Enterprise Architecture governance assistant at McCain Foods. Classify this cloud infrastructure request as "simple" (fast-track directly to TDD) or "complex" (requires EA review).
+
+SIMPLE — fast-track to TDD (all should hold):
+- Priority: Low or Medium
+- Environments: Dev/Test only (no Production, Staging, DR)
+- Single Azure region
+- No HA or DR requirements
+- No significant security, regulatory, or integration impact
+- Expected user base under 500
+
+COMPLEX — requires EA review (any one sufficient):
+- Priority: High or Critical
+- Includes Production, Staging, or DR environment
+- Multiple Azure regions
+- HA or DR enabled
+- Security, regulatory, or integration impact flagged Medium or High
+- User base 500+
+- Cost size XL or XXL
+- Availability target 99.9%+
+- Description/justification indicates enterprise-wide or cross-team impact
+
+Request:
+Priority: ${body.priority}
+Application Type: ${body.applicationType}
+Environments: ${body.targetEnvironments.join(", ")}
+Azure Regions: ${body.azureRegions.join(", ")}
+User Base: ${body.expectedUserBase ?? "Not specified"}
+Deployment Model: ${body.deploymentModel ?? "Not specified"}
+HA Enabled: ${body.haEnabled ? "Yes" : "No"}
+DR Enabled: ${body.drEnabled ? "Yes" : "No"}
+Security Impact: ${body.securityImpact ?? "Not specified"}
+Regulatory Impact: ${body.regulatoryImpact ?? "Not specified"}
+Integration Impact: ${body.integrationImpact ?? "Not specified"}
+Cost Size: ${body.costTShirtSize ?? "Not specified"}
+Availability Target: ${body.availabilityTarget ?? "Not specified"}
+Description: ${body.description}
+Business Justification: ${body.businessJustification}
+
+Respond with JSON only: {"classification":"simple"|"complex","confidence":"high"|"medium"|"low","reason":"One sentence explaining the key deciding factor."}`;
+
+    const response = await Promise.race([
+      client.chat.completions.create({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 150,
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+    ]) as Awaited<ReturnType<typeof client.chat.completions.create>>;
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const jsonMatch = content.match(/\{[\s\S]*?\}/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+
+    return {
+      classification: parsed.classification === "simple" ? "simple" : "complex",
+      confidence: (["high", "medium", "low"] as const).includes(parsed.confidence) ? parsed.confidence : "medium",
+      reason: typeof parsed.reason === "string" ? parsed.reason : "Classification based on request parameters.",
+    };
+  } catch {
+    return { classification: "complex", confidence: "low", reason: "AI classification unavailable — routed to EA review as a precaution." };
+  }
+}
 
 const router = Router();
 router.use(authenticate);
@@ -325,38 +416,53 @@ router.post("/", requireRole("requestor"), async (req, res) => {
   await logEvent(row.id, user.name, user.role, "submitted", `Request submitted by ${user.name}`);
   sendWebhookNotification(row.title, user.name, "submitted", row.id);
 
-  // ── Simple App Fast-Track: auto-approve immediately on submit ────────────
-  const isSimpleApp =
-    body.deploymentModel === "Cloud (McCain Tenant)" &&
-    body.appComplexity === "Simple";
+  // ── AI-driven routing: classify request complexity and route accordingly ──
+  const aiResult = await classifyRequestWithAI({
+    priority: body.priority ?? "Medium",
+    applicationType: body.applicationType,
+    targetEnvironments: body.targetEnvironments,
+    azureRegions: body.azureRegions,
+    expectedUserBase: body.expectedUserBase,
+    description: body.description,
+    businessJustification: body.businessJustification,
+    deploymentModel: body.deploymentModel,
+    haEnabled: body.haEnabled,
+    drEnabled: body.drEnabled,
+    securityImpact: body.securityImpact,
+    regulatoryImpact: body.regulatoryImpact,
+    integrationImpact: body.integrationImpact,
+    costTShirtSize: body.costTShirtSize,
+    availabilityTarget: body.availabilityTarget,
+  });
 
-  if (isSimpleApp) {
+  await db
+    .update(architectureRequestsTable)
+    .set({ aiClassification: aiResult.classification, aiClassificationReason: aiResult.reason, updatedAt: new Date() })
+    .where(eq(architectureRequestsTable.id, row.id));
+
+  if (aiResult.classification === "simple") {
     const [approvedRow] = await db
       .update(architectureRequestsTable)
       .set({
         status: "ea_approved",
-        eaReviewerName: "System (Auto-Approved)",
+        eaReviewerName: "AI Auto-Classification",
         eaReviewedAt: new Date(),
-        eaComments: "Simple application — automatically approved via fast-track. TDD will be auto-generated once network CIDRs are entered.",
+        eaComments: `AI classified this as a simple request (${aiResult.confidence} confidence) and fast-tracked it to TDD. Reason: ${aiResult.reason}`,
         updatedAt: new Date(),
       })
       .where(eq(architectureRequestsTable.id, row.id))
       .returning();
 
-    await logEvent(
-      row.id,
-      "System",
-      "system",
-      "ea_approved",
-      "Simple application fast-tracked: automatically approved by system. TDD generation is ready to begin."
+    await logEvent(row.id, "AI System", "system", "ea_approved",
+      `AI classified as Simple (${aiResult.confidence} confidence) — fast-tracked to TDD. ${aiResult.reason}`
     );
-    sendWebhookNotification(row.title, "System (Fast-Track)", "ea_approved", row.id);
+    sendWebhookNotification(row.title, "AI Auto-Classification", "ea_approved", row.id);
 
-    res.status(201).json({ request: approvedRow, fastTrack: true });
+    res.status(201).json({ request: approvedRow, fastTrack: true, aiClassification: "simple", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
     return;
   }
 
-  res.status(201).json({ request: row });
+  res.status(201).json({ request: row, fastTrack: false, aiClassification: "complex", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
 });
 
 // GET /api/requests/:id

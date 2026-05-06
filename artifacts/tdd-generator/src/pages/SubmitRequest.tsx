@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   ArrowLeft, ArrowRight, Loader2, CheckCircle, CalendarIcon,
   Users, AlertTriangle, Info, CheckCircle2, ChevronRight, Upload, X,
-  HelpCircle, CheckSquare, ClipboardList, Eye, Save, Rocket,
+  HelpCircle, CheckSquare, ClipboardList, Eye, Save, Rocket, Zap, ShieldCheck,
 } from "lucide-react";
 import { computeArchitectRecommendations, computeRisksAndInsights } from "@/lib/architect-utils";
 import { Button } from "@/components/ui/button";
@@ -328,6 +328,9 @@ export default function SubmitRequest() {
   const [submitted, setSubmitted] = useState(false);
   const [submittedRequestId, setSubmittedRequestId] = useState<number | null>(null);
   const [fastTracked, setFastTracked] = useState(false);
+  const [aiClassification, setAiClassification] = useState<"simple" | "complex" | null>(null);
+  const [aiReason, setAiReason] = useState<string>("");
+  const [aiConfidence, setAiConfidence] = useState<"high" | "medium" | "low">("medium");
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
   const [regionInput, setRegionInput] = useState("");
@@ -439,6 +442,9 @@ export default function SubmitRequest() {
       localStorage.removeItem(DRAFT_KEY);
       setSubmittedRequestId(d.request?.id ?? null);
       setFastTracked(d.fastTrack === true);
+      setAiClassification(d.aiClassification ?? null);
+      setAiReason(d.aiReason ?? "");
+      setAiConfidence(d.aiConfidence ?? "medium");
       setSubmitted(true);
       setReviewing(false);
     } catch (err: unknown) {
@@ -498,6 +504,37 @@ export default function SubmitRequest() {
             </div>
           </div>
         </div>
+
+        {/* AI Classification Result */}
+        {aiClassification && (
+          <div className={`rounded-xl border p-5 flex items-start gap-4 ${aiClassification === "simple" ? "border-blue-200 bg-blue-50" : "border-amber-200 bg-amber-50"}`}>
+            <div className={`p-2.5 rounded-full flex-shrink-0 ${aiClassification === "simple" ? "bg-blue-100" : "bg-amber-100"}`}>
+              {aiClassification === "simple"
+                ? <Zap className="w-5 h-5 text-blue-600" />
+                : <ShieldCheck className="w-5 h-5 text-amber-600" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <p className={`text-sm font-semibold ${aiClassification === "simple" ? "text-blue-900" : "text-amber-900"}`}>
+                  {aiClassification === "simple" ? "AI Fast-Tracked → TDD Ready" : "AI Routed → EA Review Required"}
+                </p>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                  aiConfidence === "high" ? "bg-green-100 text-green-700 border-green-200" :
+                  aiConfidence === "medium" ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
+                  "bg-slate-100 text-slate-500 border-slate-200"
+                }`}>
+                  {aiConfidence} confidence
+                </span>
+              </div>
+              <p className={`text-xs ${aiClassification === "simple" ? "text-blue-800" : "text-amber-800"}`}>{aiReason}</p>
+              <p className={`text-xs mt-1.5 font-medium ${aiClassification === "simple" ? "text-blue-700" : "text-amber-700"}`}>
+                {aiClassification === "simple"
+                  ? "Your request has been automatically approved and is ready for TDD generation."
+                  : "Your request has been queued for Enterprise Architecture review. You will be notified once reviewed."}
+              </p>
+            </div>
+          </div>
+        )}
 
         {isPrivileged && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Architect Recommendations */}
@@ -771,7 +808,7 @@ export default function SubmitRequest() {
           <Button
             className="text-[#1a1a2e] font-semibold"
             style={{ background: "#FFCD00" }}
-            onClick={() => { setSubmitted(false); setFastTracked(false); setSubmittedRequestId(null); setForm({ ...EMPTY_FORM }); setArchitectureDiagramFile(null); localStorage.removeItem(DRAFT_KEY); setDraftSavedAt(null); }}
+            onClick={() => { setSubmitted(false); setFastTracked(false); setSubmittedRequestId(null); setAiClassification(null); setAiReason(""); setAiConfidence("medium"); setForm({ ...EMPTY_FORM }); setArchitectureDiagramFile(null); localStorage.removeItem(DRAFT_KEY); setDraftSavedAt(null); }}
           >
             Submit Another Request
           </Button>

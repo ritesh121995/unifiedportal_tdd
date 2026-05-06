@@ -66,6 +66,10 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   // Partial form data pre-fill for TDD wizard (populated from request on approval)
   tddFormData: jsonb("tdd_form_data"),
 
+  // AI-driven routing classification set at submission time
+  aiClassification: text("ai_classification"),       // 'simple' | 'complex'
+  aiClassificationReason: text("ai_classification_reason"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

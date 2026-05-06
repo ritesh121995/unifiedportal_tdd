@@ -149,7 +149,9 @@ async function runStartupMigrations() {
         ADD COLUMN IF NOT EXISTS dtslt_leader TEXT,
         ADD COLUMN IF NOT EXISTS expected_user_base TEXT,
         ADD COLUMN IF NOT EXISTS target_go_live_date DATE,
-        ADD COLUMN IF NOT EXISTS deployment_model TEXT DEFAULT 'To be defined'
+        ADD COLUMN IF NOT EXISTS deployment_model TEXT DEFAULT 'To be defined',
+        ADD COLUMN IF NOT EXISTS ai_classification TEXT,
+        ADD COLUMN IF NOT EXISTS ai_classification_reason TEXT
     `);
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS iac_deployments (
