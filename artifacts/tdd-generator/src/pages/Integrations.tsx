@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Loader2, Save, Plug, Link2, ExternalLink, RefreshCw, Bell,
-  Cloud, BookOpen, CheckCircle2, XCircle, AlertTriangle,
+  Cloud, BookOpen, CheckCircle2, XCircle, AlertTriangle, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,20 @@ type SaveKey =
   | "leanix"
   | "azure"
   | "confluence";
+
+interface AiDiagnosticResult {
+  timestamp: string;
+  status: "ok" | "error";
+  provider?: string;
+  resolvedModel?: string;
+  latencyMs?: number;
+  modelReply?: string;
+  finishReason?: string;
+  usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  error?: string;
+  diagnosis: string;
+  env: Record<string, string>;
+}
 
 export default function Integrations() {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -40,6 +54,9 @@ export default function Integrations() {
   const [confluenceParentPageId, setConfluenceParentPageId] = useState("");
   const [testConfluenceStatus, setTestConfluenceStatus] = useState<"idle" | "testing" | "ok" | "error">("idle");
   const [testConfluenceMsg, setTestConfluenceMsg] = useState("");
+
+  const [aiDiagnosing, setAiDiagnosing] = useState(false);
+  const [aiDiagnostic, setAiDiagnostic] = useState<AiDiagnosticResult | null>(null);
 
   useEffect(() => {
     fetch(`${getApiBase()}/api/settings`, { credentials: "include" })
@@ -108,6 +125,20 @@ export default function Integrations() {
       setTestConfluenceMsg("Could not reach Confluence");
     }
     setTimeout(() => setTestConfluenceStatus("idle"), 6000);
+  };
+
+  const runAiDiagnostics = async () => {
+    setAiDiagnosing(true);
+    setAiDiagnostic(null);
+    try {
+      const r = await fetch(`${getApiBase()}/api/tdd/diagnostics`, { credentials: "include" });
+      const d = await r.json() as AiDiagnosticResult;
+      setAiDiagnostic(d);
+    } catch {
+      setAiDiagnostic({ timestamp: new Date().toISOString(), status: "error", diagnosis: "Could not reach the portal API. Check Container App is running.", env: {} });
+    } finally {
+      setAiDiagnosing(false);
+    }
   };
 
   const testLeanIX = () => {
@@ -415,6 +446,90 @@ export default function Integrations() {
             <Plug className="w-3.5 h-3.5 shrink-0" />
             <span>Contact your CCoE team or the McCain LeanIX administrator to obtain credentials.</span>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Azure OpenAI Diagnostics ──────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-violet-600">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Azure OpenAI — Connection Diagnostics</CardTitle>
+              <CardDescription>Test whether the TDD generator can reach your Azure OpenAI deployment</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 space-y-1">
+            <p className="font-semibold text-slate-800">Environment variables to verify (set in Container App → Configuration → Environment variables)</p>
+            <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+              <li><code className="bg-slate-100 px-1 rounded">AZURE_OPENAI_ENDPOINT</code> — e.g. <code className="bg-slate-100 px-1 rounded">https://&lt;resource&gt;.openai.azure.com/</code></li>
+              <li><code className="bg-slate-100 px-1 rounded">AZURE_OPENAI_API_KEY</code> — Key 1 from Azure Portal → Azure OpenAI → Keys &amp; Endpoint</li>
+              <li><code className="bg-slate-100 px-1 rounded">AZURE_OPENAI_DEPLOYMENT</code> — <strong>exact</strong> deployment name from Azure Portal → Azure OpenAI → Model Deployments</li>
+              <li><code className="bg-slate-100 px-1 rounded">AZURE_OPENAI_API_VERSION</code> — defaults to <code className="bg-slate-100 px-1 rounded">2024-08-01-preview</code></li>
+            </ul>
+          </div>
+          <Button onClick={() => void runAiDiagnostics()} disabled={aiDiagnosing} className="gap-2" style={{ background: "#7c3aed", color: "#fff" }}>
+            {aiDiagnosing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {aiDiagnosing ? "Testing connection…" : "Run Connection Test"}
+          </Button>
+
+          {aiDiagnostic && (
+            <div className={`rounded-lg border p-4 space-y-3 text-sm ${aiDiagnostic.status === "ok" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+              <div className="flex items-center gap-2 font-semibold">
+                {aiDiagnostic.status === "ok"
+                  ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                  : <XCircle className="w-4 h-4 text-red-600 shrink-0" />}
+                <span className={aiDiagnostic.status === "ok" ? "text-green-800" : "text-red-800"}>
+                  {aiDiagnostic.status === "ok" ? "Connection OK" : "Connection Failed"}
+                </span>
+                {aiDiagnostic.latencyMs && (
+                  <span className="text-xs font-normal text-slate-500 ml-auto">{aiDiagnostic.latencyMs}ms</span>
+                )}
+              </div>
+              <p className={`text-xs leading-relaxed ${aiDiagnostic.status === "ok" ? "text-green-700" : "text-red-700"}`}>
+                {aiDiagnostic.diagnosis}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {aiDiagnostic.provider && (
+                  <div className="rounded bg-white/70 px-2 py-1.5 border border-white">
+                    <p className="text-slate-400">Provider</p>
+                    <p className="font-mono font-semibold text-slate-700">{aiDiagnostic.provider}</p>
+                  </div>
+                )}
+                {aiDiagnostic.resolvedModel && (
+                  <div className="rounded bg-white/70 px-2 py-1.5 border border-white">
+                    <p className="text-slate-400">Deployment / Model</p>
+                    <p className="font-mono font-semibold text-slate-700">{aiDiagnostic.resolvedModel}</p>
+                  </div>
+                )}
+                {aiDiagnostic.modelReply && (
+                  <div className="rounded bg-white/70 px-2 py-1.5 border border-white">
+                    <p className="text-slate-400">Model replied</p>
+                    <p className="font-mono font-semibold text-slate-700">"{aiDiagnostic.modelReply}"</p>
+                  </div>
+                )}
+                {aiDiagnostic.usage && (
+                  <div className="rounded bg-white/70 px-2 py-1.5 border border-white">
+                    <p className="text-slate-400">Tokens used</p>
+                    <p className="font-mono font-semibold text-slate-700">{aiDiagnostic.usage.total_tokens ?? "—"}</p>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1 text-xs">
+                <p className="text-slate-500 font-medium">Env vars detected (masked):</p>
+                {Object.entries(aiDiagnostic.env).map(([k, v]) => (
+                  <div key={k} className="flex items-center gap-2">
+                    <code className="bg-white/80 px-1.5 py-0.5 rounded border border-white/50 text-slate-600">{k}</code>
+                    <span className={`font-mono ${v === "NOT SET" ? "text-red-600 font-bold" : "text-slate-600"}`}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
