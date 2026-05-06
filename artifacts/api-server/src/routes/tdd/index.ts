@@ -4,6 +4,7 @@ import exportRouter from "./export";
 import cidrRouter from "./cidr";
 import namingRouter from "./naming";
 import sectionRegenerateRouter from "./section-regenerate";
+import submissionsRouter from "./submissions";
 import { authenticate } from "../../middleware/authenticate.js";
 
 const router: IRouter = Router();
@@ -16,5 +17,6 @@ router.use(exportRouter);
 router.use(cidrRouter);
 router.use(namingRouter);
 router.use(sectionRegenerateRouter);
+router.use(submissionsRouter);
 
 export default router;

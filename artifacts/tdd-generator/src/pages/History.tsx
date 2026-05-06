@@ -1,13 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAppContext, type HistoryEntry } from "@/store/app-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Clock, Trash2, FileText, Eye } from "lucide-react";
+import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw } from "lucide-react";
 import MermaidDiagram from "@/components/MermaidDiagram";
+import { getApiBase } from "@/lib/api-base";
+
+interface TddSubmission {
+  id: number;
+  applicationName: string;
+  organization: string;
+  lineOfBusiness: string;
+  requestorEmail: string;
+  environments: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TddSubmissionFull extends TddSubmission {
+  generatedContent: string | null;
+}
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -22,32 +38,60 @@ function timeAgo(iso: string): string {
 
 export default function History() {
   const [, setLocation] = useLocation();
-  const { history, removeHistoryEntry, clearHistory } = useAppContext();
-  const [selected, setSelected] = useState<HistoryEntry | null>(null);
+  const [submissions, setSubmissions] = useState<TddSubmission[]>([]);
+  const [selected, setSelected] = useState<TddSubmissionFull | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchSubmissions = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${getApiBase()}/api/tdd/submissions`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load history");
+      const d = await res.json();
+      setSubmissions(d.submissions ?? []);
+    } catch {
+      setError("Could not load TDD history. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchSubmissions(); }, []);
+
+  const handleSelect = async (sub: TddSubmission) => {
+    if (selected?.id === sub.id) { setSelected(null); return; }
+    setLoadingDetail(true);
+    try {
+      const res = await fetch(`${getApiBase()}/api/tdd/submissions/${sub.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load document");
+      const d = await res.json();
+      setSelected(d.submission);
+    } catch {
+      setSelected({ ...sub, generatedContent: null });
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Document History</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">TDD History</h2>
           <p className="text-slate-500 mt-1">
-            {history.length === 0
-              ? "No documents generated yet."
-              : `${history.length} document${history.length !== 1 ? "s" : ""} saved locally.`}
+            {loading ? "Loading…" : submissions.length === 0
+              ? "No TDD documents generated yet."
+              : `${submissions.length} document${submissions.length !== 1 ? "s" : ""} in the database.`}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {history.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearHistory}
-              className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
-            >
-              <Trash2 className="w-3 h-3 mr-1" />
-              Clear All
-            </Button>
-          )}
+          <Button variant="outline" size="sm" onClick={fetchSubmissions} disabled={loading}>
+            <RefreshCw className={`w-3 h-3 mr-1 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
           <Button variant="outline" onClick={() => setLocation("/dashboard")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -55,11 +99,20 @@ export default function History() {
         </div>
       </div>
 
-      {history.length === 0 ? (
+      {error && (
+        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-slate-400">
+          <Loader2 className="w-8 h-8 animate-spin mr-3" />
+          <span className="text-sm">Loading TDD history…</span>
+        </div>
+      ) : submissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <FileText className="w-16 h-16 mb-4 opacity-30" />
           <p className="text-lg font-medium">No history yet</p>
-          <p className="text-sm mt-1">Generated TDDs will appear here for the last 10 documents.</p>
+          <p className="text-sm mt-1">Generated TDD documents will appear here.</p>
           <Button className="mt-6" onClick={() => setLocation("/dashboard")}>
             Generate a TDD
           </Button>
@@ -68,43 +121,36 @@ export default function History() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* List */}
           <div className="lg:col-span-1 space-y-3">
-            {history.map((entry) => (
+            {submissions.map((sub) => (
               <Card
-                key={entry.id}
+                key={sub.id}
                 className={`cursor-pointer transition-all border shadow-sm hover:shadow-md ${
-                  selected?.id === entry.id
-                    ? "border-primary ring-1 ring-primary/20 bg-primary/5"
+                  selected?.id === sub.id
+                    ? "border-amber-400 ring-1 ring-amber-200 bg-amber-50/40"
                     : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
-                onClick={() => setSelected(entry)}
+                onClick={() => handleSelect(sub)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 text-sm truncate">
-                        {entry.applicationName}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1 text-xs text-slate-500">
+                      <p className="font-semibold text-slate-800 text-sm truncate">{sub.applicationName}</p>
+                      <p className="text-xs text-slate-500 truncate mt-0.5">{sub.organization} · {sub.lineOfBusiness}</p>
+                      <div className="flex items-center gap-1 mt-1.5 text-xs text-slate-400">
                         <Clock className="w-3 h-3" />
-                        <span>{timeAgo(entry.generatedAt)}</span>
+                        <span>{timeAgo(sub.createdAt)}</span>
                         <span className="text-slate-300 mx-1">·</span>
-                        <span>{new Date(entry.generatedAt).toLocaleDateString()}</span>
+                        <span>{new Date(sub.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
-                        {entry.snippet}
-                      </p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {sub.environments.slice(0, 3).map((e) => (
+                          <span key={e} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{e}</span>
+                        ))}
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${sub.status === "completed" ? "border-green-200 text-green-700" : "border-slate-200 text-slate-500"}`}>
+                          {sub.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <button
-                      className="p-1 text-slate-300 hover:text-red-400 transition-colors flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeHistoryEntry(entry.id);
-                        if (selected?.id === entry.id) setSelected(null);
-                      }}
-                      title="Remove"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 </CardContent>
               </Card>
@@ -113,39 +159,48 @@ export default function History() {
 
           {/* Preview panel */}
           <div className="lg:col-span-2">
-            {selected ? (
+            {loadingDetail ? (
+              <div className="flex items-center justify-center h-64 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                <span className="text-sm">Loading document…</span>
+              </div>
+            ) : selected ? (
               <Card className="shadow-sm border-slate-200 bg-white sticky top-24">
                 <CardHeader className="pb-3 border-b border-slate-100">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-slate-800">
-                      {selected.applicationName}
-                    </CardTitle>
+                    <CardTitle className="text-base font-semibold text-slate-800">{selected.applicationName}</CardTitle>
                     <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400">{selected.requestorEmail}</span>
                       <Badge variant="outline" className="text-xs text-slate-500">
-                        {new Date(selected.generatedAt).toLocaleString()}
+                        {new Date(selected.createdAt).toLocaleString()}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent
-                  className="p-6 overflow-y-auto max-h-[calc(100vh-18rem)]"
-                >
-                  <article className="prose prose-slate prose-sm max-w-none prose-headings:text-slate-900 prose-headings:font-bold prose-h2:text-lg prose-h2:border-b prose-h2:pb-1 prose-h2:mt-6 prose-h3:text-base prose-code:text-primary prose-code:bg-primary/5 prose-code:px-1 prose-code:rounded">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code({ className, children, ...props }) {
-                          const lang = /language-(\w+)/.exec(className ?? "")?.[1];
-                          if (lang?.toLowerCase() === "mermaid") {
-                            return <MermaidDiagram code={String(children).replace(/\n$/, "")} />;
-                          }
-                          return <code className={className} {...props}>{children}</code>;
-                        },
-                      }}
-                    >
-                      {selected.markdown}
-                    </ReactMarkdown>
-                  </article>
+                <CardContent className="p-6 overflow-y-auto max-h-[calc(100vh-18rem)]">
+                  {selected.generatedContent ? (
+                    <article className="prose prose-slate prose-sm max-w-none prose-headings:text-slate-900 prose-headings:font-bold prose-h2:text-lg prose-h2:border-b prose-h2:pb-1 prose-h2:mt-6 prose-h3:text-base prose-code:text-primary prose-code:bg-primary/5 prose-code:px-1 prose-code:rounded">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ className, children, ...props }) {
+                            const lang = /language-(\w+)/.exec(className ?? "")?.[1];
+                            if (lang?.toLowerCase() === "mermaid") {
+                              return <MermaidDiagram code={String(children).replace(/\n$/, "")} />;
+                            }
+                            return <code className={className} {...props}>{children}</code>;
+                          },
+                        }}
+                      >
+                        {selected.generatedContent}
+                      </ReactMarkdown>
+                    </article>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                      <FileText className="w-10 h-10 mb-3 opacity-30" />
+                      <p className="text-sm">No generated content available for this document.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
