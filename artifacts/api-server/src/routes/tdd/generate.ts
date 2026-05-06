@@ -22,10 +22,32 @@ const router: IRouter = Router();
 
 /**
  * Build OpenAI completion parameters compatible with both Azure OpenAI and
- * standard OpenAI. Uses `max_completion_tokens` (the modern parameter)
- * which is supported by all current Azure API versions (2024-10-01-preview+)
- * and the gpt-4.1 model family.
+ * standard OpenAI. Most Azure Chat Completions deployments (for example
+ * gpt-4o on 2024-08-01-preview) expect `max_tokens`; reasoning/newer model
+ * families use `max_completion_tokens`. The env override is useful when Azure
+ * deployment names do not include the underlying model family.
  */
+type TokenLimitParameter = "max_tokens" | "max_completion_tokens";
+
+function resolveTokenLimitParameter(options: {
+  model: string;
+  usesAzure: boolean;
+}): TokenLimitParameter {
+  const configured = process.env.TDD_GENERATE_TOKEN_PARAM;
+  if (configured === "max_tokens" || configured === "max_completion_tokens") {
+    return configured;
+  }
+
+  const normalizedModel = options.model.toLowerCase();
+  const usesReasoningTokenParam =
+    normalizedModel.includes("o1") ||
+    normalizedModel.includes("o3") ||
+    normalizedModel.includes("o4") ||
+    normalizedModel.includes("gpt-5");
+
+  return usesReasoningTokenParam ? "max_completion_tokens" : "max_tokens";
+}
+
 function buildCompletionParams(options: {
   model: string;
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
@@ -37,8 +59,9 @@ function buildCompletionParams(options: {
     model: options.model,
     messages: options.messages,
     stream: options.stream,
-    max_completion_tokens: options.maxTokens,
   };
+  const tokenLimitParameter = resolveTokenLimitParameter(options);
+  base[tokenLimitParameter] = options.maxTokens;
 
   return base as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
 }
