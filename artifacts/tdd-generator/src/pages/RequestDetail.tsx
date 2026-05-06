@@ -1056,50 +1056,6 @@ export default function RequestDetail() {
         </CardContent>
       </Card>}
 
-      {/* Activity & Comments — placed here so it's accessible without scrolling past action cards */}
-      {(() => {
-        const visibleEvents = isRequestor
-          ? events.filter((e) => e.actorRole !== "system")
-          : events;
-        const hasEvents = visibleEvents.length > 0;
-        return (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-slate-400" />
-                {isRequestor ? "Comments" : "Activity & Comments"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {hasEvents && <ActivityTimeline events={visibleEvents} />}
-              <>
-                <div className={`flex gap-2 ${hasEvents ? "pt-2 border-t border-slate-100" : ""}`}>
-                    <Textarea
-                      placeholder={isRequestor ? "Add a note for the CCoE team…" : "Add a comment or note…"}
-                      rows={2}
-                      value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
-                      className="text-sm resize-none flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAddComment();
-                      }}
-                    />
-                    <Button
-                      size="sm"
-                      className="self-end h-9 px-4"
-                      style={{ background: "#FFCD00", color: "#1a1a2e" }}
-                      onClick={handleAddComment}
-                      disabled={submittingComment || !commentText.trim()}
-                    >
-                      {submittingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-400">Press Ctrl+Enter to submit</p>
-                </>
-            </CardContent>
-          </Card>
-        );
-      })()}
 
       {/* Error */}
       {error && (

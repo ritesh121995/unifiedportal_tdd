@@ -90,6 +90,7 @@ interface Notification {
 
 const SEEN_KEY = "portal_seen_statuses";
 const LAST_READ_KEY = "portal_last_read_at";
+const CLEARED_AT_KEY = "portal_cleared_at";
 
 interface RecentEvent {
   id: number;
@@ -123,6 +124,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const [activeTab, setActiveTab] = useState<"notifications" | "activity" | "comments">("notifications");
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
   const [lastReadAt, setLastReadAt] = useState<string>(() => localStorage.getItem(LAST_READ_KEY) ?? new Date(0).toISOString());
+  const [clearedAt, setClearedAt] = useState<string>(() => localStorage.getItem(CLEARED_AT_KEY) ?? new Date(0).toISOString());
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -188,13 +190,23 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     setLocation(`/requests/${requestId}`);
   };
 
+  const visibleEvents = recentEvents.filter((e) => new Date(e.createdAt) > new Date(clearedAt));
   const isUnread = (e: RecentEvent) => new Date(e.createdAt) > new Date(lastReadAt);
-  const activityEvents = recentEvents.filter((e) => e.eventType !== "comment");
-  const commentEvents = recentEvents.filter((e) => e.eventType === "comment");
-  const unreadCount = recentEvents.filter(isUnread).length;
+  const activityEvents = visibleEvents.filter((e) => e.eventType !== "comment");
+  const commentEvents = visibleEvents.filter((e) => e.eventType === "comment");
+  const unreadCount = visibleEvents.filter(isUnread).length;
 
   const handleMarkAllRead = () => {
     const now = new Date().toISOString();
+    setLastReadAt(now);
+    localStorage.setItem(LAST_READ_KEY, now);
+    markAllSeen();
+  };
+
+  const handleClearAll = () => {
+    const now = new Date().toISOString();
+    setClearedAt(now);
+    localStorage.setItem(CLEARED_AT_KEY, now);
     setLastReadAt(now);
     localStorage.setItem(LAST_READ_KEY, now);
     markAllSeen();
@@ -347,6 +359,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                       {unreadCount > 0 && (
                         <button onClick={handleMarkAllRead} className="text-xs font-medium" style={{ color: "#b49000" }}>
                           Mark all as read
+                        </button>
+                      )}
+                      {visibleEvents.length > 0 && (
+                        <button onClick={handleClearAll} className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors">
+                          Clear all
                         </button>
                       )}
                       <button onClick={() => setShowNotifs(false)} className="text-slate-400 hover:text-slate-600">
