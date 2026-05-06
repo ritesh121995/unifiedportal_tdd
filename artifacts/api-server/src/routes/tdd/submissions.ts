@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { tddSubmissionsTable } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { requireRole } from "../../middleware/authenticate.js";
 
 const router: IRouter = Router();
 
@@ -42,6 +43,20 @@ router.get("/submissions/:id", async (req, res) => {
   }
 
   res.json({ submission: row });
+});
+
+// DELETE /api/tdd/submissions/:id — admin only
+router.delete("/submissions/:id", requireRole("admin"), async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [deleted] = await db
+    .delete(tddSubmissionsTable)
+    .where(eq(tddSubmissionsTable.id, id))
+    .returning({ id: tddSubmissionsTable.id });
+
+  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
+  res.json({ ok: true });
 });
 
 export default router;

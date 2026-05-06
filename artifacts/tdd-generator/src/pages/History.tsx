@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import { getApiBase } from "@/lib/api-base";
+import { useAuth } from "@/store/auth-context";
 
 interface TddSubmission {
   id: number;
@@ -38,10 +39,13 @@ function timeAgo(iso: string): string {
 
 export default function History() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [submissions, setSubmissions] = useState<TddSubmission[]>([]);
   const [selected, setSelected] = useState<TddSubmissionFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   const fetchSubmissions = async () => {
@@ -60,6 +64,21 @@ export default function History() {
   };
 
   useEffect(() => { fetchSubmissions(); }, []);
+
+  const handleDelete = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this TDD document? This cannot be undone.")) return;
+    setDeletingId(id);
+    try {
+      await fetch(`${getApiBase()}/api/tdd/submissions/${id}`, { method: "DELETE", credentials: "include" });
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+      if (selected?.id === id) setSelected(null);
+    } catch {
+      setError("Failed to delete document. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const handleSelect = async (sub: TddSubmission) => {
     if (selected?.id === sub.id) { setSelected(null); return; }
@@ -151,6 +170,18 @@ export default function History() {
                         </Badge>
                       </div>
                     </div>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => handleDelete(sub.id, e)}
+                        disabled={deletingId === sub.id}
+                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                        title="Delete document"
+                      >
+                        {deletingId === sub.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
