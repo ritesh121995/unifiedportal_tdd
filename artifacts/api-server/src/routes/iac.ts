@@ -84,7 +84,7 @@ async function runAzureDeployment(deploymentId: number, opts: AzureDeploymentOpt
     allowedRdpSource,
   } = opts;
   const appShort = appName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "app";
-  const pfx = `mf-${appShort}-demo`;
+  const pfx = `mf-${appShort}`;
 
   try {
     const { ClientSecretCredential } = await import("@azure/identity");
@@ -99,10 +99,10 @@ async function runAzureDeployment(deploymentId: number, opts: AzureDeploymentOpt
 
     const tags = {
       Application: appName,
-      Environment: "demo",
+      Environment: "production",
       Owner: "CCoE-Platform",
-      ManagedBy: "Portal",
-      Repo: "mccain-iac-demo",
+      ManagedBy: "McCain-Portal",
+      Repo: "mccain-unified-portal",
     };
 
     await setStatus(deploymentId, "provisioning");
@@ -120,7 +120,7 @@ async function runAzureDeployment(deploymentId: number, opts: AzureDeploymentOpt
     await appendLog(deploymentId, `✓ VNet: ${vnetName}`);
 
     await appendLog(deploymentId, "Creating Subnet…");
-    const subnetName = "demo-subnet";
+    const subnetName = `${pfx}-subnet`;
     await (await netClient.subnets.beginCreateOrUpdate(resourceGroup, vnetName, subnetName, {
       addressPrefix: "10.100.1.0/24",
     })).pollUntilDone();
@@ -235,7 +235,7 @@ router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), as
     }
 
     const appShort = appName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "app";
-    const resourceGroup = `mf-${appShort}-demo-rg`;
+    const resourceGroup = `mf-${appShort}-rg`;
 
     const result = await db.execute(sql`
       INSERT INTO iac_deployments (request_id, subscription_id, resource_group, app_name, region, status)

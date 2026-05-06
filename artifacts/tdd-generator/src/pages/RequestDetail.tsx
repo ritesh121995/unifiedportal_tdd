@@ -117,6 +117,8 @@ interface ArchitectureRequest {
   finopsActivatedAt: string | null;
   finopsActivatedBy: string | null;
   tddFormData: StoredTddFormData | null;
+  aiClassification: string | null;
+  aiClassificationReason: string | null;
   createdAt: string;
 }
 
@@ -560,9 +562,11 @@ export default function RequestDetail() {
   const isCloudTenant = request.deploymentModel === "Cloud (McCain Tenant)";
   const isThirdParty  = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
 
-  // Simple app fast-track detection
-  const isSimpleFastTrack = isCloudTenant &&
-    (request.tddFormData as Record<string, unknown> | null)?.appComplexity === "Simple";
+  // Simple app fast-track detection — AI classification takes precedence; fall back to legacy tddFormData field
+  const isSimpleFastTrack = isCloudTenant && (
+    request.aiClassification === "simple" ||
+    (request.tddFormData as Record<string, unknown> | null)?.appComplexity === "Simple"
+  );
 
   const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack;
   const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack;

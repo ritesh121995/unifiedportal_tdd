@@ -707,9 +707,10 @@ ${articleEl.innerHTML}
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          appName: formData.applicationName ?? "demo-app",
+          appName: formData.applicationName ?? "mccain-app",
           region: (formData.azureRegions?.[0] ?? "canadacentral").toLowerCase().replace(/\s+/g, ""),
           adminPassword: iacDeployPassword,
+          selectedServices,
         }),
       });
       const d = await r.json() as { deploymentId?: number; error?: string };
@@ -1188,7 +1189,7 @@ ${articleEl.innerHTML}
         </Card>
       )}
 
-      {/* ─── Demo IaC — Terraform ────────────────────────────────────────── */}
+      {/* ─── IaC — Terraform ─────────────────────────────────────────────── */}
       {content && !isGenerating && (!pendingRequestId || reviewCompleted) && (
         <Card className="border border-slate-200 shadow-sm overflow-hidden">
           <CardHeader className="pb-0 pt-5 px-6">
@@ -1198,12 +1199,8 @@ ${articleEl.innerHTML}
                   <Code2 className="w-5 h-5 text-[#FFCD00]" />
                 </div>
                 <div>
-                  <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    Demo IaC — Terraform
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                      <FlaskConical className="w-3 h-3" />
-                      DEMO ONLY
-                    </span>
+                  <CardTitle className="text-base font-bold text-slate-900">
+                    Infrastructure as Code — Terraform
                   </CardTitle>
                   <p className="text-xs text-slate-500 mt-0.5">
                     azurerm ~&gt; 3.110 · {selectedServices.length > 0 ? `${selectedServices.length} service${selectedServices.length !== 1 ? "s" : ""} selected` : "No services selected"}
@@ -1271,7 +1268,7 @@ ${articleEl.innerHTML}
                 <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                   <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                   <p className="text-sm text-amber-800">
-                    <span className="font-semibold">Demonstration configuration only.</span> This Terraform template is generated for demo purposes and is <span className="font-semibold">not hardened for production</span>. Do not use in production without a full security review.
+                    <span className="font-semibold">Security review required.</span> Review all Terraform configurations and validate security settings before deploying to production environments.
                   </p>
                 </div>
 
@@ -1287,7 +1284,7 @@ ${articleEl.innerHTML}
                 {/* Deployment summary: resource group + region */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                   {[
-                    { label: "Resource Group", value: `mf-${(formData.applicationName ?? "app").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8)}-demo-rg` },
+                    { label: "Resource Group", value: `mf-${(formData.applicationName ?? "app").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8)}-rg` },
                     { label: "Region", value: formData.azureRegions?.[0] ?? "canadacentral" },
                     { label: "Services", value: `${selectedServices.length} resource block${selectedServices.length !== 1 ? "s" : ""}` },
                   ].map(({ label, value }) => (
@@ -1325,7 +1322,7 @@ ${articleEl.innerHTML}
                   <div>
                     <p className="text-slate-500 mb-0.5">Resource Group</p>
                     <p className="font-mono font-semibold text-slate-800">
-                      {`mf-${(formData.applicationName ?? "app").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8)}-demo-rg`}
+                      {`mf-${(formData.applicationName ?? "app").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8)}-rg`}
                     </p>
                   </div>
                   <div>

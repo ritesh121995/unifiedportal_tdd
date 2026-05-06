@@ -58,7 +58,7 @@ const APP_TYPES: { value: string; label: string; desc: string; workflow: string;
     value: "New Application",
     label: "New Application",
     desc: "Building something brand new — no existing system to replace or enhance.",
-    workflow: "Routed based on complexity: Simple → TDD directly, Complex → full EA review",
+    workflow: "AI-assessed complexity: fast-tracked to TDD if simple, or routed through full EA review",
     icon: "🆕",
   },
   {
@@ -248,7 +248,6 @@ const EMPTY_FORM = {
   expectedUserBase: "",
   targetGoLiveDate: "",
   deploymentModel: "",
-  appComplexity: "",
   // Existing application details (for Enhancement / New Capability, Cloud Migration, Application Replacement, Decommissioning)
   existingAppName: "",
   existingAppId: "",
@@ -827,7 +826,7 @@ export default function SubmitRequest() {
   const isPoC            = form.applicationType === "Proof of Concept / Technology Evaluation";
   const needsExistingApp = isEnhancement || isCloudMigration || form.applicationType === "Application Replacement" || isDecommission;
   const skipTDD          = isDecommission;
-  const fastTrackTDD     = isCloudMigration || (form.applicationType === "New Application" && form.appComplexity === "Simple");
+  const fastTrackTDD     = isCloudMigration;
 
   // ── 4. Section completion ──────────────────────────────────────────────────
   const sec1Done = !!(form.title && form.applicationName && form.applicationType && form.businessCriticality && form.organization && form.lineOfBusiness && form.sltLeader && form.targetGoLiveDate && form.deploymentModel);
@@ -900,7 +899,6 @@ export default function SubmitRequest() {
               <ReviewRow label="Deployment Model" value={form.deploymentModel} />
               <ReviewRow label="Target Go-Live" value={form.targetGoLiveDate ? formatDDMMYYYY(form.targetGoLiveDate) : ""} />
               <ReviewRow label="Estimated Budget" value={form.costTShirtSize} />
-              <ReviewRow label="App Complexity" value={form.appComplexity} />
               <ReviewRow label="Expected Users" value={form.expectedUserBase} />
               <ReviewRow label="In-Scope Regions" value={form.inScopeRegions} />
               <ReviewRow label="Business Value" value={form.businessValueHypothesis} />
@@ -1222,43 +1220,6 @@ export default function SubmitRequest() {
               </Select>
             </div>
 
-            {/* ─── Application Complexity (New Application only) ─── */}
-            {form.applicationType === "New Application" && (
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <Label>Application Complexity</Label>
-                <span className="text-[11px] text-slate-400 font-normal">Determines the review and design workflow</span>
-              </div>
-              <div className="flex gap-3">
-                {[
-                  { value: "Simple", label: "Simple App", desc: "Standard functionality, few integrations — will be fast-tracked to TDD", icon: "⚡" },
-                  { value: "Complex", label: "Complex App", desc: "Multiple integrations, custom architecture, or high security requirements", icon: "🏗" },
-                ].map((opt) => {
-                  const selected = form.appComplexity === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => update("appComplexity", opt.value)}
-                      className={`flex-1 rounded-lg border-2 p-3 text-left transition-all ${selected ? "border-[#0078d4] bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-base">{opt.icon}</span>
-                        <span className={`text-sm font-semibold ${selected ? "text-[#0078d4]" : "text-slate-800"}`}>{opt.label}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-snug">{opt.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-              {form.appComplexity === "Simple" && (
-                <div className="flex items-start gap-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-[12px] text-blue-800">
-                  <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-blue-600" />
-                  <span><strong>Fast-track enabled:</strong> Simple applications skip the full EA triage and are routed directly to TDD generation once submitted.</span>
-                </div>
-              )}
-            </div>
-            )}
 
             {/* ─── Cloud Migration fast-track notice ─── */}
             {isCloudMigration && (
