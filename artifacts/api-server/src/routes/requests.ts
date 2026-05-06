@@ -12,21 +12,12 @@ interface AiClassificationResult {
 }
 
 async function classifyRequestWithAI(body: {
-  priority: string;
   applicationType: string;
-  targetEnvironments: string[];
-  azureRegions: string[];
   expectedUserBase?: string | null;
-  description: string;
-  businessJustification: string;
-  deploymentModel?: string;
-  haEnabled?: boolean;
-  drEnabled?: boolean;
   securityImpact?: string;
   regulatoryImpact?: string;
   integrationImpact?: string;
   costTShirtSize?: string;
-  availabilityTarget?: string;
 }): Promise<AiClassificationResult> {
   try {
     const { client, usesAzure } = createOpenAiClientContext();
@@ -34,43 +25,31 @@ async function classifyRequestWithAI(body: {
 
     const prompt = `You are an Enterprise Architecture governance assistant at McCain Foods. Classify this cloud infrastructure request as "simple" (fast-track directly to TDD) or "complex" (requires EA review).
 
-SIMPLE — fast-track to TDD (all should hold):
-- Priority: Low or Medium
-- Environments: Dev/Test only (no Production, Staging, DR)
-- Single Azure region
-- No HA or DR requirements
-- No significant security, regulatory, or integration impact
+Classification is based solely on impact, scale, and cost — not on environment choice, region count, HA/DR settings, priority, or availability targets.
+
+SIMPLE — fast-track to TDD (none of the complex triggers apply):
+- Security impact: None or Low
+- Regulatory impact: None or Low
+- Integration impact: None or Low
 - Expected user base under 500
+- Cost size is not XL or XXL
 
 COMPLEX — requires EA review (any one sufficient):
-- Priority: High or Critical
-- Includes Production, Staging, or DR environment
-- Multiple Azure regions
-- HA or DR enabled
-- Security, regulatory, or integration impact flagged Medium or High
-- User base 500+
+- Security impact: Medium or High
+- Regulatory impact: Medium or High
+- Integration impact: Medium or High
+- Expected user base 500 or more
 - Cost size XL or XXL
-- Availability target 99.9%+
-- Description/justification indicates enterprise-wide or cross-team impact
 
 Request:
-Priority: ${body.priority}
 Application Type: ${body.applicationType}
-Environments: ${body.targetEnvironments.join(", ")}
-Azure Regions: ${body.azureRegions.join(", ")}
 User Base: ${body.expectedUserBase ?? "Not specified"}
-Deployment Model: ${body.deploymentModel ?? "Not specified"}
-HA Enabled: ${body.haEnabled ? "Yes" : "No"}
-DR Enabled: ${body.drEnabled ? "Yes" : "No"}
 Security Impact: ${body.securityImpact ?? "Not specified"}
 Regulatory Impact: ${body.regulatoryImpact ?? "Not specified"}
 Integration Impact: ${body.integrationImpact ?? "Not specified"}
 Cost Size: ${body.costTShirtSize ?? "Not specified"}
-Availability Target: ${body.availabilityTarget ?? "Not specified"}
-Description: ${body.description}
-Business Justification: ${body.businessJustification}
 
-Respond with JSON only: {"classification":"simple"|"complex","confidence":"high"|"medium"|"low","reason":"One sentence explaining the key deciding factor."}`;
+Respond with JSON only: {"classification":"simple"|"complex","confidence":"high"|"medium"|"low","reason":"One sentence citing the specific field that determined the classification."}`;
 
     const response = await Promise.race([
       client.chat.completions.create({
@@ -418,21 +397,12 @@ router.post("/", requireRole("requestor"), async (req, res) => {
 
   // ── AI-driven routing: classify request complexity and route accordingly ──
   const aiResult = await classifyRequestWithAI({
-    priority: body.priority ?? "Medium",
     applicationType: body.applicationType,
-    targetEnvironments: body.targetEnvironments,
-    azureRegions: body.azureRegions,
     expectedUserBase: body.expectedUserBase,
-    description: body.description,
-    businessJustification: body.businessJustification,
-    deploymentModel: body.deploymentModel,
-    haEnabled: body.haEnabled,
-    drEnabled: body.drEnabled,
     securityImpact: body.securityImpact,
     regulatoryImpact: body.regulatoryImpact,
     integrationImpact: body.integrationImpact,
     costTShirtSize: body.costTShirtSize,
-    availabilityTarget: body.availabilityTarget,
   });
 
   await db
