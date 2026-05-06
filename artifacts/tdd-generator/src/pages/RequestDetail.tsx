@@ -4,8 +4,10 @@ import {
   ArrowLeft, Loader2, CheckCircle, XCircle, Clock, MessageSquare,
   Cloud, FileText, Calendar, User, Building2, AlertTriangle, Info,
   Send, ShieldCheck, ShieldX, Play, Flag, Network,
-  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine,
+  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine, Copy, Check, Download,
 } from "lucide-react";
+import AzureServiceSelector, { detectServicesFromTdd } from "@/components/AzureServiceSelector";
+import { generateMultiServiceTerraform } from "@/lib/terraformGenerator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -241,6 +243,15 @@ function ActivityTimeline({ events }: { events: RequestEvent[] }) {
   );
 }
 
+interface IacDeployStatus {
+  id: number;
+  status: string;
+  resource_group: string;
+  app_name: string;
+  region: string;
+  error_message?: string | null;
+}
+
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -259,6 +270,19 @@ export default function RequestDetail() {
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [cloningRequest, setCloningRequest] = useState(false);
+
+  // Phase 3 IaC state
+  const [iacTddContent, setIacTddContent] = useState("");
+  const [iacTddLoading, setIacTddLoading] = useState(false);
+  const [iacTddError, setIacTddError] = useState<string | null>(null);
+  const [iacSelectedServices, setIacSelectedServices] = useState<string[]>([]);
+  const [iacDeployFormOpen, setIacDeployFormOpen] = useState(false);
+  const [iacDeployPassword, setIacDeployPassword] = useState("");
+  const [iacDeployLoading, setIacDeployLoading] = useState(false);
+  const [iacDeploymentId, setIacDeploymentId] = useState<number | null>(null);
+  const [iacDeployment, setIacDeployment] = useState<IacDeployStatus | null>(null);
+  const [iacDeployError, setIacDeployError] = useState<string | null>(null);
+  const [iacCopied, setIacCopied] = useState(false);
 
   // Network CIDR state — keyed by environment name
   const DEFAULT_CIDRS: Record<string, string> = {
@@ -331,6 +355,42 @@ export default function RequestDetail() {
     }).finally(() => setLoading(false));
   }, [id]);
 
+  // Load TDD content when the request is in tdd_completed status (needed for Phase 3 IaC)
+  useEffect(() => {
+    if (!request || request.status !== "tdd_completed" || !request.tddSubmissionId) return;
+    setIacTddLoading(true);
+    setIacTddError(null);
+    fetch(`${getApiBase()}/api/tdd/submissions/${request.tddSubmissionId}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: { submission?: { generatedContent?: string }; error?: string }) => {
+        if (!d.submission) throw new Error(d.error ?? "TDD not found");
+        const txt = d.submission.generatedContent ?? "";
+        setIacTddContent(txt);
+        const detected = detectServicesFromTdd(txt);
+        if (detected.length > 0) setIacSelectedServices(detected);
+      })
+      .catch((err: unknown) => setIacTddError(err instanceof Error ? err.message : "Failed to load TDD"))
+      .finally(() => setIacTddLoading(false));
+  }, [request?.tddSubmissionId, request?.status]);
+
+  // Poll deployment status in Phase 3
+  useEffect(() => {
+    if (!iacDeploymentId) return;
+    const poll = setInterval(() => {
+      void fetch(`${getApiBase()}/api/iac/deploy/${iacDeploymentId}`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((d: { deployment?: IacDeployStatus }) => {
+          if (d.deployment) {
+            setIacDeployment(d.deployment);
+            if (d.deployment.status === "succeeded" || d.deployment.status === "failed") {
+              clearInterval(poll);
+            }
+          }
+        });
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [iacDeploymentId]);
+
   // Compute architect team + risk panels from submitted form data
   const formSnapshot = useMemo((): FormSnapshot | null => {
     if (!request) return null;
@@ -355,6 +415,14 @@ export default function RequestDetail() {
   const architectRecs  = useMemo(() => formSnapshot ? computeArchitectRecommendations(formSnapshot) : [], [formSnapshot]);
   const riskInsights   = useMemo(() => formSnapshot ? computeRisksAndInsights(formSnapshot)         : [], [formSnapshot]);
 
+  // Minimal FormDraft for Terraform generation in Phase 3
+  const iacFormDraft = useMemo((): FormDraft => ({
+    applicationName: request?.applicationName ?? "mccain-app",
+    azureRegions: request?.azureRegions ?? ["canadacentral"],
+    lineOfBusiness: request?.lineOfBusiness ?? "",
+    organization: request?.businessUnit ?? "",
+  }), [request]);
+
   const doAction = async (action: string, body: Record<string, unknown> = {}) => {
     setActionLoading(action);
     setError("");
@@ -378,6 +446,36 @@ export default function RequestDetail() {
       setError(err instanceof Error ? err.message : "Action failed");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleIacDeploy = async () => {
+    if (!request || !iacDeployPassword) return;
+    setIacDeployLoading(true);
+    setIacDeployError(null);
+    try {
+      const r = await fetch(`${getApiBase()}/api/iac/deploy`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appName: request.applicationName ?? "mccain-app",
+          region: (request.azureRegions?.[0] ?? "canadacentral").toLowerCase().replace(/\s+/g, ""),
+          adminPassword: iacDeployPassword,
+          selectedServices: iacSelectedServices,
+        }),
+      });
+      const d = await r.json() as { deploymentId?: number; error?: string };
+      if (!r.ok || !d.deploymentId) {
+        setIacDeployError(d.error ?? "Failed to start deployment");
+        return;
+      }
+      setIacDeploymentId(d.deploymentId);
+      setIacDeployFormOpen(false);
+    } catch {
+      setIacDeployError("Could not reach the portal API. Please try again.");
+    } finally {
+      setIacDeployLoading(false);
     }
   };
 
@@ -1339,7 +1437,13 @@ export default function RequestDetail() {
             </div>
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={() => setLocation(`/wizard/${request.id}`)}
+              onClick={() => {
+                if (request.status === "tdd_completed") {
+                  setLocation(`/tdd-view/${request.id}`);
+                } else {
+                  setLocation(`/wizard/${request.id}`);
+                }
+              }}
             >
               <FileText className="w-4 h-4 mr-2" />
               {request.status === "tdd_completed" ? "View TDD" : "Continue TDD"}
@@ -1358,37 +1462,181 @@ export default function RequestDetail() {
               <span className="ml-auto text-[10px] font-mono text-indigo-600 border border-indigo-300 bg-indigo-100 px-2 py-0.5 rounded">Cloud Architect · 2 Weeks</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <p className="text-sm text-slate-700">
-              TDD is complete and reviewed. Approve the DevSecOps / IaC deployment pipeline — this confirms the Terraform modules, pipeline gates (QA → STG → PRD), and Checkov policy scans are in order.
+              TDD is complete and reviewed. Select the Azure services detected from the TDD, generate the Terraform IaC, then approve the DevSecOps pipeline.
             </p>
-            <div className="space-y-1.5">
-              <Label>DevSecOps Review Notes (optional)</Label>
-              <Textarea
-                value={devsecopsComments}
-                onChange={(e) => setDevsecopsComments(e.target.value)}
-                placeholder="Document pipeline readiness, policy gate results, dual-approval confirmation…"
-                rows={3}
-              />
+
+            {/* IaC Service Selection */}
+            <div className="rounded-lg border border-indigo-200 bg-white p-4 space-y-4">
+              <h4 className="text-sm font-semibold text-indigo-800 flex items-center gap-2">
+                <Rocket className="w-4 h-4" />
+                Infrastructure as Code — Service Selection
+              </h4>
+
+              {iacTddLoading && (
+                <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Detecting Azure services from TDD…
+                </div>
+              )}
+              {iacTddError && (
+                <p className="text-sm text-red-600">{iacTddError}</p>
+              )}
+              {!iacTddLoading && !iacTddError && (
+                <>
+                  <AzureServiceSelector
+                    tddContent={iacTddContent}
+                    selectedIds={iacSelectedServices}
+                    onChange={setIacSelectedServices}
+                  />
+
+                  {/* Terraform Code */}
+                  {iacSelectedServices.length > 0 && (
+                    <div className="rounded-lg overflow-hidden border border-slate-200">
+                      <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e]">
+                        <span className="text-xs text-slate-400 font-mono">main.tf</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500">Terraform</span>
+                          <button
+                            className="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded flex items-center gap-1"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(generateMultiServiceTerraform(iacFormDraft, iacSelectedServices)).then(() => {
+                                setIacCopied(true);
+                                setTimeout(() => setIacCopied(false), 2000);
+                              });
+                            }}
+                          >
+                            {iacCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                            {iacCopied ? "Copied" : "Copy"}
+                          </button>
+                          <button
+                            className="text-xs text-slate-400 hover:text-white px-2 py-0.5 rounded flex items-center gap-1"
+                            onClick={() => {
+                              const blob = new Blob([generateMultiServiceTerraform(iacFormDraft, iacSelectedServices)], { type: "text/plain" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url; a.download = "main.tf"; a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                          >
+                            <Download className="w-3 h-3" />
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                      <pre className="overflow-x-auto text-xs leading-relaxed p-4 bg-[#1e1e1e] text-[#d4d4d4] max-h-[400px] font-mono">
+                        <code>{generateMultiServiceTerraform(iacFormDraft, iacSelectedServices)}</code>
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* Deploy to Azure */}
+                  {iacSelectedServices.length > 0 && !iacDeploymentId && (
+                    <div>
+                      <Button
+                        size="sm"
+                        className="gap-1.5 font-semibold"
+                        style={{ background: "#0078d4", color: "#fff" }}
+                        onClick={() => setIacDeployFormOpen((v) => !v)}
+                      >
+                        <Rocket className="w-4 h-4" />
+                        Deploy to Azure
+                      </Button>
+                      {iacDeployFormOpen && (
+                        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                          <p className="text-xs text-blue-700">
+                            Deploys the selected services to the McCain Azure subscription via Container App service principal.
+                          </p>
+                          <div className="space-y-1">
+                            <Label>Admin Password (VM / SQL initial password)</Label>
+                            <Input
+                              type="password"
+                              value={iacDeployPassword}
+                              onChange={(e) => setIacDeployPassword(e.target.value)}
+                              placeholder="Minimum 12 characters, must include uppercase, number, symbol"
+                              className="bg-white"
+                            />
+                          </div>
+                          <Button
+                            disabled={!iacDeployPassword || iacDeployLoading}
+                            onClick={() => { void handleIacDeploy(); }}
+                            style={{ background: "#0078d4", color: "#fff" }}
+                            size="sm"
+                          >
+                            {iacDeployLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
+                            Start Deployment
+                          </Button>
+                          {iacDeployError && <p className="text-sm text-red-600">{iacDeployError}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Deployment Status */}
+                  {iacDeploymentId && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        {!iacDeployment || iacDeployment.status === "pending" || iacDeployment.status === "provisioning" ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        ) : iacDeployment.status === "succeeded" ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-red-600" />
+                        )}
+                        <span className="text-sm font-medium">
+                          Deployment {iacDeployment?.status ?? "queued"} (ID {iacDeploymentId})
+                        </span>
+                      </div>
+                      {iacDeployment?.resource_group && (
+                        <p className="text-xs text-slate-600">Resource Group: <code className="font-mono">{iacDeployment.resource_group}</code></p>
+                      )}
+                      {iacDeployment?.status === "failed" && iacDeployment.error_message && (
+                        <p className="text-xs text-red-600">{iacDeployment.error_message}</p>
+                      )}
+                      {(!iacDeployment || ["pending", "provisioning"].includes(iacDeployment.status)) && (
+                        <p className="text-xs text-slate-500">Polling every 5s — do not close this page.</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-            <div className="flex gap-3">
-              <Button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                disabled={!!actionLoading}
-                onClick={() => doAction("devsecops-review", { action: "approve", comments: devsecopsComments })}
-              >
-                {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                Approve — Proceed to FinOps
-              </Button>
-              <Button
-                variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
-                disabled={!!actionLoading}
-                onClick={() => doAction("devsecops-review", { action: "reject", comments: devsecopsComments })}
-              >
-                {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
-                Reject
-              </Button>
+
+            {/* DevSecOps Approval */}
+            <div className="space-y-3 border-t border-indigo-200 pt-4">
+              <h4 className="text-sm font-semibold text-indigo-800">DevSecOps Approval</h4>
+              <p className="text-xs text-slate-600">
+                Once IaC is reviewed and pipeline gates are confirmed (Checkov policy scans, QA → STG → PRD), approve below to proceed to FinOps.
+              </p>
+              <div className="space-y-1.5">
+                <Label>Review Notes (optional)</Label>
+                <Textarea
+                  value={devsecopsComments}
+                  onChange={(e) => setDevsecopsComments(e.target.value)}
+                  placeholder="Document pipeline readiness, policy gate results, dual-approval confirmation…"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  disabled={!!actionLoading}
+                  onClick={() => doAction("devsecops-review", { action: "approve", comments: devsecopsComments })}
+                >
+                  {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                  Approve — Proceed to FinOps
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  disabled={!!actionLoading}
+                  onClick={() => doAction("devsecops-review", { action: "reject", comments: devsecopsComments })}
+                >
+                  {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                  Reject
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

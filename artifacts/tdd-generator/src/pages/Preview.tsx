@@ -1299,7 +1299,7 @@ ${articleEl.innerHTML}
                 <div className="rounded-lg overflow-hidden border border-slate-200">
                   <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e]">
                     <span className="text-xs text-slate-400 font-mono">main.tf</span>
-                    <span className="text-xs text-slate-500">HCL · Terraform</span>
+                    <span className="text-xs text-slate-500">Terraform</span>
                   </div>
                   <pre className="overflow-x-auto text-xs leading-relaxed p-4 bg-[#1e1e1e] text-[#d4d4d4] max-h-[520px] font-mono">
                     <code>{generateMultiServiceTerraform(formData, selectedServices)}</code>

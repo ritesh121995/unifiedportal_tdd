@@ -21,6 +21,7 @@ import Phase5DevSecOps from "@/pages/Phase5DevSecOps";
 import Phase6FinOps from "@/pages/Phase6FinOps";
 import AdminUsers from "@/pages/AdminUsers";
 import Integrations from "@/pages/Integrations";
+import TddViewer from "@/pages/TddViewer";
 import "@/lib/api-base";
 import { useEffect } from "react";
 
@@ -135,6 +136,9 @@ function Router() {
       </Route>
       <Route path="/preview">
         <ProtectedRoute component={Preview} />
+      </Route>
+      <Route path="/tdd-view/:requestId">
+        <ProtectedRoute component={TddViewer} />
       </Route>
       <Route path="/history">
         <ProtectedRoute component={History} />
