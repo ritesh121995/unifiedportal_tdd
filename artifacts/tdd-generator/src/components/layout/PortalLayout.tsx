@@ -1,9 +1,9 @@
-import { type ReactNode, useEffect, useState, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import {
   Cloud, LayoutDashboard, FileText, PlusCircle, CheckSquare, History,
   LogOut, ChevronRight, Users, Bell, X, Building2, ShieldCheck,
-  Code2, DollarSign, Layers, UserCog, Plug,
+  Code2, DollarSign, Layers, UserCog, Plug, MessageSquare, Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/store/auth-context";
@@ -89,6 +89,18 @@ interface Notification {
 }
 
 const SEEN_KEY = "portal_seen_statuses";
+const LAST_READ_KEY = "portal_last_read_at";
+
+interface RecentEvent {
+  id: number;
+  requestId: number;
+  requestTitle: string;
+  actorName: string;
+  actorRole: string;
+  eventType: string;
+  description: string;
+  createdAt: string;
+}
 
 function loadSeen(): Record<string, string> {
   try { return JSON.parse(localStorage.getItem(SEEN_KEY) ?? "{}"); } catch { return {}; }
@@ -108,6 +120,12 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"notifications" | "activity" | "comments">("notifications");
+  const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
+  const [lastReadAt, setLastReadAt] = useState<string>(() => localStorage.getItem(LAST_READ_KEY) ?? new Date(0).toISOString());
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -138,6 +156,20 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const fetchRecentEvents = useCallback(() => {
+    if (!user) return;
+    fetch(`${getApiBase()}/api/requests/events/recent`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => setRecentEvents(d.events ?? []))
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    fetchRecentEvents();
+    const timer = setInterval(fetchRecentEvents, 30_000);
+    return () => clearInterval(timer);
+  }, [fetchRecentEvents]);
+
   const markAllSeen = () => {
     fetch(`${getApiBase()}/api/requests`, { credentials: "include" })
       .then((r) => r.json())
@@ -154,6 +186,39 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     markAllSeen();
     setShowNotifs(false);
     setLocation(`/requests/${requestId}`);
+  };
+
+  const isUnread = (e: RecentEvent) => new Date(e.createdAt) > new Date(lastReadAt);
+  const activityEvents = recentEvents.filter((e) => e.eventType !== "comment");
+  const commentEvents = recentEvents.filter((e) => e.eventType === "comment");
+  const unreadCount = recentEvents.filter(isUnread).length;
+
+  const handleMarkAllRead = () => {
+    const now = new Date().toISOString();
+    setLastReadAt(now);
+    localStorage.setItem(LAST_READ_KEY, now);
+    markAllSeen();
+  };
+
+  const handleReply = async (eventId: number) => {
+    const event = commentEvents.find((e) => e.id === eventId);
+    if (!event || !replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      await fetch(`${getApiBase()}/api/requests/${event.requestId}/comment`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: replyText.trim() }),
+      });
+      setReplyText("");
+      setReplyingTo(null);
+      fetchRecentEvents();
+    } catch {
+      // ignore
+    } finally {
+      setSubmittingReply(false);
+    }
   };
 
   if (!user) return null;
@@ -261,60 +326,184 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             {/* Notifications bell */}
             <div className="relative" ref={notifRef}>
               <button
-                onClick={() => {
-                  setShowNotifs((v) => !v);
-                  if (!showNotifs && notifications.length > 0) setTimeout(markAllSeen, 3000);
-                }}
+                onClick={() => setShowNotifs((v) => !v)}
                 className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-800"
                 title="Notifications"
               >
                 <Bell className="w-5 h-5" />
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                    {notifications.length > 9 ? "9+" : notifications.length}
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
+
               {showNotifs && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
+                  {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                     <p className="text-sm font-semibold text-slate-800">Notifications</p>
-                    <button onClick={() => setShowNotifs(false)} className="text-slate-400 hover:text-slate-600">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-slate-400 text-sm">
-                      <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                      You're all caught up!
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                      {notifications.map((n) => (
-                        <button
-                          key={n.requestId}
-                          onClick={() => handleNotifClick(n.requestId)}
-                          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5"><StatusBadge status={n.status} /></div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">{n.title}</p>
-                              <p className="text-xs text-slate-500">{n.message}</p>
-                              <p className="text-xs text-slate-400 mt-0.5">{new Date(n.updatedAt).toLocaleString()}</p>
-                            </div>
-                          </div>
+                    <div className="flex items-center gap-3">
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead} className="text-xs font-medium" style={{ color: "#b49000" }}>
+                          Mark all as read
                         </button>
-                      ))}
-                    </div>
-                  )}
-                  {notifications.length > 0 && (
-                    <div className="border-t border-slate-100 px-4 py-2">
-                      <button onClick={markAllSeen} className="text-xs font-medium" style={{ color: "#b49000" }}>
-                        Mark all as read
+                      )}
+                      <button onClick={() => setShowNotifs(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex border-b border-slate-100">
+                    {(["notifications", "activity", "comments"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium capitalize transition-colors border-b-2",
+                          activeTab === tab ? "text-slate-800 border-amber-400" : "text-slate-400 hover:text-slate-600 border-transparent"
+                        )}
+                      >
+                        {tab === "notifications" && <Bell className="w-3 h-3" />}
+                        {tab === "activity" && <Activity className="w-3 h-3" />}
+                        {tab === "comments" && <MessageSquare className="w-3 h-3" />}
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab content */}
+                  <div className="max-h-80 overflow-y-auto">
+
+                    {/* Notifications tab */}
+                    {activeTab === "notifications" && (
+                      activityEvents.length === 0 ? (
+                        <div className="px-4 py-8 text-center text-slate-400 text-sm">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          You're all caught up!
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100">
+                          {activityEvents.map((e) => (
+                            <button
+                              key={e.id}
+                              onClick={() => { setShowNotifs(false); setLocation(`/requests/${e.requestId}`); }}
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0 flex-shrink-0", isUnread(e) ? "bg-red-400" : "bg-slate-200")} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-slate-700 truncate">{e.requestTitle}</p>
+                                  <p className="text-xs text-slate-600 mt-0.5">{e.description}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">{e.actorName} · {new Date(e.createdAt).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    )}
+
+                    {/* Activity tab */}
+                    {activeTab === "activity" && (
+                      recentEvents.length === 0 ? (
+                        <div className="px-4 py-8 text-center text-slate-400 text-sm">
+                          <Activity className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          No recent activity
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100">
+                          {recentEvents.map((e) => (
+                            <button
+                              key={e.id}
+                              onClick={() => { setShowNotifs(false); setLocation(`/requests/${e.requestId}`); }}
+                              className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0 flex-shrink-0", isUnread(e) ? "bg-red-400" : "bg-slate-200")} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-slate-700 truncate">{e.requestTitle}</p>
+                                  <p className="text-xs text-slate-600 mt-0.5">{e.description}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">
+                                    <span className={cn("inline-block px-1.5 py-0.5 rounded text-[10px] font-medium mr-1",
+                                      e.eventType === "comment" ? "bg-violet-100 text-violet-600" : "bg-amber-100 text-amber-700"
+                                    )}>{e.eventType}</span>
+                                    {e.actorName} · {new Date(e.createdAt).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    )}
+
+                    {/* Comments tab */}
+                    {activeTab === "comments" && (
+                      commentEvents.length === 0 ? (
+                        <div className="px-4 py-8 text-center text-slate-400 text-sm">
+                          <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          No comments yet
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-slate-100">
+                          {commentEvents.map((e) => (
+                            <div key={e.id} className="px-4 py-3">
+                              <div className="flex items-start gap-2">
+                                <div className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0 flex-shrink-0", isUnread(e) ? "bg-red-400" : "bg-slate-200")} />
+                                <div className="flex-1 min-w-0">
+                                  <button
+                                    onClick={() => { setShowNotifs(false); setLocation(`/requests/${e.requestId}`); }}
+                                    className="text-xs font-semibold text-slate-700 hover:underline text-left truncate block w-full"
+                                  >
+                                    {e.requestTitle}
+                                  </button>
+                                  <p className="text-xs text-slate-600 mt-0.5 break-words">{e.description}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">{e.actorName} · {new Date(e.createdAt).toLocaleString()}</p>
+                                  <button
+                                    onClick={() => { setReplyingTo(replyingTo === e.id ? null : e.id); setReplyText(""); }}
+                                    className="text-xs font-medium mt-1 hover:underline"
+                                    style={{ color: "#b49000" }}
+                                  >
+                                    Reply
+                                  </button>
+                                  {replyingTo === e.id && (
+                                    <div className="mt-2">
+                                      <textarea
+                                        value={replyText}
+                                        onChange={(ev) => setReplyText(ev.target.value)}
+                                        placeholder="Write a reply..."
+                                        rows={2}
+                                        className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      />
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <button
+                                          onClick={() => handleReply(e.id)}
+                                          disabled={submittingReply || !replyText.trim()}
+                                          className="text-xs px-3 py-1 rounded-md font-medium disabled:opacity-50 transition-opacity"
+                                          style={{ background: "#FFCD00", color: "#1a1a2e" }}
+                                        >
+                                          {submittingReply ? "Sending…" : "Send"}
+                                        </button>
+                                        <button
+                                          onClick={() => { setReplyingTo(null); setReplyText(""); }}
+                                          className="text-xs text-slate-400 hover:text-slate-600"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
               )}
             </div>

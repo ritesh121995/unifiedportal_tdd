@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { architectureRequestsTable, requestEventsTable, portalSettingsTable } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, inArray } from "drizzle-orm";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
 
 const router = Router();
@@ -382,6 +382,36 @@ router.delete("/:id", requireRole("admin"), async (req, res) => {
     .returning();
   if (!deleted) { res.status(404).json({ error: "Request not found" }); return; }
   res.json({ ok: true });
+});
+
+// GET /api/requests/events/recent — last 50 events across all requests visible to the user
+router.get("/events/recent", async (req, res) => {
+  const user = req.user!;
+  const baseRequests = user.role === "requestor"
+    ? await db.select({ id: architectureRequestsTable.id }).from(architectureRequestsTable).where(eq(architectureRequestsTable.requestorId, user.id))
+    : await db.select({ id: architectureRequestsTable.id }).from(architectureRequestsTable);
+
+  const requestIds = baseRequests.map((r) => r.id);
+  if (requestIds.length === 0) { res.json({ events: [] }); return; }
+
+  const events = await db
+    .select({
+      id: requestEventsTable.id,
+      requestId: requestEventsTable.requestId,
+      requestTitle: architectureRequestsTable.title,
+      actorName: requestEventsTable.actorName,
+      actorRole: requestEventsTable.actorRole,
+      eventType: requestEventsTable.eventType,
+      description: requestEventsTable.description,
+      createdAt: requestEventsTable.createdAt,
+    })
+    .from(requestEventsTable)
+    .innerJoin(architectureRequestsTable, eq(requestEventsTable.requestId, architectureRequestsTable.id))
+    .where(inArray(requestEventsTable.requestId, requestIds))
+    .orderBy(desc(requestEventsTable.createdAt))
+    .limit(50);
+
+  res.json({ events });
 });
 
 // GET /api/requests/:id/events
