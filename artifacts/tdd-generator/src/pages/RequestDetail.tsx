@@ -167,6 +167,45 @@ const EVENT_COLORS: Record<string, string> = {
   comment:             "bg-slate-100 text-slate-500 border-slate-200",
 };
 
+function getRiskSeverityClass(severity: "high" | "medium" | "info"): string {
+  if (severity === "high") {
+    return "border-red-200 bg-red-50";
+  }
+  if (severity === "medium") {
+    return "border-amber-200 bg-amber-50";
+  }
+  return "border-blue-200 bg-blue-50";
+}
+
+function getRiskIconClass(severity: "high" | "medium" | "info"): string {
+  if (severity === "high") {
+    return "text-red-500";
+  }
+  if (severity === "medium") {
+    return "text-amber-500";
+  }
+  return "text-blue-500";
+}
+
+function buildApprovalRiskSummary(risks: ReturnType<typeof computeRisksAndInsights>): string {
+  if (risks.length === 0) {
+    return "Risk review: no automated risk flags identified.";
+  }
+
+  const highCount = risks.filter((risk) => risk.severity === "high").length;
+  const mediumCount = risks.filter((risk) => risk.severity === "medium").length;
+  const topRisks = risks
+    .filter((risk) => risk.severity !== "info")
+    .slice(0, 3)
+    .map((risk) => risk.title)
+    .join("; ");
+
+  const riskCounts = `${highCount} high, ${mediumCount} medium`;
+  return topRisks
+    ? `Risk review: ${riskCounts} risk flags reviewed. Key items: ${topRisks}.`
+    : `Risk review: ${riskCounts} risk flags reviewed.`;
+}
+
 function ActivityTimeline({ events }: { events: RequestEvent[] }) {
   if (events.length === 0) return null;
   return (
@@ -1088,14 +1127,14 @@ export default function RequestDetail() {
                 <strong>3rd Party / Vendor workflow:</strong> Approving this ARR will route directly to FinOps activation — no TDD or DevSecOps phases.
               </div>
             )}
-            {/* AI-Recommended Architect Team + Risk Insights */}
+            {/* Recommended Architect Team + Risk Insights */}
             {architectRecs.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Architect Team Panel */}
                 <div className="rounded-lg border border-yellow-200 bg-yellow-50/60 p-3 space-y-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-yellow-800 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    AI-Recommended Architect Team
+                    Recommended Architect Team
                   </p>
                   <div className="space-y-1.5">
                     {architectRecs.map((rec) => {
@@ -1114,33 +1153,33 @@ export default function RequestDetail() {
                   </div>
                 </div>
 
-                {/* Risk & Insights Panel */}
+                {/* Risk, Remediation & Best Practices Panel */}
                 <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 space-y-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    Risk &amp; Hosting Insights
+                    Risk, Remediation &amp; Best Practices
                   </p>
                   {riskInsights.length === 0 ? (
                     <p className="text-[11px] text-slate-400 italic">No risk flags for this workload.</p>
                   ) : (
                     <div className="space-y-1.5">
                       {riskInsights.map((risk, i) => {
-                        const severityClass =
-                          risk.severity === "high"   ? "border-red-200 bg-red-50"    :
-                          risk.severity === "medium" ? "border-amber-200 bg-amber-50" :
-                          "border-blue-200 bg-blue-50";
-                        const iconClass =
-                          risk.severity === "high"   ? "text-red-500"    :
-                          risk.severity === "medium" ? "text-amber-500"  :
-                          "text-blue-500";
                         const RiskIcon = risk.severity === "info" ? Info : AlertTriangle;
                         return (
-                          <div key={i} className={`flex gap-2 items-start rounded-md border px-2.5 py-1.5 text-xs ${severityClass}`}>
-                            <RiskIcon className={`w-3 h-3 mt-0.5 shrink-0 ${iconClass}`} />
+                          <div key={`${risk.category}-${risk.title}-${i}`} className={`flex gap-2 items-start rounded-md border px-2.5 py-2 text-xs ${getRiskSeverityClass(risk.severity)}`}>
+                            <RiskIcon className={`w-3 h-3 mt-0.5 shrink-0 ${getRiskIconClass(risk.severity)}`} />
                             <div>
                               <span className="font-semibold text-slate-800">{risk.title}</span>
                               <span className="ml-1 text-[10px] font-medium uppercase tracking-wide opacity-70">[{risk.category}]</span>
                               <p className="text-[10px] text-slate-600 mt-0.5 leading-snug line-clamp-2">{risk.detail}</p>
+                              <div className="mt-1.5 grid gap-1">
+                                <p className="text-[10px] text-slate-700 leading-snug">
+                                  <span className="font-semibold">Remediation:</span> {risk.remediation}
+                                </p>
+                                <p className="text-[10px] text-slate-600 leading-snug">
+                                  <span className="font-semibold">Best practice:</span> {risk.bestPractice}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         );
@@ -1203,6 +1242,7 @@ export default function RequestDetail() {
                   action: "approve",
                   comments: [
                     domainArchsConsulted.length > 0 ? `Architects consulted: ${domainArchsConsulted.join(", ")}.` : "",
+                    buildApprovalRiskSummary(riskInsights),
                     eaComments,
                   ].filter(Boolean).join(" "),
                 })}
