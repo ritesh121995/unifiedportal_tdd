@@ -8,70 +8,57 @@ An enterprise Azure cloud infrastructure governance platform that manages the en
 
 ```mermaid
 flowchart TB
-    %% ── ACTORS ─────────────────────────────────────────────────────────────
     REQ(["👤 Requestor"])
     CA(["👷 Cloud Architect"])
-    EA(["🏛️ Enterprise Architect"])
+    EA(["🏛 Enterprise Architect"])
     ADM(["⚙️ Admin"])
 
-    %% ── FRONTEND ────────────────────────────────────────────────────────────
-    subgraph SPA["⚛️  React SPA  ·  Vite  ·  Tailwind  ·  Radix UI"]
-        F1["Dashboard  ·  Submit Request  ·  Request List"]
-        F2["Request Detail  — all workflow phases"]
-        F3["TDD Wizard  →  TDD Preview  SSE streaming"]
-        F4["TDD Viewer  read-only  ·  Integrations  ·  Admin"]
+    subgraph SPA["React SPA — Vite · Tailwind · Radix UI"]
+        F1["Dashboard · Submit Request · Request List"]
+        F2["Request Detail — all workflow phases"]
+        F3["TDD Wizard · TDD Preview · TDD Viewer"]
+        F4["Integrations · Admin Users"]
     end
 
-    %% ── CONTAINER ───────────────────────────────────────────────────────────
-    subgraph ACA["🐳  Azure Container App  ·  test1995  ·  RG: Rishi_RG  ·  Port 8080"]
-        subgraph API["🚀  Express REST API  ·  Node 22  ·  esbuild"]
-            A1["  /api/auth         JWT · httpOnly cookie · 8h TTL  "]
-            A2["  /api/requests     Workflow engine · AI classification  "]
-            A3["  /api/tdd          Generate · Export · SSE · Diagnostics  "]
-            A4["  /api/iac          Azure SDK deploy · status poll  "]
-            A5["  /api/users        Admin CRUD  "]
-            A6["  /api/settings     Portal config · webhook URL  "]
-            A7["  /api/healthz      Liveness probe  "]
-        end
+    subgraph ACA["Azure Container App — test1995 · Port 8080"]
+        API["Express REST API — Node 22\n/api/auth    — JWT · httpOnly cookie · 8h\n/api/requests — Workflow engine · AI classify\n/api/tdd      — Generate · Export · SSE\n/api/iac      — Deploy · status poll\n/api/users    — Admin CRUD\n/api/healthz  — Liveness probe"]
     end
 
-    %% ── DATABASE ────────────────────────────────────────────────────────────
-    PG[("🗄️  PostgreSQL 16\n\narchitecture_requests\ntdd_submissions\nrequest_events\nusers · portal_settings")]
+    subgraph DATA["Data Layer"]
+        PG[("PostgreSQL 16\narchitecture_requests\ntdd_submissions\nrequest_events\nusers · settings")]
+    end
 
-    %% ── AZURE OPENAI ────────────────────────────────────────────────────────
-    AOAI["🤖  Azure OpenAI  ·  gpt-4o\n\n① Classify request: simple vs complex\n② Stream TDD generation  8 sections via SSE\n③ Regenerate individual sections\n④ Connection diagnostics"]
+    subgraph AI["Azure OpenAI — gpt-4o"]
+        AOAI["Classify: simple vs complex\nStream TDD — 8 sections via SSE\nSection regeneration\nConnection diagnostics"]
+    end
 
-    %% ── IAC TARGET ──────────────────────────────────────────────────────────
-    AZR["☁️  Azure Resource Manager\n\nResource Groups · App Services\nAKS · SQL · Key Vault · VNet"]
+    subgraph IAC["IaC Target"]
+        AZR["Azure Resource Manager\nResource Groups · App Services\nAKS · SQL · Key Vault · VNet"]
+    end
 
-    %% ── CI / CD ─────────────────────────────────────────────────────────────
-    subgraph CICD["🔄  CI / CD"]
-        GHA["GitHub Actions\naudit · typecheck · docker build"]
+    subgraph CICD["CI / CD"]
+        GHA["GitHub Actions\naudit · typecheck · build"]
         ACR["Azure Container Registry\ntestregistry1995.azurecr.io"]
     end
 
-    %% ── REQUEST LIFECYCLE ───────────────────────────────────────────────────
-    subgraph WF["📋  Request Lifecycle"]
+    subgraph WF["Request Lifecycle"]
         direction LR
-        S1([submitted]) -->|"AI: complex"| S2([ea_triage])
-        S1 -->|"AI: simple ⚡"| S3
-        S2 -->|EA approves| S3([ea_approved])
+        S1([submitted]) -->|AI complex| S2([ea_triage])
+        S1 -->|AI simple| S3([ea_approved])
+        S2 -->|EA approves| S3
         S3 --> S4([tdd_in_progress])
         S4 --> S5([tdd_completed])
         S5 --> S6([devsecops_approved])
-        S6 --> S7([finops_active ✓])
+        S6 --> S7([finops_active])
     end
 
-    %% ── CONNECTIONS ─────────────────────────────────────────────────────────
     REQ & CA & EA & ADM -->|HTTPS| SPA
-    SPA <-->|"fetch / SSE"| ACA
-
-    API <-->|"Drizzle ORM"| PG
-    A2 & A3 -->|"chat completions"| AOAI
-    A4 -->|"ARM SDK"| AZR
-
-    GHA -->|"docker push"| ACR
-    ACR -->|"image pull"| ACA
+    SPA <-->|fetch / SSE| ACA
+    ACA <-->|Drizzle ORM| DATA
+    ACA -->|chat completions| AI
+    ACA -->|ARM SDK| IAC
+    GHA -->|docker push| ACR
+    ACR -->|image pull| ACA
 ```
 
 > For the full detailed architecture (DB schema, sequence diagrams, Docker build stages, CI/CD pipeline) see [ARCHITECTURE.md](./ARCHITECTURE.md).
