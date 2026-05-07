@@ -4,6 +4,78 @@
 
 ---
 
+## High-Level Architecture
+
+```mermaid
+flowchart TB
+    %% ── ACTORS ─────────────────────────────────────────────────────────────
+    REQ(["👤 Requestor"])
+    CA(["👷 Cloud Architect"])
+    EA(["🏛️ Enterprise Architect"])
+    ADM(["⚙️ Admin"])
+
+    %% ── FRONTEND ────────────────────────────────────────────────────────────
+    subgraph SPA["⚛️  React SPA  ·  Vite  ·  Tailwind  ·  Radix UI"]
+        F1["Dashboard  ·  Submit Request  ·  Request List"]
+        F2["Request Detail  — all workflow phases"]
+        F3["TDD Wizard  →  TDD Preview  SSE streaming"]
+        F4["TDD Viewer  read-only  ·  Integrations  ·  Admin"]
+    end
+
+    %% ── CONTAINER ───────────────────────────────────────────────────────────
+    subgraph ACA["🐳  Azure Container App  ·  test1995  ·  RG: Rishi_RG  ·  Port 8080"]
+        subgraph API["🚀  Express REST API  ·  Node 22  ·  esbuild"]
+            A1["  /api/auth         JWT · httpOnly cookie · 8h TTL  "]
+            A2["  /api/requests     Workflow engine · AI classification  "]
+            A3["  /api/tdd          Generate · Export · SSE · Diagnostics  "]
+            A4["  /api/iac          Azure SDK deploy · status poll  "]
+            A5["  /api/users        Admin CRUD  "]
+            A6["  /api/settings     Portal config · webhook URL  "]
+            A7["  /api/healthz      Liveness probe  "]
+        end
+    end
+
+    %% ── DATABASE ────────────────────────────────────────────────────────────
+    PG[("🗄️  PostgreSQL 16\n\narchitecture_requests\ntdd_submissions\nrequest_events\nusers · portal_settings")]
+
+    %% ── AZURE OPENAI ────────────────────────────────────────────────────────
+    AOAI["🤖  Azure OpenAI  ·  gpt-4o\n\n① Classify request: simple vs complex\n② Stream TDD generation  8 sections via SSE\n③ Regenerate individual sections\n④ Connection diagnostics"]
+
+    %% ── IAC TARGET ──────────────────────────────────────────────────────────
+    AZR["☁️  Azure Resource Manager\n\nResource Groups · App Services\nAKS · SQL · Key Vault · VNet"]
+
+    %% ── CI / CD ─────────────────────────────────────────────────────────────
+    subgraph CICD["🔄  CI / CD"]
+        GHA["GitHub Actions\naudit · typecheck · docker build"]
+        ACR["Azure Container Registry\ntestregistry1995.azurecr.io"]
+    end
+
+    %% ── REQUEST LIFECYCLE ───────────────────────────────────────────────────
+    subgraph WF["📋  Request Lifecycle"]
+        direction LR
+        S1([submitted]) -->|"AI: complex"| S2([ea_triage])
+        S1 -->|"AI: simple ⚡"| S3
+        S2 -->|EA approves| S3([ea_approved])
+        S3 --> S4([tdd_in_progress])
+        S4 --> S5([tdd_completed])
+        S5 --> S6([devsecops_approved])
+        S6 --> S7([finops_active ✓])
+    end
+
+    %% ── CONNECTIONS ─────────────────────────────────────────────────────────
+    REQ & CA & EA & ADM -->|HTTPS| SPA
+    SPA <-->|"fetch / SSE"| ACA
+
+    API <-->|"Drizzle ORM"| PG
+    A2 & A3 -->|"chat completions"| AOAI
+    A4 -->|"ARM SDK"| AZR
+
+    GHA -->|"docker push"| ACR
+    ACR -->|"image pull"| ACA
+```
+
+---
+
 ## 1. System Overview
 
 ```mermaid
