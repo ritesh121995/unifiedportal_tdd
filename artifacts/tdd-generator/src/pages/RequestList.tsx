@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
-import { Search, Filter, Loader2, PlusCircle, AlertCircle, Trash2, Download, RefreshCw } from "lucide-react";
+import { Search, Filter, Loader2, PlusCircle, AlertCircle, Trash2, Download, RefreshCw, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ interface ArchitectureRequest {
   status: RequestStatus;
   requestorName: string;
   applicationType: string;
+  deploymentModel?: string;
   createdAt: string;
 }
 
@@ -30,6 +31,24 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const SLA_THRESHOLD_DAYS = 3;
 const ACTIVE_STATUSES = ["submitted", "ea_triage"];
+const BULK_ELIGIBLE_STATUSES = ["submitted", "ea_triage"];
+
+const DEPLOYMENT_MODEL_OPTIONS = [
+  { value: "all", label: "All deployment models" },
+  { value: "Cloud (McCain Tenant)", label: "Cloud (McCain Tenant)" },
+  { value: "SaaS Solution", label: "SaaS Solution" },
+  { value: "Vendor Tenant", label: "Vendor Tenant" },
+  { value: "Other 3rd Party Solution", label: "Other 3rd Party Solution" },
+  { value: "On-Premises (McCain Data Center)", label: "On-Premises (McCain Data Center)" },
+  { value: "Hybrid", label: "Hybrid" },
+];
+
+const DATE_FILTER_OPTIONS = [
+  { value: "any", label: "Any time" },
+  { value: "7", label: "Last 7 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+];
 
 function daysSince(dateStr: string) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
@@ -61,11 +80,17 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [deploymentFilter, setDeploymentFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("any");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "priority">("newest");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkActing, setBulkActing] = useState(false);
+
+  const canBulkSelect = user?.role === "enterprise_architect" || user?.role === "admin";
 
   const doRefresh = useCallback(() => {
     setRefreshing(true);
@@ -99,15 +124,63 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
         ? fixedStatuses.includes(r.status)
         : statusFilter === "all" || r.status === statusFilter;
       const matchesPriority = priorityFilter === "all" || r.priority === priorityFilter;
+      const matchesDeployment = deploymentFilter === "all" || r.deploymentModel === deploymentFilter;
       const q = query.toLowerCase();
       const matchesQuery = !q || r.title.toLowerCase().includes(q) || r.applicationName.toLowerCase().includes(q) || r.businessUnit.toLowerCase().includes(q) || r.requestorName.toLowerCase().includes(q);
-      return matchesStatus && matchesPriority && matchesQuery;
+      let matchesDate = true;
+      if (dateFilter !== "any") {
+        const days = parseInt(dateFilter, 10);
+        matchesDate = daysSince(r.createdAt) <= days;
+      }
+      return matchesStatus && matchesPriority && matchesDeployment && matchesQuery && matchesDate;
     })
     .sort((a, b) => {
       if (sortOrder === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       if (sortOrder === "priority") return (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+
+  // Only requests eligible for bulk selection (submitted or ea_triage)
+  const bulkEligible = filtered.filter((r) => BULK_ELIGIBLE_STATUSES.includes(r.status));
+  const allEligibleSelected = bulkEligible.length > 0 && bulkEligible.every((r) => selectedIds.has(r.id));
+  const someSelected = selectedIds.size > 0;
+
+  const toggleSelectAll = () => {
+    if (allEligibleSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(bulkEligible.map((r) => r.id)));
+    }
+  };
+
+  const toggleSelectRow = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkAction = async (action: "approve" | "triage") => {
+    if (selectedIds.size === 0) return;
+    setBulkActing(true);
+    try {
+      await fetch(`${getApiBase()}/api/requests/bulk-action`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+      });
+      setSelectedIds(new Set());
+      doRefresh();
+    } finally {
+      setBulkActing(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -196,6 +269,26 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
             <SelectItem value="Low">Low</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={deploymentFilter} onValueChange={setDeploymentFilter}>
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder="All deployment models" />
+          </SelectTrigger>
+          <SelectContent>
+            {DEPLOYMENT_MODEL_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Any time" />
+          </SelectTrigger>
+          <SelectContent>
+            {DATE_FILTER_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as typeof sortOrder)}>
           <SelectTrigger className="w-36">
             <SelectValue placeholder="Sort" />
@@ -207,6 +300,43 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
           </SelectContent>
         </Select>
       </div>
+
+      {/* Bulk Actions Bar */}
+      {canBulkSelect && someSelected && (
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#0078d4]/10 border border-[#0078d4]/30 text-sm">
+          <CheckSquare className="w-4 h-4 text-[#0078d4] shrink-0" />
+          <span className="font-medium text-[#0078d4]">{selectedIds.size} selected</span>
+          <div className="flex gap-2 ml-auto">
+            <Button
+              size="sm"
+              className="h-7 px-3 text-xs bg-[#0078d4] hover:bg-[#106ebe]"
+              disabled={bulkActing}
+              onClick={() => handleBulkAction("approve")}
+            >
+              {bulkActing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+              Approve (EA)
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs"
+              disabled={bulkActing}
+              onClick={() => handleBulkAction("triage")}
+            >
+              Move to Triage
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-3 text-xs text-slate-500"
+              disabled={bulkActing}
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center gap-2 text-slate-500 py-8">
@@ -232,71 +362,109 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
         </Card>
       ) : (
         <div className="space-y-2">
-          {filtered.map((req) => (
-            <Card
-              key={req.id}
-              className="hover:shadow-md transition-shadow"
-            >
-              <CardContent className="p-4 flex items-center gap-4">
-                <div
-                  className="flex-1 min-w-0 cursor-pointer"
-                  onClick={() => setLocation(`/requests/${req.id}`)}
-                >
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className="font-medium text-sm truncate">{req.title}</p>
-                    <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${PRIORITY_COLORS[req.priority] ?? "text-slate-600"}`}>
-                      {req.priority}
-                    </span>
-                    <SlaTag createdAt={req.createdAt} status={req.status} />
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    {req.applicationName} · {req.applicationType} · {req.businessUnit}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    By {req.requestorName} · {new Date(req.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <StatusBadge status={req.status} />
-                  {user?.role === "admin" && (
-                    confirmDeleteId === req.id ? (
-                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-slate-600">Delete?</span>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="h-7 px-2 text-xs"
-                          disabled={deleting}
-                          onClick={() => handleDelete(req.id)}
-                        >
-                          {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
-                          disabled={deleting}
-                          onClick={() => setConfirmDeleteId(null)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(req.id); }}
-                        title="Delete request"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )
+          {/* Select-all header row — EA / admin only, shown when there are bulk-eligible rows */}
+          {canBulkSelect && bulkEligible.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-1.5 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                className="w-4 h-4 rounded accent-[#0078d4] cursor-pointer"
+                checked={allEligibleSelected}
+                onChange={toggleSelectAll}
+                aria-label="Select all eligible requests"
+              />
+              <span>
+                {allEligibleSelected ? "Deselect all" : `Select all (${bulkEligible.length} eligible)`}
+              </span>
+            </div>
+          )}
+
+          {filtered.map((req) => {
+            const isBulkEligible = canBulkSelect && BULK_ELIGIBLE_STATUSES.includes(req.status);
+            const isSelected = selectedIds.has(req.id);
+
+            return (
+              <Card
+                key={req.id}
+                className={`hover:shadow-md transition-shadow ${isSelected ? "ring-2 ring-[#0078d4]/50 bg-[#0078d4]/5" : ""}`}
+              >
+                <CardContent className="p-4 flex items-center gap-4">
+                  {/* Checkbox — only for EA/admin on eligible rows */}
+                  {canBulkSelect && (
+                    <div className="shrink-0 w-5 flex items-center justify-center">
+                      {isBulkEligible ? (
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded accent-[#0078d4] cursor-pointer"
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(req.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select request ${req.title}`}
+                        />
+                      ) : null}
+                    </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => setLocation(`/requests/${req.id}`)}
+                  >
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="font-medium text-sm truncate">{req.title}</p>
+                      <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${PRIORITY_COLORS[req.priority] ?? "text-slate-600"}`}>
+                        {req.priority}
+                      </span>
+                      <SlaTag createdAt={req.createdAt} status={req.status} />
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {req.applicationName} · {req.applicationType} · {req.businessUnit}
+                      {req.deploymentModel ? ` · ${req.deploymentModel}` : ""}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      By {req.requestorName} · {new Date(req.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <StatusBadge status={req.status} />
+                    {user?.role === "admin" && (
+                      confirmDeleteId === req.id ? (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-xs text-slate-600">Delete?</span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs"
+                            disabled={deleting}
+                            onClick={() => handleDelete(req.id)}
+                          >
+                            {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            disabled={deleting}
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(req.id); }}
+                          title="Delete request"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

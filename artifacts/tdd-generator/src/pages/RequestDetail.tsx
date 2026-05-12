@@ -243,6 +243,57 @@ function ActivityTimeline({ events }: { events: RequestEvent[] }) {
   );
 }
 
+function parseTerraformResources(hcl: string): { type: string; name: string }[] {
+  const matches = [...hcl.matchAll(/^resource\s+"([^"]+)"\s+"([^"]+)"/gm)];
+  return matches.map((m) => ({ type: m[1]!, name: m[2]! }));
+}
+
+function downloadAuditReport(request: ArchitectureRequest, events: RequestEvent[]) {
+  const sep = "─".repeat(60);
+  const lines = [
+    "MCCAIN FOODS — CLOUD ARCHITECTURE GOVERNANCE PORTAL",
+    "AUDIT REPORT",
+    sep,
+    `ARR #${request.id}: ${request.title}`,
+    `Application:      ${request.applicationName}`,
+    `Type:             ${request.applicationType}`,
+    `Business Unit:    ${request.businessUnit}`,
+    `Line of Business: ${request.lineOfBusiness}`,
+    `Requestor:        ${request.requestorName} <${request.requestorEmail}>`,
+    `Status:           ${request.status}`,
+    `Priority:         ${request.priority}`,
+    `Deployment:       ${request.deploymentModel ?? "—"}`,
+    `Submitted:        ${new Date(request.createdAt).toLocaleString()}`,
+    ...(request.targetGoLiveDate ? [`Target Go-Live:   ${new Date(request.targetGoLiveDate).toLocaleDateString()}`] : []),
+    "",
+    sep,
+    `AUDIT TRAIL — ${events.length} events`,
+    sep,
+    "",
+    ...events.flatMap((ev) => [
+      `${new Date(ev.createdAt).toLocaleString()}`,
+      `  Actor:   ${ev.actorName} (${ev.actorRole})`,
+      `  Event:   ${ev.eventType.toUpperCase()}`,
+      `  Details: ${ev.description}`,
+      "",
+    ]),
+    sep,
+    `Report generated: ${new Date().toLocaleString()}`,
+    "McCain Foods CCoE — Cloud Architecture Governance Portal",
+  ];
+
+  const content = lines.join("\n");
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mccain-arr-${request.id}-audit-${new Date().toISOString().slice(0, 10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 interface IacDeployStatus {
   id: number;
   status: string;
@@ -283,6 +334,7 @@ export default function RequestDetail() {
   const [iacDeployment, setIacDeployment] = useState<IacDeployStatus | null>(null);
   const [iacDeployError, setIacDeployError] = useState<string | null>(null);
   const [iacCopied, setIacCopied] = useState(false);
+  const [iacShowPlan, setIacShowPlan] = useState(false);
 
   // Network CIDR state — keyed by environment name
   const DEFAULT_CIDRS: Record<string, string> = {
@@ -686,6 +738,10 @@ export default function RequestDetail() {
   );
   // True when ea_approved but no action is available for the current user (unknown/future model)
   const noActionAfterApproval = request.status === "ea_approved" && !canGenerateTDD && !canFinOps;
+  // Requestor can view their completed TDD in read-only mode
+  const canRequestorViewTDD = isRequestor &&
+    ["tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"].includes(request.status) &&
+    !!request.tddSubmissionId;
 
   // Phase progress steps — dynamic based on workflow type
   const PHASE_STEPS_CLOUD: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
@@ -942,6 +998,69 @@ export default function RequestDetail() {
             <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
               {isAdmin ? "Phase Progress" : "Your Request Progress"}
             </p>
+
+            {/* Feature 4 — Visual package-tracking stepper (requestors only) */}
+            {!isAdmin && (() => {
+              const phases = isCloudTenant
+                ? ["Submitted", "EA Review", "TDD", "DevSecOps", "FinOps"]
+                : ["Submitted", "EA Review", "FinOps"];
+              const phaseForStatus: Record<string, number> = isCloudTenant
+                ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, tdd_in_progress: 2, tdd_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, finops_active: 4 }
+                : { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, finops_active: 2 };
+              const phaseIdx = phaseForStatus[s] ?? 0;
+              const daysSince = Math.floor((Date.now() - new Date(request.createdAt).getTime()) / 86400000);
+              const responsibleNow =
+                s === "modification_requested" ? "You — Action Required" :
+                ["submitted", "ea_triage"].includes(s) ? "Enterprise Architecture" :
+                ["ea_approved", "tdd_in_progress", "tdd_completed"].includes(s) ? "Cloud Architecture" :
+                s === "devsecops_approved" ? "Enterprise Architecture" :
+                s === "finops_active" ? "Completed" :
+                s === "ea_rejected" ? "Rejected" : "—";
+              return (
+                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>Submitted <span className="font-semibold text-slate-700">{daysSince}d ago</span></span>
+                    <span className="flex items-center gap-1.5">
+                      <User className="w-3 h-3" />
+                      <span className="font-semibold text-slate-700">{responsibleNow}</span>
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute top-3.5 inset-x-0 h-1 bg-slate-100 rounded-full" />
+                    <div
+                      className="absolute top-3.5 left-0 h-1 bg-green-400 rounded-full transition-all duration-700"
+                      style={{ width: `${phases.length > 1 ? (Math.min(phaseIdx, phases.length - 1) / (phases.length - 1)) * 100 : 0}%` }}
+                    />
+                    <div className="relative flex justify-between">
+                      {phases.map((phase, idx) => {
+                        const done = idx < phaseIdx || s === "finops_active";
+                        const active = idx === phaseIdx && !["finops_active", "ea_rejected", "devsecops_rejected"].includes(s);
+                        const rejected = ["ea_rejected", "devsecops_rejected"].includes(s) && idx === phaseIdx;
+                        return (
+                          <div key={phase} className="flex flex-col items-center gap-1.5">
+                            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold z-10 ${
+                              rejected ? "border-red-400 bg-red-50 text-red-600"
+                              : done ? "border-green-500 bg-green-500 text-white"
+                              : active ? "border-[#FFCD00] bg-yellow-50 text-yellow-900"
+                              : "border-slate-200 bg-white text-slate-300"
+                            }`}>
+                              {done ? <CheckCircle className="w-3.5 h-3.5" /> : <span>{idx + 1}</span>}
+                            </div>
+                            <p className={`text-[9px] text-center leading-tight max-w-[52px] ${
+                              rejected ? "text-red-600 font-semibold"
+                              : done ? "text-green-600"
+                              : active ? "text-slate-700 font-semibold"
+                              : "text-slate-300"
+                            }`}>{phase}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <PhaseCard
               phase={1}
               title="Architecture Review Request (ARR)"
@@ -1022,6 +1141,30 @@ export default function RequestDetail() {
         );
       })()}
 
+
+      {/* TDD document available to requestor (view-only) once TDD is completed */}
+      {canRequestorViewTDD && (
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-4 flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <FileText className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-purple-800 text-sm">Technical Design Document is ready</p>
+                <p className="text-xs text-purple-600 mt-0.5">
+                  The Cloud Architect has completed the Technical Design Document for your application. You can view it in read-only mode.
+                </p>
+              </div>
+            </div>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+              onClick={() => setLocation(`/tdd-view/${request.id}`)}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              View TDD
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ─── Submitted Request Details — admins / EA / CA only ───────── */}
       {!isRequestor && <Card className="border-slate-200">
@@ -1559,6 +1702,48 @@ export default function RequestDetail() {
                     </div>
                   )}
 
+                  {/* Feature 5 — Terraform Plan Preview */}
+                  {iacSelectedServices.length > 0 && !iacDeploymentId && (
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-slate-600"
+                        onClick={() => setIacShowPlan((v) => !v)}
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        {iacShowPlan ? "Hide Plan" : "Preview Plan"}
+                      </Button>
+                      {iacShowPlan && (() => {
+                        const resources = parseTerraformResources(
+                          generateMultiServiceTerraform(iacFormDraft, iacSelectedServices)
+                        );
+                        return (
+                          <div className="mt-3 rounded-lg border border-slate-700 bg-[#1e1e1e] overflow-hidden text-xs font-mono">
+                            <div className="px-4 py-2 border-b border-slate-700 flex items-center justify-between">
+                              <span className="text-slate-400">terraform plan · dry-run preview</span>
+                              <span className="text-green-400">+{resources.length} to add · 0 to change · 0 to destroy</span>
+                            </div>
+                            <div className="p-3 space-y-1 max-h-48 overflow-y-auto">
+                              {resources.map((r, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <span className="text-green-400 font-bold">+</span>
+                                  <span className="text-slate-400">resource</span>
+                                  <span className="text-[#9cdcfe]">&quot;{r.type}&quot;</span>
+                                  <span className="text-[#dcdcaa]">&quot;{r.name}&quot;</span>
+                                  <span className="text-slate-600 ml-auto">create</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="px-4 py-2 border-t border-slate-700 text-slate-400">
+                              Plan: {resources.length} to add, 0 to change, 0 to destroy.
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
                   {/* Deploy to Azure */}
                   {iacSelectedServices.length > 0 && !iacDeploymentId && (
                     <div>
@@ -1748,6 +1933,55 @@ export default function RequestDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* ─── Activity Timeline + Comments (Feature 8 audit download for EA/admin) ── */}
+      <Card className="border-slate-200">
+        <CardHeader className="pb-2 border-b border-slate-100">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-slate-400" />
+              Activity &amp; Comments
+            </CardTitle>
+            {(isEA || isAdmin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs gap-1.5 text-slate-500"
+                onClick={() => downloadAuditReport(request, events)}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Audit Report
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-4">
+          {events.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">No activity yet.</p>
+          ) : (
+            <ActivityTimeline events={events} />
+          )}
+          <div className="pt-3 border-t border-slate-100 space-y-2">
+            <Textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment or note for the team…"
+              rows={2}
+              className="text-sm"
+            />
+            <Button
+              size="sm"
+              disabled={!commentText.trim() || submittingComment}
+              onClick={() => { void handleAddComment(); }}
+            >
+              {submittingComment
+                ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                : <MessageSquare className="w-3.5 h-3.5 mr-1.5" />}
+              Add Comment
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Request Details — requestors only (admins see the full "Submitted Request Details" card above) */}
       {isRequestor && (<Card>

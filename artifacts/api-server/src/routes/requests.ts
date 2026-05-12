@@ -435,6 +435,45 @@ router.post("/", requireRole("requestor"), async (req, res) => {
   res.status(201).json({ request: row, fastTrack: false, aiClassification: "complex", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
 });
 
+// POST /api/requests/bulk-action — EA / admin only
+router.post("/bulk-action", requireRole("enterprise_architect"), async (req, res) => {
+  const user = req.user!;
+  const { ids, action } = req.body as { ids?: number[]; action?: string };
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: "ids array required" }); return;
+  }
+  if (!["approve", "triage"].includes(action ?? "")) {
+    res.status(400).json({ error: "action must be 'approve' or 'triage'" }); return;
+  }
+
+  const newStatus = action === "approve" ? "ea_approved" : "ea_triage";
+  const eventType = action === "approve" ? "ea_approved" : "ea_triage";
+  const description = action === "approve"
+    ? `Bulk approved by ${user.name}`
+    : `Bulk moved to EA Triage by ${user.name}`;
+
+  const updated: number[] = [];
+  for (const id of ids) {
+    const [row] = await db
+      .select({ id: architectureRequestsTable.id, status: architectureRequestsTable.status })
+      .from(architectureRequestsTable)
+      .where(eq(architectureRequestsTable.id, id))
+      .limit(1);
+    if (!row) continue;
+    const allowedStatuses = action === "approve" ? ["submitted", "ea_triage"] : ["submitted"];
+    if (!allowedStatuses.includes(row.status)) continue;
+
+    await db.update(architectureRequestsTable)
+      .set({ status: newStatus, updatedAt: new Date() })
+      .where(eq(architectureRequestsTable.id, id));
+    await logEvent(id, user.name, user.role, eventType, description);
+    updated.push(id);
+  }
+
+  res.json({ updated, skipped: ids.length - updated.length });
+});
+
 // GET /api/requests/:id
 router.get("/:id", async (req, res) => {
   const id = parseRequestId(req.params.id);

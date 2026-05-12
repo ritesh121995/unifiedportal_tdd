@@ -7,6 +7,7 @@ import usersRouter from "./users";
 import settingsRouter from "./settings";
 import iacRouter from "./iac";
 import confluenceRouter from "./confluence";
+import delegationsRouter from "./delegations";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/users", usersRouter);
 router.use("/settings", settingsRouter);
 router.use("/iac", iacRouter);
 router.use("/confluence", confluenceRouter);
+router.use("/delegations", delegationsRouter);
 
 export default router;

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   Cloud, LayoutDashboard, FileText, PlusCircle, CheckSquare, History,
   LogOut, ChevronRight, Users, Bell, X, Building2, ShieldCheck,
-  Code2, DollarSign, Layers, UserCog, Plug, MessageSquare, Activity,
+  Code2, DollarSign, Layers, UserCog, Plug, MessageSquare, Activity, UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/store/auth-context";
@@ -45,6 +45,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { label: "TDD Queue", path: "/tdd-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
       { label: "TDD History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
       { label: "User Management", path: "/admin/users", icon: UserCog, roles: ["admin"] },
+      { label: "Approval Delegation", path: "/admin/delegations", icon: UserCheck, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "Integrations", path: "/integrations", icon: Plug, roles: ["admin"] },
     ],
   },

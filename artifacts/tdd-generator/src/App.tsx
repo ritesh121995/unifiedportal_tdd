@@ -22,6 +22,7 @@ import Phase6FinOps from "@/pages/Phase6FinOps";
 import AdminUsers from "@/pages/AdminUsers";
 import Integrations from "@/pages/Integrations";
 import TddViewer from "@/pages/TddViewer";
+import DelegationManager from "@/pages/DelegationManager";
 import "@/lib/api-base";
 import { useEffect } from "react";
 
@@ -108,6 +109,9 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/users">
         <ProtectedRoute component={AdminUsers} />
+      </Route>
+      <Route path="/admin/delegations">
+        <ProtectedRoute component={DelegationManager} />
       </Route>
       <Route path="/integrations">
         <ProtectedRoute component={Integrations} />
