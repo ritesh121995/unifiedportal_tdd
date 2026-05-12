@@ -656,7 +656,14 @@ export default function RequestDetail() {
   const isRequestor = !isEA && !isCA;
 
   // Derive workflow type from deployment model
-  const THIRD_PARTY_MODELS = ["SaaS Solution", "Vendor Tenant", "Other 3rd Party Solution"];
+  // Third-party and non-cloud models all skip TDD and go directly EA → FinOps
+  const THIRD_PARTY_MODELS = [
+    "SaaS Solution",
+    "Vendor Tenant",
+    "Other 3rd Party Solution",
+    "On-Premises (McCain Data Center)",
+    "Hybrid",
+  ];
   const isCloudTenant = request.deploymentModel === "Cloud (McCain Tenant)";
   const isThirdParty  = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
 
@@ -668,15 +675,17 @@ export default function RequestDetail() {
 
   const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack;
   const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack;
-  // TDD generation triggers directly from ea_approved (Risk Analysis removed as separate gate)
+  // TDD generation triggers directly from ea_approved (Cloud Tenant only)
   const canGenerateTDD = isCA && request.status === "ea_approved" && isCloudTenant;
   const canViewTDD     = ["tdd_in_progress", "tdd_completed"].includes(request.status) && isCA;
   const canDevSecOps   = isCA && request.status === "tdd_completed";
-  // FinOps: from devsecops_approved (Cloud) OR ea_approved (3rd Party)
+  // FinOps: from devsecops_approved (Cloud) OR ea_approved (non-Cloud)
   const canFinOps      = isEA && (
-    (isCloudTenant  && request.status === "devsecops_approved") ||
-    (isThirdParty   && request.status === "ea_approved")
+    (isCloudTenant && request.status === "devsecops_approved") ||
+    (isThirdParty  && request.status === "ea_approved")
   );
+  // True when ea_approved but no action is available for the current user (unknown/future model)
+  const noActionAfterApproval = request.status === "ea_approved" && !canGenerateTDD && !canFinOps;
 
   // Phase progress steps — dynamic based on workflow type
   const PHASE_STEPS_CLOUD: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
@@ -1175,14 +1184,14 @@ export default function RequestDetail() {
               <ShieldCheck className="w-4 h-4" style={{ color: "#b49000" }} />
               Phase 1 — Architecture Review Request (ARR)
               <span className="ml-auto text-[10px] font-mono text-yellow-700 border border-yellow-300 bg-yellow-50 px-2 py-0.5 rounded">
-                {isThirdParty ? "EA → FinOps" : "EA → TDD → DevSecOps → FinOps"}
+                {isCloudTenant ? "EA → TDD → DevSecOps → FinOps" : "EA → FinOps"}
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isThirdParty && (
+            {!isCloudTenant && (
               <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-                <strong>3rd Party / Vendor workflow:</strong> Approving this ARR will route directly to FinOps activation — no TDD or DevSecOps phases.
+                <strong>{isThirdParty ? "Non-Cloud workflow:" : "Non-Cloud workflow:"}</strong> Approving this ARR ({request.deploymentModel ?? "unknown model"}) will route directly to FinOps activation — no TDD or DevSecOps phases required.
               </div>
             )}
             {/* Recommended Architect Team + Risk Insights */}
@@ -1417,6 +1426,25 @@ export default function RequestDetail() {
                 <><FileText className="w-4 h-4 mr-2" />Generate TDD</>
               )}
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fallback — ea_approved but no next action available for this user/model */}
+      {noActionAfterApproval && (
+        <Card className="border-slate-200 bg-slate-50">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-700">Request Approved — Next Steps</p>
+              <p className="text-xs text-slate-500">
+                {isCA && !isCloudTenant
+                  ? `TDD generation is only available for Cloud (McCain Tenant) requests. This request uses "${request.deploymentModel ?? "unknown"}" — a Cloud Architect action is not required. The Enterprise Architect will proceed to FinOps activation.`
+                  : isEA && !isThirdParty && !isCloudTenant
+                    ? `Deployment model "${request.deploymentModel ?? "unknown"}" is not mapped to a workflow action. Please contact an admin to update the request or proceed manually.`
+                    : "The request is approved. The next action will be available to the appropriate team."}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -1686,7 +1714,7 @@ export default function RequestDetail() {
               </p>
             ) : (
               <p className="text-sm text-slate-700">
-                The ARR for this <strong>{request.deploymentModel}</strong> solution is approved. Activate FinOps monitoring to track vendor costs under McCain's cost governance framework and monthly chargeback reporting.
+                The ARR for this <strong>{request.deploymentModel}</strong> solution is approved. Activate FinOps monitoring to track costs under McCain's cost governance framework and monthly chargeback reporting.
               </p>
             )}
             <Button
