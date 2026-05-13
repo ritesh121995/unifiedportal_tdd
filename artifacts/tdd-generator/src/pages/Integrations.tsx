@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import {
   Loader2, Save, Plug, Link2, ExternalLink, RefreshCw, Bell,
-  Cloud, BookOpen, CheckCircle2, XCircle, AlertTriangle, Zap,
+  Cloud, BookOpen, CheckCircle2, XCircle, AlertTriangle, Zap, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getApiBase } from "@/lib/api-base";
+import { useAuth } from "@/store/auth-context";
 
 type SaveKey =
   | "teams"
@@ -30,6 +31,7 @@ interface AiDiagnosticResult {
 }
 
 export default function Integrations() {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<SaveKey | null>(null);
@@ -153,6 +155,47 @@ export default function Integrations() {
     return (
       <div className="flex items-center justify-center py-24 text-slate-400">
         <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading settings…
+      </div>
+    );
+  }
+
+  // Non-admin users see a contact-admin message instead of credentials
+  if (user?.role !== "admin") {
+    return (
+      <div className="max-w-xl mx-auto mt-16">
+        <Card className="border-slate-200">
+          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center">
+              <ShieldCheck className="w-7 h-7 text-slate-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">Admin access required</h2>
+              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                Integration settings — including API tokens and credentials for Microsoft Teams, LeanIX, Azure, and Confluence — are managed exclusively by portal administrators.
+              </p>
+              <p className="text-sm text-slate-500 mt-3 leading-relaxed">
+                If you need an integration configured or updated, please reach out to your <strong>CCoE portal administrator</strong>.
+              </p>
+            </div>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 px-5 py-3 text-sm text-slate-600 w-full text-left space-y-1">
+              <p className="font-medium text-slate-700 text-xs uppercase tracking-wide mb-1.5">Available integrations</p>
+              {[
+                { name: "Microsoft Teams", desc: "Status update notifications" },
+                { name: "LeanIX", desc: "Enterprise Architecture repository — initiative pre-fill" },
+                { name: "Microsoft Azure", desc: "Automated infrastructure deployment" },
+                { name: "Confluence", desc: "TDD document publishing" },
+                { name: "Azure OpenAI", desc: "AI-assisted TDD generation" },
+              ].map(({ name, desc }) => (
+                <div key={name} className="flex items-center gap-2 py-0.5">
+                  <Plug className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="font-medium text-slate-700">{name}</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-slate-500 text-xs">{desc}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
