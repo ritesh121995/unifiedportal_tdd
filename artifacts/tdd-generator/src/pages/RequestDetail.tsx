@@ -300,7 +300,7 @@ function downloadAuditReport(request: ArchitectureRequest, events: RequestEvent[
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `mccain-arr-${request.id}-audit-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.download = `mccain-architecture-request-${request.id}-audit-${new Date().toISOString().slice(0, 10)}.txt`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
