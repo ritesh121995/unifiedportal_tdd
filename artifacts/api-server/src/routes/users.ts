@@ -44,15 +44,20 @@ router.post("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const { role, name } = req.body as { role?: string; name?: string };
+  const { role, name, password } = req.body as { role?: string; name?: string; password?: string };
   const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "admin"];
   if (role && !validRoles.includes(role)) {
     res.status(400).json({ error: "Invalid role" });
     return;
   }
-  const updates: Partial<{ role: string; name: string }> = {};
+  if (password !== undefined && password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+  const updates: Partial<{ role: string; name: string; passwordHash: string }> = {};
   if (role) updates.role = role;
   if (name) updates.name = name;
+  if (password) updates.passwordHash = await bcrypt.hash(password, 12);
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: "Nothing to update" });
     return;
