@@ -135,7 +135,7 @@ interface RequestEvent {
 }
 
 const CA_REVIEW_CHECKLIST = [
-  "TDD document reviewed and technically accurate",
+  "Design document reviewed and technically accurate",
   "Checkov policy scans completed — no critical violations",
   "Terraform IaC peer-reviewed by a second Cloud Architect",
   "QA environment deployment verified and tested",

@@ -31,9 +31,9 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "Process Phases",
     items: [
-      { label: "Phase 1 — Submit & Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
+      { label: "Phase 1 — Architecture Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
       { label: "Phase 2 — Technical Design", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
-      { label: "Phase 3 — Infrastructure Setup", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
+      { label: "Phase 3 — Infrastructure Deployment", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
       { label: "Phase 4 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 4 },
     ],
   },
@@ -544,7 +544,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
         <footer className="bg-white border-t border-slate-200 px-8 py-3 flex items-center justify-between">
           <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">McCAIN FOODS LTD. · Cloud Centre of Excellence</span>
-          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">CONFIDENTIAL — MANAGEMENT REVIEW</span>
+          <span className="text-xs font-mono text-slate-400 tracking-widest uppercase">Internal Use Only</span>
         </footer>
       </div>
     </div>

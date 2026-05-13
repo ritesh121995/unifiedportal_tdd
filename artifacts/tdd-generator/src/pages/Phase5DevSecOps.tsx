@@ -98,8 +98,8 @@ export default function Phase5DevSecOps() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 4 · Infrastructure Setup</p>
-            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Infrastructure Setup & Deployment</h1>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 3 · Infrastructure Deployment</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Infrastructure Deployment</h1>
             <p className="text-sm opacity-80 max-w-xl">
               Deploy approved services through the McCain infrastructure pipeline using certified modules. Automated security scanning and policy checks run across all environments before production.
             </p>

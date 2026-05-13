@@ -15,7 +15,6 @@ import RequestList from "@/pages/RequestList";
 import RequestDetail from "@/pages/RequestDetail";
 import SubmitRequest from "@/pages/SubmitRequest";
 import Phase1EAReview from "@/pages/Phase1EAReview";
-import Phase3RiskAnalysis from "@/pages/Phase3RiskAnalysis";
 import Phase4TDDGeneration from "@/pages/Phase4TDDGeneration";
 import Phase5DevSecOps from "@/pages/Phase5DevSecOps";
 import Phase6FinOps from "@/pages/Phase6FinOps";
@@ -104,7 +103,7 @@ function Router() {
         <ProtectedRoute component={() => <RequestList fixedStatuses={["submitted", "ea_triage"]} pageTitle="EA Review Queue" />} />
       </Route>
       <Route path="/tdd-queue">
-        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "tdd_in_progress"]} pageTitle="TDD Queue" />} />
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "tdd_in_progress"]} pageTitle="Design Document Queue" />} />
       </Route>
 
       {/* Admin routes */}
@@ -121,9 +120,6 @@ function Router() {
       {/* Phase routes */}
       <Route path="/phase/1">
         <ProtectedRoute component={Phase1EAReview} />
-      </Route>
-      <Route path="/phase/2">
-        <ProtectedRoute component={Phase3RiskAnalysis} />
       </Route>
       <Route path="/phase/3">
         <ProtectedRoute component={Phase4TDDGeneration} />

@@ -52,10 +52,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const PHASES = [
-  { num: 1, label: "Submit & Architecture Review", sub: "Your request is reviewed by Enterprise Architects — they assess risk, security, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "EA sign-off" },
-  { num: 2, label: "Technical Design Document", sub: "Cloud Architects create a detailed design for your solution — covering infrastructure, security, and costs.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours (AI-assisted)", gate: "CA sign-off" },
-  { num: 3, label: "Infrastructure Setup", sub: "The approved design is deployed to Azure using automated infrastructure code. Environments are provisioned and tested.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
-  { num: 4, label: "Cost Management", sub: "Ongoing governance of cloud and vendor spend — budgets, tagging, and monthly cost reviews.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
+  { num: 1, label: "Architecture Review", sub: "Your request is reviewed by Enterprise and Security Architects — they assess risk, compliance, and technical fit before any design work begins.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
+  { num: 2, label: "Technical Design", sub: "Cloud Architects create a detailed Technical Design Document for your solution — covering infrastructure, security, and cost.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours (AI-assisted)", gate: "CA sign-off" },
+  { num: 3, label: "Infrastructure Deployment", sub: "The approved design is deployed to Azure using automated, policy-enforced pipelines. Environments are provisioned and tested.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
+  { num: 4, label: "Cost Management", sub: "Ongoing governance of cloud spend — budget alerts, tagging, chargeback reporting, and monthly cost reviews.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
 ];
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
@@ -200,11 +200,10 @@ export default function Dashboard() {
         <p className="text-[11px] text-slate-400 mb-3">Times are approximate — complexity and approvals affect actual duration.</p>
         <div className="flex h-9 rounded-lg overflow-hidden text-[10px] font-semibold">
           {[
-            { label: "Submit & Review", w: "14%", sub: "≤1 wk" },
-            { label: "Risk Assessment", w: "14%", sub: "1–3 days" },
-            { label: "Tech Design", w: "14%", sub: "1–2 hrs" },
-            { label: "Infrastructure Setup", w: "42%", sub: "~2 weeks" },
-            { label: "Cost Mgmt", w: "16%", sub: "ongoing" },
+            { label: "Architecture Review", w: "20%", sub: "≤1 wk" },
+            { label: "Technical Design", w: "20%", sub: "1–2 hrs" },
+            { label: "Infrastructure Deployment", w: "42%", sub: "~2 weeks" },
+            { label: "Cost Management", w: "18%", sub: "ongoing" },
           ].map((seg, idx) => (
             <div
               key={seg.label}

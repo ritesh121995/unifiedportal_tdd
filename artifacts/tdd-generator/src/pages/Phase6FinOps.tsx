@@ -87,7 +87,7 @@ export default function Phase6FinOps() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 5 · Cost Management</p>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 4 · Cost Management</p>
             <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Cost Management</h1>
             <p className="text-sm opacity-80 max-w-xl">
               Continuous cost visibility, budget alerts, chargeback reporting, and savings recommendations across all Azure subscriptions.

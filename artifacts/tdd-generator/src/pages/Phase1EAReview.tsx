@@ -132,7 +132,7 @@ export default function Phase1EAReview() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 1 · Submit & Review</p>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 1 · Architecture Review</p>
             <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Architecture Review</h1>
             <p className="text-sm opacity-80 max-w-xl">
               Single consolidated review covering Enterprise, Cloud Architecture, and Cloud Security — completed within one week with architecture board sign-off.
