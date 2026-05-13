@@ -72,16 +72,13 @@ function buildCompletionParams(options: {
  * TDD_GENERATE_MAX_TOKENS environment variable.
  *
  * Token budget guidance by model:
- * - gpt-4o (2024-08-06+): 16,384 output tokens (128k context)
- * - gpt-4o-mini:          16,384 output tokens (128k context)
- * - gpt-4.1 / gpt-4.1-mini: up to 32,768 output tokens (1M context)
- * - o1 / o3-mini:         100,000+ output tokens (200k context)
+ * - gpt-4o / gpt-4o-mini: 16,384 output tokens (hard limit — Azure returns 400 if exceeded)
+ * - gpt-4.1 / gpt-4.1-mini: up to 32,768 output tokens
+ * - o1 / o3 / o4-mini:    up to 100,000 output tokens
  *
  * The complete TDD document typically requires 8,000–16,000 output tokens
- * across all 8 sections. We request 32,000 to give the model maximum room —
- * the Azure OpenAI / OpenAI service will cap this at the model's actual limit
- * (e.g. 16,384 for gpt-4o) so over-requesting is safe. Sections 7 & 8 appear
- * near the end and were being truncated at the old 16,000 default.
+ * across all 8 sections. Default to 16,384 (gpt-4o hard limit) and only
+ * request more for models that genuinely support higher limits.
  */
 function resolveMaxOutputTokens(usesAzure: boolean): number {
   const envOverride = process.env.TDD_GENERATE_MAX_TOKENS;
@@ -96,10 +93,7 @@ function resolveMaxOutputTokens(usesAzure: boolean): number {
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? "").toLowerCase()
     : (process.env.AI_INTEGRATIONS_OPENAI_MODEL ?? "gpt-4o").toLowerCase();
 
-  // o-series and newer high-capacity models can handle 32k output tokens natively.
-  // For gpt-4o and others, the service caps the value at the model's actual limit
-  // (typically 16,384) — requesting 32,000 is safe and ensures we never leave
-  // tokens on the table artificially.
+  // o-series and gpt-4.1+ can handle 32k+ output tokens
   if (deployment.includes("o1") || deployment.includes("o3") || deployment.includes("o4")) {
     return 32_000;
   }
@@ -107,7 +101,8 @@ function resolveMaxOutputTokens(usesAzure: boolean): number {
     return 32_000;
   }
 
-  return 32_000;
+  // gpt-4o and gpt-4o-mini hard limit is 16,384 — Azure returns 400 if exceeded
+  return 16_384;
 }
 
 interface TddPersistenceContext {

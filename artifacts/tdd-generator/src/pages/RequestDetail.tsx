@@ -155,33 +155,51 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const EVENT_ICONS: Record<string, React.ElementType> = {
-  submitted:           Send,
-  ea_triage:           Clock,
-  ea_approved:         ShieldCheck,
-  ea_rejected:         ShieldX,
-  risk_approved:       ShieldCheck,
-  risk_rejected:       ShieldX,
-  tdd_started:         Play,
-  tdd_completed:       Flag,
-  devsecops_approved:  Code2,
-  devsecops_rejected:  ShieldX,
-  finops_active:       DollarSign,
-  comment:             MessageSquare,
+  submitted:                Send,
+  ea_triage:                Clock,
+  ea_approved:              ShieldCheck,
+  ea_rejected:              ShieldX,
+  modification_requested:   AlertTriangle,
+  risk_approved:            ShieldCheck,
+  risk_rejected:            ShieldX,
+  tdd_started:              Play,
+  tdd_completed:            Flag,
+  devsecops_approved:       Code2,
+  devsecops_rejected:       ShieldX,
+  finops_active:            DollarSign,
+  comment:                  MessageSquare,
+  viewed:                   Info,
+  deleted:                  Trash2,
+  audit_report_downloaded:  Download,
+  admin_user_created:       User,
+  admin_user_updated:       User,
+  admin_user_deleted:       Trash2,
+  delegation_created:       Network,
+  delegation_revoked:       ShieldX,
 };
 
 const EVENT_COLORS: Record<string, string> = {
-  submitted:           "bg-yellow-100 text-yellow-600 border-yellow-200",
-  ea_triage:           "bg-orange-100 text-orange-600 border-orange-200",
-  ea_approved:         "bg-green-100 text-green-600 border-green-200",
-  ea_rejected:         "bg-red-100 text-red-600 border-red-200",
-  risk_approved:       "bg-teal-100 text-teal-600 border-teal-200",
-  risk_rejected:       "bg-red-100 text-red-600 border-red-200",
-  tdd_started:         "bg-blue-100 text-blue-600 border-blue-200",
-  tdd_completed:       "bg-purple-100 text-purple-600 border-purple-200",
-  devsecops_approved:  "bg-indigo-100 text-indigo-600 border-indigo-200",
-  devsecops_rejected:  "bg-red-100 text-red-600 border-red-200",
-  finops_active:       "bg-emerald-100 text-emerald-600 border-emerald-200",
-  comment:             "bg-slate-100 text-slate-500 border-slate-200",
+  submitted:                "bg-yellow-100 text-yellow-600 border-yellow-200",
+  ea_triage:                "bg-orange-100 text-orange-600 border-orange-200",
+  ea_approved:              "bg-green-100 text-green-600 border-green-200",
+  ea_rejected:              "bg-red-100 text-red-600 border-red-200",
+  modification_requested:   "bg-amber-100 text-amber-600 border-amber-200",
+  risk_approved:            "bg-teal-100 text-teal-600 border-teal-200",
+  risk_rejected:            "bg-red-100 text-red-600 border-red-200",
+  tdd_started:              "bg-blue-100 text-blue-600 border-blue-200",
+  tdd_completed:            "bg-purple-100 text-purple-600 border-purple-200",
+  devsecops_approved:       "bg-indigo-100 text-indigo-600 border-indigo-200",
+  devsecops_rejected:       "bg-red-100 text-red-600 border-red-200",
+  finops_active:            "bg-emerald-100 text-emerald-600 border-emerald-200",
+  comment:                  "bg-slate-100 text-slate-500 border-slate-200",
+  viewed:                   "bg-slate-100 text-slate-400 border-slate-200",
+  deleted:                  "bg-red-100 text-red-600 border-red-200",
+  audit_report_downloaded:  "bg-blue-50 text-blue-500 border-blue-200",
+  admin_user_created:       "bg-green-100 text-green-600 border-green-200",
+  admin_user_updated:       "bg-blue-100 text-blue-600 border-blue-200",
+  admin_user_deleted:       "bg-red-100 text-red-600 border-red-200",
+  delegation_created:       "bg-violet-100 text-violet-600 border-violet-200",
+  delegation_revoked:       "bg-orange-100 text-orange-600 border-orange-200",
 };
 
 function getRiskSeverityClass(severity: "high" | "medium" | "info"): string {
@@ -261,51 +279,6 @@ function parseTerraformResources(hcl: string): { type: string; name: string }[] 
   return matches.map((m) => ({ type: m[1]!, name: m[2]! }));
 }
 
-function downloadAuditReport(request: ArchitectureRequest, events: RequestEvent[]) {
-  const sep = "─".repeat(60);
-  const lines = [
-    "MCCAIN FOODS — CLOUD ARCHITECTURE GOVERNANCE PORTAL",
-    "AUDIT REPORT",
-    sep,
-    `Request #${request.id}: ${request.title}`,
-    `Application:      ${request.applicationName}`,
-    `Type:             ${request.applicationType}`,
-    `Business Unit:    ${request.businessUnit}`,
-    `Line of Business: ${request.lineOfBusiness}`,
-    `Requestor:        ${request.requestorName} <${request.requestorEmail}>`,
-    `Status:           ${request.status}`,
-    `Priority:         ${request.priority}`,
-    `Deployment:       ${request.deploymentModel ?? "—"}`,
-    `Submitted:        ${new Date(request.createdAt).toLocaleString()}`,
-    ...(request.targetGoLiveDate ? [`Target Go-Live:   ${new Date(request.targetGoLiveDate).toLocaleDateString()}`] : []),
-    "",
-    sep,
-    `AUDIT TRAIL — ${events.length} events`,
-    sep,
-    "",
-    ...events.flatMap((ev) => [
-      `${new Date(ev.createdAt).toLocaleString()}`,
-      `  Actor:   ${ev.actorName} (${ev.actorRole})`,
-      `  Event:   ${ev.eventType.toUpperCase()}`,
-      `  Details: ${ev.description}`,
-      "",
-    ]),
-    sep,
-    `Report generated: ${new Date().toLocaleString()}`,
-    "McCain Foods CCoE — Cloud Architecture Governance Portal",
-  ];
-
-  const content = lines.join("\n");
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `mccain-architecture-request-${request.id}-audit-${new Date().toISOString().slice(0, 10)}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
 interface IacDeployStatus {
   id: number;
@@ -588,6 +561,24 @@ export default function RequestDetail() {
     } finally {
       setSubmittingComment(false);
     }
+  };
+
+  const handleDownloadAuditReport = async () => {
+    if (!request) return;
+    const res = await fetch(`${getApiBase()}/api/requests/${request.id}/audit-report`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mccain-architecture-request-${request.id}-audit-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleClone = async () => {
@@ -2207,7 +2198,7 @@ export default function RequestDetail() {
                 variant="outline"
                 size="sm"
                 className="h-7 px-2.5 text-xs gap-1.5 text-slate-500"
-                onClick={() => downloadAuditReport(request, events)}
+                onClick={() => { void handleDownloadAuditReport(); }}
               >
                 <Download className="w-3.5 h-3.5" />
                 Audit Report

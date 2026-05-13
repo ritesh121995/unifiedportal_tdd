@@ -9,6 +9,60 @@ import { useAuth } from "@/store/auth-context";
 import { getApiBase } from "@/lib/api-base";
 import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge";
 
+const PHASE_STEPS = ["Arch Review", "Tech Design", "Infrastructure", "Cost Mgmt"];
+
+// activeStep is 1-based: 1 = first phase active, 5 = all done
+function statusToPhase(status: string): { activeStep: number; rejected: boolean } {
+  switch (status) {
+    case "submitted":
+    case "ea_triage":
+    case "modification_requested": return { activeStep: 1, rejected: false };
+    case "ea_rejected":            return { activeStep: 1, rejected: true };
+    case "ea_approved":
+    case "tdd_in_progress":        return { activeStep: 2, rejected: false };
+    case "tdd_completed":          return { activeStep: 3, rejected: false };
+    case "devsecops_rejected":     return { activeStep: 3, rejected: true };
+    case "devsecops_approved":
+    case "vendor_active":          return { activeStep: 4, rejected: false };
+    case "finops_active":          return { activeStep: 5, rejected: false };
+    default:                       return { activeStep: 1, rejected: false };
+  }
+}
+
+function PhaseProgress({ status }: { status: string }) {
+  const { activeStep, rejected } = statusToPhase(status);
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <div className="flex items-center gap-0">
+        {PHASE_STEPS.map((label, i) => {
+          const done = i < activeStep - 1;
+          const active = i === activeStep - 1;
+          const isRejected = active && rejected;
+          return (
+            <div key={i} className="flex items-center">
+              <div
+                className={`w-2.5 h-2.5 rounded-full border transition-colors ${
+                  done        ? "bg-green-500 border-green-500" :
+                  isRejected  ? "bg-red-400 border-red-400" :
+                  active      ? "bg-yellow-400 border-yellow-400" :
+                                "bg-slate-100 border-slate-300"
+                }`}
+                title={label}
+              />
+              {i < PHASE_STEPS.length - 1 && (
+                <div className={`w-4 h-px ${done ? "bg-green-300" : "bg-slate-200"}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[9px] text-slate-400 leading-none">
+        {rejected ? "⚑ " : ""}{PHASE_STEPS[Math.min(activeStep - 1, PHASE_STEPS.length - 1)]}
+      </p>
+    </div>
+  );
+}
+
 interface ArchitectureRequest {
   id: number;
   title: string;
@@ -428,6 +482,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    <PhaseProgress status={req.status} />
                     <StatusBadge status={req.status} />
                     {user?.role === "admin" && (
                       confirmDeleteId === req.id ? (

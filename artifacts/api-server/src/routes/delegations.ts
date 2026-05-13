@@ -1,8 +1,13 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { portalSettingsTable } from "@workspace/db/schema";
+import { portalSettingsTable, requestEventsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
+
+// requestId 0 is a sentinel for admin/system-level events not tied to a specific request
+async function logAdminEvent(actorName: string, actorRole: string, eventType: string, description: string) {
+  await db.insert(requestEventsTable).values({ requestId: 0, actorName, actorRole, eventType, description });
+}
 
 const router = Router();
 router.use(authenticate);
@@ -108,6 +113,10 @@ router.post("/", requireRole("enterprise_architect", "cloud_architect", "admin")
     const existing = await loadDelegations();
     await saveDelegations([...existing, delegation]);
 
+    await logAdminEvent(user.name, user.role, "delegation_created",
+      `Approval delegation created — Delegated to: ${delegateName.trim()} (${delegateEmail.trim().toLowerCase()}), Scope: ${scope.trim()}, Period: ${startDate} to ${endDate}`
+    );
+
     res.status(201).json({ delegation });
   } catch {
     res.status(500).json({ error: "Failed to create delegation" });
@@ -133,6 +142,9 @@ router.delete("/:id", requireRole("enterprise_architect", "cloud_architect", "ad
     }
 
     await saveDelegations(existing.filter((d) => d.id !== id));
+    await logAdminEvent(user.name, user.role, "delegation_revoked",
+      `Approval delegation revoked — Delegate: ${target.delegateName} (${target.delegateEmail}), Scope: ${target.scope}, Original period: ${target.startDate} to ${target.endDate}`
+    );
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to remove delegation" });

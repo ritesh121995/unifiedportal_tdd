@@ -1400,6 +1400,7 @@ export default function SubmitRequest() {
                 options: ImpactOption[],
                 valueField: "securityImpact" | "dataImpact" | "integrationImpact" | "regulatoryImpact" | "aiImpact",
                 detailsField: "securityImpactDetails" | "dataImpactDetails" | "integrationImpactDetails" | "regulatoryImpactDetails" | "aiImpactDetails",
+                required = false,
               ) => {
                 const value = form[valueField];
                 const selected = options.find((o) => o.value === value);
@@ -1407,7 +1408,7 @@ export default function SubmitRequest() {
                 return (
                   <div className="space-y-2 pt-2 border-t border-slate-100 first:pt-0 first:border-t-0">
                     <div className="space-y-1.5">
-                      <Label className="flex items-center">{label}{tooltip && <FieldHelp text={tooltip} />}</Label>
+                      <Label className="flex items-center">{label}{required && <span className="text-red-500 ml-0.5">*</span>}{tooltip && <FieldHelp text={tooltip} />}</Label>
                       <Select value={value} onValueChange={(v) => update(valueField, v)}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`Select ${label.toLowerCase()} level`} />
@@ -1440,8 +1441,8 @@ export default function SubmitRequest() {
               };
               return (
                 <>
-                  {renderImpact("Security Impact", "Security Impact Details", SECURITY_IMPACT_OPTIONS, "securityImpact", "securityImpactDetails")}
-                  {renderImpact("Data Impact", "Data Impact Details", DATA_IMPACT_OPTIONS, "dataImpact", "dataImpactDetails")}
+                  {renderImpact("Security Impact", "Security Impact Details", SECURITY_IMPACT_OPTIONS, "securityImpact", "securityImpactDetails", true)}
+                  {renderImpact("Data Impact", "Data Impact Details", DATA_IMPACT_OPTIONS, "dataImpact", "dataImpactDetails", true)}
                   {renderImpact("Integration Impact", "Integration Impact Details", INTEGRATION_IMPACT_OPTIONS, "integrationImpact", "integrationImpactDetails")}
                   {renderImpact("Regulatory Impact", "Regulatory Impact Details", REGULATORY_IMPACT_OPTIONS, "regulatoryImpact", "regulatoryImpactDetails")}
                   {renderImpact("AI Impact", "AI Impact Details", AI_IMPACT_OPTIONS, "aiImpact", "aiImpactDetails")}
@@ -1567,7 +1568,7 @@ export default function SubmitRequest() {
             <div className="space-y-2">
               <Label className="flex items-center">Workload Tier <span className="text-red-500 ml-0.5">*</span><FieldHelp text="Tier 1 = Mission Critical (near-zero downtime). Tier 2 = Business Critical (limited downtime tolerated). Tier 3 = Standard (dev/test, internal tools). Drives SLA and HA architecture requirements." /></Label>
               <Select value={form.workloadTier} onValueChange={(v) => update("workloadTier", v)}>
-                <SelectTrigger className="w-64"><SelectValue placeholder="Select tier" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select tier" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Tier 0">Tier 0 — Mission Critical</SelectItem>
                   <SelectItem value="Tier 1">Tier 1 — Business Critical</SelectItem>
