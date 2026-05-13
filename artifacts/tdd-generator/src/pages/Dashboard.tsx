@@ -97,6 +97,41 @@ export default function Dashboard() {
   const completed = requests.filter((r) => r.status === "tdd_completed").length;
   const recent = requests.slice(0, 5);
 
+  // Compute requestor banner state — most urgent status wins
+  const hasActionRequired = requests.some((r) => r.status === "modification_requested");
+  const hasRejected = requests.some((r) => r.status === "ea_rejected" || r.status === "devsecops_rejected");
+  const allComplete = requests.length > 0 && requests.every((r) => r.status === "finops_active");
+  const hasActive = requests.some((r) =>
+    ["submitted", "ea_triage", "ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(r.status)
+  );
+  const requestorBanner: { icon: string; color: string; title: string; body: string } | null =
+    user.role !== "requestor" || requests.length === 0 ? null
+    : hasActionRequired ? {
+        icon: "⚠️",
+        color: "border-red-200 bg-red-50",
+        title: "Action required — changes requested",
+        body: "An Enterprise Architect has reviewed your submission and is requesting changes. Open the request below to respond and resubmit.",
+      }
+    : hasRejected ? {
+        icon: "✗",
+        color: "border-red-200 bg-red-50",
+        title: "One or more requests were not approved",
+        body: "A request has been reviewed and could not be approved at this stage. Click the request below to see the reviewer's comments.",
+      }
+    : allComplete ? {
+        icon: "✓",
+        color: "border-emerald-200 bg-emerald-50",
+        title: "All your requests are complete",
+        body: "Every request has cleared all phases and is fully onboarded into McCain's governance framework. You can submit a new request at any time.",
+      }
+    : hasActive ? {
+        icon: "⏱",
+        color: "border-amber-200 bg-amber-50",
+        title: "Your requests are in progress",
+        body: "You'll see updates here and in the notification bell (top right) as each request moves forward. Click any request below to see its current status and next steps.",
+      }
+    : null;
+
   const statusChartData = [
     { name: "Awaiting Review", value: submitted + eaTriage, fill: STATUS_COLORS.submitted },
     { name: "Approved", value: approved, fill: STATUS_COLORS.ea_approved },
@@ -224,18 +259,24 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 text-slate-500"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div>
       ) : (
         <>
-          {/* Next-step guidance for requestors */}
-          {user.role === "requestor" && requests.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
-              <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          {/* Next-step guidance for requestors — dynamic based on actual status */}
+          {requestorBanner && (
+            <div className={`rounded-xl border px-4 py-3 flex items-start gap-3 ${requestorBanner.color}`}>
+              <span className="text-lg shrink-0 leading-none mt-0.5">{requestorBanner.icon}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-amber-800">Your requests are being reviewed</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  You'll see updates here and in the notification bell (top right) as each request moves forward.
-                  Click any request below to see its current status and next steps.
+                <p className={`text-sm font-semibold ${allComplete ? "text-emerald-800" : hasActionRequired || hasRejected ? "text-red-800" : "text-amber-800"}`}>
+                  {requestorBanner.title}
+                </p>
+                <p className={`text-xs mt-0.5 ${allComplete ? "text-emerald-700" : hasActionRequired || hasRejected ? "text-red-700" : "text-amber-700"}`}>
+                  {requestorBanner.body}
                 </p>
               </div>
-              <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 shrink-0" onClick={() => setLocation("/requests")}>
+              <Button
+                size="sm"
+                variant="outline"
+                className={`shrink-0 ${allComplete ? "border-emerald-300 text-emerald-800 hover:bg-emerald-100" : hasActionRequired || hasRejected ? "border-red-300 text-red-800 hover:bg-red-100" : "border-amber-300 text-amber-800 hover:bg-amber-100"}`}
+                onClick={() => setLocation("/requests")}
+              >
                 View my requests
               </Button>
             </div>
