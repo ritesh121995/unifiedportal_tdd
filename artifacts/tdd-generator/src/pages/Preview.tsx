@@ -579,12 +579,12 @@ export default function Preview() {
   const handlePrintPdf = () => {
     const articleEl = previewRef.current;
     if (!articleEl) return;
-    const appName = formData.applicationName || "TDD Document";
+    const appName = formData.applicationName || "Technical Design";
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>${appName} — TDD</title>
+  <title>${appName} — Technical Design</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.5; padding: 2cm 2.5cm; }
@@ -773,7 +773,7 @@ ${articleEl.innerHTML}
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `TDD — ${formData.applicationName ?? "Application"}`,
+          title: `Technical Design — ${formData.applicationName ?? "Application"}`,
           markdownContent: content,
         }),
       });
@@ -1088,7 +1088,7 @@ ${articleEl.innerHTML}
                 >
                   {reviewCompleting
                     ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>
-                    : <><ClipboardCheck className="w-4 h-4 mr-2" />Mark TDD as Complete</>
+                    : <><ClipboardCheck className="w-4 h-4 mr-2" />Mark Technical Design as Complete</>
                   }
                 </Button>
               </div>
@@ -1135,7 +1135,7 @@ ${articleEl.innerHTML}
             <div className="flex items-center gap-4">
               <CheckCircle2 className="w-8 h-8 text-green-600 shrink-0" />
               <div className="flex-1">
-                <p className="font-semibold text-green-800">TDD Signed Off &amp; Complete</p>
+                <p className="font-semibold text-green-800">Technical Design Signed Off &amp; Complete</p>
                 <p className="text-sm text-green-700 mt-0.5">
                   This Technical Design Document has been reviewed and marked as complete. It is now visible to all stakeholders on the request.
                 </p>
@@ -1145,7 +1145,7 @@ ${articleEl.innerHTML}
                 onClick={() => setLocation(completedRequestId ? `/requests/${completedRequestId}#devsecops-section` : "/requests")}
                 className="shrink-0 border-green-300 text-green-700 hover:bg-green-100"
               >
-                View Request &amp; DevSecOps
+                View Request &amp; Infrastructure
               </Button>
             </div>
 
@@ -1153,7 +1153,7 @@ ${articleEl.innerHTML}
             <div className="border-t border-green-200 pt-3 flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2 text-sm text-green-700 flex-1">
                 <BookOpen className="w-4 h-4 text-[#0052CC]" />
-                <span>Publish this TDD to your Confluence space for wider visibility</span>
+                <span>Publish this design document to your Confluence space for wider visibility</span>
               </div>
               {confluenceResult ? (
                 <a
@@ -1199,7 +1199,7 @@ ${articleEl.innerHTML}
                   Select Azure Services for IaC
                 </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Services are auto-detected from your TDD. Adjust the selection — Terraform code and deployment will reflect your choices.
+                  Services are auto-detected from your Technical Design. Adjust the selection — Terraform code and deployment will reflect your choices.
                 </p>
               </div>
             </div>

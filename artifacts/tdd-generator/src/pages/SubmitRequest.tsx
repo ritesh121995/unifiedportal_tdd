@@ -59,35 +59,35 @@ const APP_TYPES: { value: string; label: string; desc: string; workflow: string;
     value: "New Application",
     label: "New Application",
     desc: "Building something brand new — no existing system to replace or enhance.",
-    workflow: "AI-assessed complexity: fast-tracked to TDD if simple, or routed through full EA review",
+    workflow: "AI-assessed complexity: fast-tracked to Technical Design if simple, or routed through full Architecture Review",
     icon: "🆕",
   },
   {
     value: "Enhancement / New Capability",
     label: "Enhancement / New Capability",
     desc: "Adding significant new features or capabilities to an existing application.",
-    workflow: "EA review required — existing application details will be requested",
+    workflow: "Architecture Review required — existing application details will be requested",
     icon: "✏️",
   },
   {
     value: "Cloud Migration",
     label: "Cloud Migration",
     desc: "Moving an existing on-premises or hosted application to Microsoft Azure.",
-    workflow: "Fast-tracked to TDD — EA review not required for migrations",
+    workflow: "Fast-tracked to Technical Design — Architecture Review not required for migrations",
     icon: "☁️",
   },
   {
     value: "Application Replacement",
     label: "Application Replacement",
     desc: "Replacing one system with another (new vendor, platform, or architecture).",
-    workflow: "Full review: EA approval → TDD → DevSecOps → FinOps",
+    workflow: "Full review: Architecture Review → Technical Design → Infrastructure Deployment → Cost Management",
     icon: "🔄",
   },
   {
     value: "Application Decommissioning",
     label: "Application Decommissioning",
     desc: "Retiring and shutting down an existing application and its infrastructure.",
-    workflow: "Lightweight review — dependency check, data disposal, cost sign-off. No TDD required.",
+    workflow: "Lightweight review — dependency check, data disposal, cost sign-off. No Technical Design required.",
     icon: "🗄️",
   },
   {
@@ -542,7 +542,7 @@ export default function SubmitRequest() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <p className={`text-sm font-semibold ${aiClassification === "simple" ? "text-blue-900" : "text-amber-900"}`}>
-                  {aiClassification === "simple" ? "AI Fast-Tracked → TDD Ready" : "AI Routed → EA Review Required"}
+                  {aiClassification === "simple" ? "AI Fast-Tracked → Design Ready" : "AI Routed → Architecture Review Required"}
                 </p>
                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
                   aiConfidence === "high" ? "bg-green-100 text-green-700 border-green-200" :
@@ -555,7 +555,7 @@ export default function SubmitRequest() {
               <p className={`text-xs ${aiClassification === "simple" ? "text-blue-800" : "text-amber-800"}`}>{aiReason}</p>
               <p className={`text-xs mt-1.5 font-medium ${aiClassification === "simple" ? "text-blue-700" : "text-amber-700"}`}>
                 {aiClassification === "simple"
-                  ? "Your request has been automatically approved and is ready for TDD generation."
+                  ? "Your request has been automatically approved and is ready for Technical Design generation."
                   : "Your request has been queued for Enterprise Architecture review. You will be notified once reviewed."}
               </p>
             </div>
@@ -709,7 +709,7 @@ export default function SubmitRequest() {
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">1</span>The Enterprise Architect reviews the submission and assigns the relevant domain architects identified above.</li>
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">2</span>Domain architects perform their respective reviews. Address all high-risk items before the review meeting.</li>
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">3</span>Architecture review meeting is scheduled. All stakeholders receive a calendar invitation with the agenda and required documentation.</li>
-                <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">4</span>TDD is produced and approved. DevSecOps and FinOps gates are cleared for provisioning.</li>
+                <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">4</span>Technical Design is produced and approved. Infrastructure Deployment and Cost Management gates are cleared for provisioning.</li>
               </ol>
             </CardContent>
           </Card>
@@ -754,15 +754,15 @@ export default function SubmitRequest() {
               <div className="flex-1">
                 <h3 className="font-bold text-[#1a1a2e] text-base">Simple App Fast-Track Active</h3>
                 <p className="text-sm text-slate-700 mt-1 leading-relaxed">
-                  Because this is a <strong>Simple application</strong>, EA review has been automatically approved. Your request has skipped the triage queue and is ready for TDD generation immediately.
+                  Because this is a <strong>Simple application</strong>, Architecture Review has been automatically approved. Your request has skipped the review queue and is ready for Technical Design generation immediately.
                 </p>
                 <div className="mt-3 space-y-1.5">
                   {[
-                    { done: true,  label: "ARR Submitted" },
-                    { done: true,  label: "EA Auto-Approved" },
-                    { done: false, label: "Network CIDRs Pre-filled → Generate TDD" },
-                    { done: false, label: "DevSecOps Review" },
-                    { done: false, label: "FinOps Activation" },
+                    { done: true,  label: "Request Submitted" },
+                    { done: true,  label: "Architecture Review — Auto-Approved" },
+                    { done: false, label: "Generate Technical Design" },
+                    { done: false, label: "Infrastructure Deployment" },
+                    { done: false, label: "Cost Management" },
                   ].map(({ done, label }) => (
                     <div key={label} className="flex items-center gap-2 text-sm">
                       {done
@@ -778,7 +778,7 @@ export default function SubmitRequest() {
                   style={{ background: "#FFCD00" }}
                   onClick={() => setLocation(`/requests/${submittedRequestId}`)}
                 >
-                  <Rocket className="w-4 h-4 mr-2" /> Open Request & Start TDD
+                  <Rocket className="w-4 h-4 mr-2" /> Open Request & Start Technical Design
                 </Button>
               </div>
             </div>
@@ -1249,12 +1249,12 @@ export default function SubmitRequest() {
                 </Select>
                 {isCloudTenant && (
                   <p className="text-[11px] text-blue-600 mt-1 flex items-center gap-1">
-                    <span className="font-semibold">Full workflow:</span> ARR → TDD Generation → DevSecOps/IaC → FinOps
+                    <span className="font-semibold">Full workflow:</span> Architecture Review → Technical Design → Infrastructure Deployment → Cost Management
                   </p>
                 )}
                 {isThirdParty && (
                   <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
-                    <span className="font-semibold">Simplified workflow:</span> ARR → FinOps monitoring only (vendor handles deployment)
+                    <span className="font-semibold">Simplified workflow:</span> Architecture Review → Cost Management only (vendor handles deployment)
                   </p>
                 )}
               </div>
@@ -1287,7 +1287,7 @@ export default function SubmitRequest() {
             {isCloudMigration && (
               <div className="flex items-start gap-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2.5 text-[12px] text-blue-900">
                 <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-blue-600" />
-                <span><strong>Fast-track enabled:</strong> Cloud Migrations are routed directly to TDD generation — full EA review is not required. Please provide existing application details in the next step.</span>
+                <span><strong>Fast-track enabled:</strong> Cloud Migrations are routed directly to Technical Design — full Architecture Review is not required. Please provide existing application details in the next step.</span>
               </div>
             )}
 
@@ -1295,7 +1295,7 @@ export default function SubmitRequest() {
             {isDecommission && (
               <div className="flex items-start gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2.5 text-[12px] text-amber-900">
                 <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
-                <span><strong>Lightweight review path:</strong> Application Decommissioning does not require a TDD. A dependency check, data disposal plan, and FinOps cost sign-off will be completed instead.</span>
+                <span><strong>Lightweight review path:</strong> Application Decommissioning does not require a Technical Design. A dependency check, data disposal plan, and Cost Management sign-off will be completed instead.</span>
               </div>
             )}
 
@@ -1830,12 +1830,12 @@ export default function SubmitRequest() {
         {isCloudTenant && !skipTDD && (
         <Card>
           <CardHeader className="pb-3">
-            <SectionTitle step={6} title="Technical Architecture" desc="Describe the solution design. Network CIDRs will be added by the Cloud Architect after EA approval." complete={sec7Done} />
+            <SectionTitle step={6} title="Technical Architecture" desc="Describe the solution design. Network CIDRs will be added by the Cloud Architect after Architecture Review." complete={sec7Done} />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="solution">Solution / TDD Name <span className="text-red-500">*</span></Label>
+                <Label htmlFor="solution">Solution Name <span className="text-red-500">*</span></Label>
                 <Input id="solution" placeholder="e.g. AgriData Platform" value={form.solution} onChange={(e) => update("solution", e.target.value)} required />
               </div>
               <div className="space-y-1.5">
@@ -1887,7 +1887,7 @@ export default function SubmitRequest() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <Label>Architecture Diagram <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
-                <span className="text-[11px] text-slate-400 font-normal">PNG, JPG, PDF or Visio — will be embedded in the TDD</span>
+                <span className="text-[11px] text-slate-400 font-normal">PNG, JPG, PDF or Visio — will be embedded in the Technical Design</span>
               </div>
               <input
                 ref={diagramInputRef}
