@@ -916,6 +916,100 @@ export default function RequestDetail() {
         </CardContent>
       </Card>}
 
+      {/* ─── Admin Action Banner — clearly shows what's pending and links directly to the action section ─── */}
+      {isAdmin && (() => {
+        const s = request.status;
+        type ActionConfig = { color: string; icon: React.ReactNode; heading: string; detail: string; anchor: string; label: string } | null;
+        const cfg: ActionConfig =
+          ["submitted", "ea_triage"].includes(s) ? {
+            color: "border-yellow-400 bg-yellow-50",
+            icon: <ShieldCheck className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />,
+            heading: "EA Review Required — Awaiting Enterprise Architecture Approval",
+            detail: "This request has been submitted and is pending EA review. As admin you can review the application details, consult the AI-suggested architecture pattern, and approve or request changes below.",
+            anchor: "#ea-review-section",
+            label: "Go to EA Approval ↓",
+          } : s === "modification_requested" ? {
+            color: "border-orange-400 bg-orange-50",
+            icon: <PenLine className="w-5 h-5 text-orange-600 shrink-0 mt-0.5" />,
+            heading: "Changes Requested — Waiting for Requestor to Resubmit",
+            detail: "The EA has requested modifications. The requestor must address the feedback and resubmit. No action is required from you at this time.",
+            anchor: "#ea-review-section",
+            label: "View EA Comments ↓",
+          } : ["ea_approved"].includes(s) ? {
+            color: "border-blue-400 bg-blue-50",
+            icon: <FileText className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />,
+            heading: "TDD Generation Required — Awaiting Cloud Architect",
+            detail: "The ARR is approved. A Cloud Architect must generate the Technical Design Document. As admin you can trigger TDD generation directly.",
+            anchor: "#tdd-action-section",
+            label: "Go to TDD Generation ↓",
+          } : s === "tdd_in_progress" ? {
+            color: "border-blue-300 bg-blue-50",
+            icon: <Loader2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />,
+            heading: "TDD In Progress — Cloud Architect is Generating the Document",
+            detail: "A Cloud Architect has started the TDD. You can re-generate it if needed.",
+            anchor: "#tdd-action-section",
+            label: "View TDD Section ↓",
+          } : s === "tdd_completed" ? {
+            color: "border-indigo-400 bg-indigo-50",
+            icon: <Code2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />,
+            heading: "DevSecOps / IaC Approval Required — Awaiting Cloud Architect Sign-off",
+            detail: "The TDD is complete. A Cloud Architect must review the Terraform IaC, complete the sign-off checklist, and approve the DevSecOps pipeline gates before FinOps activation.",
+            anchor: "#devsecops-section",
+            label: "Go to DevSecOps Sign-off ↓",
+          } : s === "devsecops_approved" ? {
+            color: "border-emerald-400 bg-emerald-50",
+            icon: <DollarSign className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />,
+            heading: "FinOps Activation Required — Final Step",
+            detail: "All technical approvals are complete. An Enterprise Architect must activate FinOps monitoring to enrol this workload in McCain's Azure Cost Management framework.",
+            anchor: "#finops-section",
+            label: "Go to FinOps Activation ↓",
+          } : s === "finops_active" ? {
+            color: "border-green-400 bg-green-50",
+            icon: <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />,
+            heading: "Fully Onboarded — No Action Required",
+            detail: "This request has completed all phases. The workload is active and enrolled in FinOps cost governance.",
+            anchor: "",
+            label: "",
+          } : s === "ea_rejected" ? {
+            color: "border-red-400 bg-red-50",
+            icon: <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />,
+            heading: "Request Rejected at EA Stage",
+            detail: "The Enterprise Architect rejected this ARR. See the EA comments below for the reason. The requestor can be asked to revise and resubmit.",
+            anchor: "#ea-review-section",
+            label: "View EA Decision ↓",
+          } : s === "devsecops_rejected" ? {
+            color: "border-red-400 bg-red-50",
+            icon: <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />,
+            heading: "DevSecOps Rejected — Cloud Architect Review Needed",
+            detail: "The DevSecOps approval was rejected. The Cloud Architect team must address the issues before re-submitting for approval.",
+            anchor: "#devsecops-section",
+            label: "View DevSecOps Decision ↓",
+          } : null;
+
+        if (!cfg) return null;
+        return (
+          <div className={`rounded-xl border-2 p-4 flex items-start gap-3 ${cfg.color}`}>
+            {cfg.icon}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800">{cfg.heading}</p>
+              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{cfg.detail}</p>
+            </div>
+            {cfg.anchor && (
+              <button
+                onClick={() => {
+                  const el = document.getElementById(cfg.anchor.replace("#", ""));
+                  el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: "#FFCD00", color: "#1a1a2e" }}
+              >
+                {cfg.label}
+              </button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ─── Phase Status View (requestors + admins) ─────────────────── */}
       {(isRequestor || isAdmin) && (() => {
         const s = request.status;
@@ -1082,16 +1176,21 @@ export default function RequestDetail() {
               phase={1}
               title="Architecture Review Request (ARR)"
               desc={
-                p1Status === "active"   ? "Your submission is currently being reviewed by the Enterprise Architecture team." :
-                p1Status === "done"     ? "EA review is complete and your request has been approved to proceed." :
-                p1Status === "revision" ? "The Enterprise Architect has reviewed your submission and is requesting changes before proceeding." :
-                "Your request was not approved at this stage. See the EA comments below."
+                isAdmin
+                  ? (p1Status === "active"   ? "Pending EA review. Use the action button to go directly to the EA approval section." :
+                     p1Status === "done"     ? `EA review complete — approved by ${request.eaReviewerName ?? "Enterprise Architect"}.` :
+                     p1Status === "revision" ? "Changes requested by EA. Awaiting requestor resubmission." :
+                     "Rejected at EA stage. See EA comments in the approval section below.")
+                  : (p1Status === "active"   ? "Your submission is currently being reviewed by the Enterprise Architecture team." :
+                     p1Status === "done"     ? "EA review is complete and your request has been approved to proceed." :
+                     p1Status === "revision" ? "The Enterprise Architect has reviewed your submission and is requesting changes before proceeding." :
+                     "Your request was not approved at this stage. See the EA comments below.")
               }
               status={p1Status}
               eaName={request.eaReviewerName ?? undefined}
-              eaComment={request.eaComments ?? undefined}
-              adminContinuePath="/ea-queue"
-              adminContinueLabel="Go to EA Review Queue"
+              eaComment={!isAdmin ? (request.eaComments ?? undefined) : undefined}
+              adminContinuePath="#ea-review-section"
+              adminContinueLabel="Go to EA Approval ↓"
             />
             {isCloudTenant && (
               <PhaseCard
@@ -1118,8 +1217,8 @@ export default function RequestDetail() {
               title="FinOps Activation"
               desc={p4Status === "done" ? "Your workload has been approved and is ready for provisioning. FinOps controls are active." : p4Status === "active" ? "Your workload is in the final FinOps activation stage. Cost allocation and budget controls are being configured." : "FinOps activation begins once all prior phases are approved."}
               status={p4Status}
-              adminContinuePath="/phase/5"
-              adminContinueLabel="Go to FinOps"
+              adminContinuePath="#finops-section"
+              adminContinueLabel="Go to FinOps ↓"
             />
 
             {/* ── Resubmit panel — requestors only (not admins) ── */}
@@ -1400,7 +1499,7 @@ export default function RequestDetail() {
 
       {/* Phase 1 — ARR / EA Review Panel */}
       {canEAReview && (
-        <Card className="border-yellow-200">
+        <Card id="ea-review-section" className="border-yellow-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <ShieldCheck className="w-4 h-4" style={{ color: "#b49000" }} />
@@ -2034,7 +2133,7 @@ export default function RequestDetail() {
 
       {/* Phase 4 — FinOps Activation (Cloud: after DevSecOps | 3rd Party: after ARR approval) */}
       {canFinOps && (
-        <Card className="border-emerald-200 bg-emerald-50">
+        <Card id="finops-section" className="border-emerald-200 bg-emerald-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-700" />
