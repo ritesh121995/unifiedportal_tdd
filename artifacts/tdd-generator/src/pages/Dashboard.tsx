@@ -28,11 +28,11 @@ interface ArchitectureRequest {
 
 const STATUS_LABELS: Record<string, string> = {
   submitted: "Submitted",
-  ea_triage: "EA Triage",
+  ea_triage: "Under Review",
   ea_approved: "Approved",
-  ea_rejected: "Rejected",
-  tdd_in_progress: "TDD In Progress",
-  tdd_completed: "Completed",
+  ea_rejected: "Not Approved",
+  tdd_in_progress: "Design In Progress",
+  tdd_completed: "Design Complete",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -52,10 +52,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const PHASES = [
-  { num: 1, label: "Architecture Review Request (ARR)", sub: "EA + Domain Architects · Cloud · Security · Network · Infra", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 Week", gate: "EA Sign-off" },
-  { num: 2, label: "CCoE App Intake (TDD Generation)", sub: "Technical Design Document · Cloud Tenant only", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 Hours", gate: "ARB Approval" },
-  { num: 3, label: "DevSecOps / IaC Deployment", sub: "Terraform via McCain Modules · Cloud Tenant only", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "2 Weeks", gate: "Dual Approval (PRD)" },
-  { num: 4, label: "FinOps — Cost Management", sub: "Ongoing Azure & Vendor Cost Governance", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly Review" },
+  { num: 1, label: "Submit & Architecture Review", sub: "Your request is reviewed by Enterprise Architects — they assess risk, security, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "EA sign-off" },
+  { num: 2, label: "Technical Design Document", sub: "Cloud Architects create a detailed design for your solution — covering infrastructure, security, and costs.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours (AI-assisted)", gate: "CA sign-off" },
+  { num: 3, label: "Infrastructure Setup", sub: "The approved design is deployed to Azure using automated infrastructure code. Environments are provisioned and tested.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
+  { num: 4, label: "Cost Management", sub: "Ongoing governance of cloud and vendor spend — budgets, tagging, and monthly cost reviews.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
 ];
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
@@ -98,11 +98,11 @@ export default function Dashboard() {
   const recent = requests.slice(0, 5);
 
   const statusChartData = [
-    { name: "Submitted", value: submitted + eaTriage, fill: STATUS_COLORS.submitted },
+    { name: "Awaiting Review", value: submitted + eaTriage, fill: STATUS_COLORS.submitted },
     { name: "Approved", value: approved, fill: STATUS_COLORS.ea_approved },
-    { name: "Rejected", value: rejected, fill: STATUS_COLORS.ea_rejected },
-    { name: "TDD Active", value: inProgress, fill: STATUS_COLORS.tdd_in_progress },
-    { name: "Completed", value: completed, fill: STATUS_COLORS.tdd_completed },
+    { name: "Not Approved", value: rejected, fill: STATUS_COLORS.ea_rejected },
+    { name: "Design Active", value: inProgress, fill: STATUS_COLORS.tdd_in_progress },
+    { name: "Complete", value: completed, fill: STATUS_COLORS.tdd_completed },
   ].filter((d) => d.value > 0);
 
   const priorityCounts: Record<string, number> = {};
@@ -123,10 +123,10 @@ export default function Dashboard() {
     : null;
 
   const roleDesc: Record<string, string> = {
-    requestor: "Submit onboarding requests and track your journey through the 6-phase process.",
-    enterprise_architect: "Review architecture requests, assess domains, and gate workloads for cloud readiness.",
-    cloud_architect: "Design Azure solutions, assess WAF pillars, generate TDDs, and drive deployment.",
-    admin: "Full portal access — manage all phases, queues, and onboarding governance.",
+    requestor: "Use this portal to request review for a new application, migration, or technology project. The architecture team will guide you through each step.",
+    enterprise_architect: "Review incoming architecture requests, assess risk and domain impact, and approve or route workloads for technical design.",
+    cloud_architect: "Pick up approved requests, generate Technical Design Documents, and drive infrastructure deployment.",
+    admin: "Full portal access — manage all phases, queues, users, and onboarding governance.",
   };
 
   return (
@@ -152,9 +152,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5-Phase overview cards */}
+      {/* Phase overview cards */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-600 mb-3 uppercase tracking-widest">Onboarding Framework — 5 Phases</h2>
+        <h2 className="text-sm font-semibold text-slate-700 mb-1">How does the onboarding process work?</h2>
+        <p className="text-xs text-slate-400 mb-3">Click any phase to learn more or take action.</p>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {PHASES.map((p) => {
             const Icon = p.icon;
@@ -189,27 +190,24 @@ export default function Dashboard() {
 
       {/* Timeline bar */}
       <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <p className="text-xs font-mono text-slate-400 uppercase tracking-widest mb-3">Indicative Timeline — End-to-End Engagement</p>
-        <div className="flex h-8 rounded overflow-hidden text-[9px] font-mono">
+        <p className="text-xs font-semibold text-slate-500 mb-1">Typical end-to-end timeline</p>
+        <p className="text-[11px] text-slate-400 mb-3">Times are approximate — complexity and approvals affect actual duration.</p>
+        <div className="flex h-9 rounded-lg overflow-hidden text-[10px] font-semibold">
           {[
-            { label: "P1 · EA & Arch", w: "14%" },
-            { label: "P2 · Risk", w: "14%" },
-            { label: "P3 · TDD", w: "14%" },
-            { label: "P4 · DevSecOps", w: "42%" },
-            { label: "P5 · FinOps ∞", w: "16%" },
+            { label: "Submit & Review", w: "14%", sub: "≤1 wk" },
+            { label: "Risk Assessment", w: "14%", sub: "1–3 days" },
+            { label: "Tech Design", w: "14%", sub: "1–2 hrs" },
+            { label: "Infrastructure Setup", w: "42%", sub: "~2 weeks" },
+            { label: "Cost Mgmt", w: "16%", sub: "ongoing" },
           ].map((seg, idx) => (
             <div
               key={seg.label}
-              className="flex items-center justify-center border-r border-yellow-600/40 last:border-r-0"
-              style={{ width: seg.w, background: "#FFCD00", color: "#1a1a2e", opacity: 0.7 + (idx % 2) * 0.3 }}
+              className="flex flex-col items-center justify-center border-r border-yellow-600/40 last:border-r-0 px-1"
+              style={{ width: seg.w, background: "#FFCD00", color: "#1a1a2e", opacity: 0.65 + (idx % 2) * 0.35 }}
             >
-              {seg.label}
+              <span className="truncate w-full text-center leading-tight">{seg.label}</span>
+              <span className="text-[9px] opacity-70 font-normal">{seg.sub}</span>
             </div>
-          ))}
-        </div>
-        <div className="flex mt-1.5">
-          {["Wk 1", "Wk 2", "Wk 3", "Wk 4", "Wk 6", "Wk 10", "Wk 14", "Wk 18+"].map((w) => (
-            <div key={w} className="flex-1 text-center text-[9px] font-mono text-slate-400">{w}</div>
           ))}
         </div>
       </div>
@@ -219,18 +217,35 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 text-slate-500"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div>
       ) : (
         <>
+          {/* Next-step guidance for requestors */}
+          {user.role === "requestor" && requests.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-800">Your requests are being reviewed</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  You'll see updates here and in the notification bell (top right) as each request moves forward.
+                  Click any request below to see its current status and next steps.
+                </p>
+              </div>
+              <Button size="sm" variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100 shrink-0" onClick={() => setLocation("/requests")}>
+                View my requests
+              </Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {user.role !== "cloud_architect" && (
-              <StatCard label="Pending Review" value={submitted + eaTriage} icon={Clock} color="bg-yellow-100 text-yellow-600" />
+              <StatCard label="Awaiting Review" value={submitted + eaTriage} icon={Clock} color="bg-yellow-100 text-yellow-600" />
             )}
-            <StatCard label="EA Approved" value={approved} icon={CheckCircle} color="bg-green-100 text-green-600" />
+            <StatCard label="Approved" value={approved} icon={CheckCircle} color="bg-green-100 text-green-600" />
             {user.role !== "requestor" && (
-              <StatCard label="EA Rejected" value={rejected} icon={XCircle} color="bg-red-100 text-red-600" />
+              <StatCard label="Not Approved" value={rejected} icon={XCircle} color="bg-red-100 text-red-600" />
             )}
-            <StatCard label="TDD In Progress" value={inProgress} icon={Cloud} color="bg-blue-100 text-blue-600" />
-            <StatCard label="TDD Completed" value={completed} icon={FileText} color="bg-purple-100 text-purple-600" />
+            <StatCard label="Design In Progress" value={inProgress} icon={Cloud} color="bg-blue-100 text-blue-600" />
+            <StatCard label="Design Complete" value={completed} icon={FileText} color="bg-purple-100 text-purple-600" />
             {avgDays !== null && (
-              <StatCard label="Avg CCoE Intake (days)" value={parseFloat(avgDays)} icon={BarChart3} color="bg-slate-100 text-slate-600" />
+              <StatCard label="Avg. Review Time (days)" value={parseFloat(avgDays)} icon={BarChart3} color="bg-slate-100 text-slate-600" />
             )}
           </div>
 

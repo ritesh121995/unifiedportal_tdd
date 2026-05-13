@@ -59,9 +59,9 @@ function SlaTag({ createdAt, status }: { createdAt: string; status: string }) {
   const days = daysSince(createdAt);
   if (days < SLA_THRESHOLD_DAYS) return null;
   return (
-    <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium text-orange-700 bg-orange-50 border-orange-200 shrink-0">
+    <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium text-orange-700 bg-orange-50 border-orange-200 shrink-0" title="Waiting for review for more than 3 days">
       <AlertCircle className="w-3 h-3" />
-      {days}d pending
+      Waiting {days}d
     </span>
   );
 }
@@ -189,7 +189,11 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
           <h1 className="text-2xl font-bold">
             {pageTitle ?? (user?.role === "requestor" ? "My Requests" : "All Architecture Requests")}
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">{requests.length} total · {filtered.length} shown</p>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {user?.role === "requestor"
+              ? `${requests.length} request${requests.length !== 1 ? "s" : ""} — click any row to see the current status, reviewer comments, and next steps.`
+              : `${requests.length} total · ${filtered.length} shown`}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -228,7 +232,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
           {(user?.role === "requestor" || user?.role === "admin") && (
             <Button className="bg-[#0078d4] hover:bg-[#106ebe]" onClick={() => setLocation("/requests/new")}>
               <PlusCircle className="w-4 h-4 mr-2" />
-              Submit New
+              New Request
             </Button>
           )}
         </div>
@@ -247,13 +251,13 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
-              <SelectItem value="ea_triage">EA Triage</SelectItem>
-              <SelectItem value="ea_approved">EA Approved</SelectItem>
-              <SelectItem value="ea_rejected">EA Rejected</SelectItem>
-              <SelectItem value="tdd_in_progress">TDD In Progress</SelectItem>
-              <SelectItem value="tdd_completed">TDD Completed</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="submitted">Submitted — awaiting review</SelectItem>
+              <SelectItem value="ea_triage">Under review</SelectItem>
+              <SelectItem value="ea_approved">Approved</SelectItem>
+              <SelectItem value="ea_rejected">Not approved</SelectItem>
+              <SelectItem value="tdd_in_progress">Technical design in progress</SelectItem>
+              <SelectItem value="tdd_completed">Technical design complete</SelectItem>
             </SelectContent>
           </Select>
         )}

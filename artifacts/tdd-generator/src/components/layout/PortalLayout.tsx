@@ -21,29 +21,34 @@ interface NavItem {
 
 const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
   {
-    label: "Overview",
+    label: "Home",
     items: [
       { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"] },
-      { label: "New Request", path: "/requests/new", icon: PlusCircle, roles: ["requestor", "admin"] },
+      { label: "Submit a Request", path: "/requests/new", icon: PlusCircle, roles: ["requestor", "admin"] },
     ],
   },
   {
-    label: "Onboarding Phases",
+    label: "Process Phases",
     items: [
-      { label: "Phase 1 — Architecture Review Request", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
-      { label: "Phase 2 — CCoE App Intake (TDD)", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
-      { label: "Phase 3 — DevSecOps / IaC", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
-      { label: "Phase 4 — FinOps", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 4 },
+      { label: "Phase 1 — Submit & Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
+      { label: "Phase 2 — Technical Design", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
+      { label: "Phase 3 — Infrastructure Setup", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
+      { label: "Phase 4 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 4 },
     ],
   },
   {
-    label: "Administration",
+    label: "My Work",
     items: [
       { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "My Requests", path: "/requests", icon: FileText, roles: ["requestor"] },
-      { label: "EA Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
-      { label: "TDD Queue", path: "/tdd-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
-      { label: "TDD History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
+      { label: "Architecture Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
+      { label: "Design Document Queue", path: "/tdd-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
+      { label: "Design Document History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
       { label: "User Management", path: "/admin/users", icon: UserCog, roles: ["admin"] },
       { label: "Approval Delegation", path: "/admin/delegations", icon: UserCheck, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "Integrations", path: "/integrations", icon: Plug, roles: ["admin"] },
@@ -74,11 +79,13 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const STATUS_CHANGE_LABELS: Record<string, string> = {
-  ea_triage: "moved to EA Triage",
-  ea_approved: "was approved by EA",
-  ea_rejected: "was rejected by EA",
-  tdd_in_progress: "TDD generation started",
-  tdd_completed: "TDD completed",
+  ea_triage: "is being reviewed by the architecture team",
+  ea_approved: "was approved — technical design will begin soon",
+  ea_rejected: "was not approved — check the request for details",
+  tdd_in_progress: "technical design document is being created",
+  tdd_completed: "technical design is complete and signed off",
+  devsecops_approved: "infrastructure setup has been approved",
+  finops_active: "is now live in cost management",
 };
 
 interface Notification {
@@ -330,9 +337,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         {/* Top header bar */}
         <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-mono tracking-widest uppercase">Enterprise Onboarding Portal</span>
+            <span className="text-xs text-slate-500 font-semibold">Application Onboarding Portal</span>
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-green-600 font-mono">Live</span>
+            <span className="text-xs text-green-600">Online</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400 font-mono">McCain CCoE · 2026</span>
@@ -341,7 +348,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               <button
                 onClick={() => setShowNotifs((v) => !v)}
                 className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-800"
-                title="Notifications"
+                title="Updates on your requests"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -375,19 +382,21 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
                   {/* Tabs */}
                   <div className="flex border-b border-slate-100">
-                    {(["notifications", "activity", "comments"] as const).map((tab) => (
+                    {([
+                      { key: "notifications", label: "Status Updates", icon: Bell },
+                      { key: "activity", label: "All Activity", icon: Activity },
+                      { key: "comments", label: "Comments", icon: MessageSquare },
+                    ] as const).map(({ key, label, icon: Icon }) => (
                       <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        key={key}
+                        onClick={() => setActiveTab(key)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium capitalize transition-colors border-b-2",
-                          activeTab === tab ? "text-slate-800 border-amber-400" : "text-slate-400 hover:text-slate-600 border-transparent"
+                          "flex-1 flex items-center justify-center gap-1 py-2 text-xs font-medium transition-colors border-b-2",
+                          activeTab === key ? "text-slate-800 border-amber-400" : "text-slate-400 hover:text-slate-600 border-transparent"
                         )}
                       >
-                        {tab === "notifications" && <Bell className="w-3 h-3" />}
-                        {tab === "activity" && <Activity className="w-3 h-3" />}
-                        {tab === "comments" && <MessageSquare className="w-3 h-3" />}
-                        {tab}
+                        <Icon className="w-3 h-3" />
+                        {label}
                       </button>
                     ))}
                   </div>
