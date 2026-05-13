@@ -438,6 +438,9 @@ export default function SubmitRequest() {
     }
     if (!form.securityImpact) { setError("Please select a Security Impact level. This is mandatory for all requests."); return; }
     if (!form.dataImpact) { setError("Please select a Data Impact level. This is mandatory for all requests."); return; }
+    if (!form.integrationImpact) { setError("Please select an Integration Impact level. This is mandatory for all requests."); return; }
+    if (!form.regulatoryImpact) { setError("Please select a Regulatory Impact level. This is mandatory for all requests."); return; }
+    if (!form.aiImpact) { setError("Please select an AI Impact level. This is mandatory for all requests."); return; }
     const picked = parseDateStr(form.targetGoLiveDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1247,16 +1250,6 @@ export default function SubmitRequest() {
                     {DEPLOYMENT_MODELS_OTHER.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {isCloudTenant && (
-                  <p className="text-[11px] text-blue-600 mt-1 flex items-center gap-1">
-                    <span className="font-semibold">Full workflow:</span> Architecture Review → Technical Design → Infrastructure Deployment → Cost Management
-                  </p>
-                )}
-                {isThirdParty && (
-                  <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
-                    <span className="font-semibold">Simplified workflow:</span> Architecture Review → Cost Management only (vendor handles deployment)
-                  </p>
-                )}
               </div>
             </div>
             {/* ─── Estimated Project Cost ─── */}
@@ -1413,7 +1406,7 @@ export default function SubmitRequest() {
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`Select ${label.toLowerCase()} level`} />
                         </SelectTrigger>
-                        <SelectContent className="w-full">
+                        <SelectContent className="w-[var(--radix-select-trigger-width)]">
                           {options.map((o) => (
                             <SelectItem key={o.value} value={o.value} description={o.desc || undefined}>
                               {o.label}
@@ -1443,9 +1436,9 @@ export default function SubmitRequest() {
                 <>
                   {renderImpact("Security Impact", "Security Impact Details", SECURITY_IMPACT_OPTIONS, "securityImpact", "securityImpactDetails", true)}
                   {renderImpact("Data Impact", "Data Impact Details", DATA_IMPACT_OPTIONS, "dataImpact", "dataImpactDetails", true)}
-                  {renderImpact("Integration Impact", "Integration Impact Details", INTEGRATION_IMPACT_OPTIONS, "integrationImpact", "integrationImpactDetails")}
-                  {renderImpact("Regulatory Impact", "Regulatory Impact Details", REGULATORY_IMPACT_OPTIONS, "regulatoryImpact", "regulatoryImpactDetails")}
-                  {renderImpact("AI Impact", "AI Impact Details", AI_IMPACT_OPTIONS, "aiImpact", "aiImpactDetails")}
+                  {renderImpact("Integration Impact", "Integration Impact Details", INTEGRATION_IMPACT_OPTIONS, "integrationImpact", "integrationImpactDetails", true)}
+                  {renderImpact("Regulatory Impact", "Regulatory Impact Details", REGULATORY_IMPACT_OPTIONS, "regulatoryImpact", "regulatoryImpactDetails", true)}
+                  {renderImpact("AI Impact", "AI Impact Details", AI_IMPACT_OPTIONS, "aiImpact", "aiImpactDetails", true)}
                 </>
               );
             })()}

@@ -692,17 +692,17 @@ ${articleEl.innerHTML}
   const handleCompleteWithReview = async () => {
     if (!pendingRequestId || !allReviewChecked) return;
     setReviewCompleting(true);
+    const targetId = pendingRequestId;
     try {
-      await fetch(`${getApiBase()}/api/requests/${pendingRequestId}/complete-tdd`, {
+      await fetch(`${getApiBase()}/api/requests/${targetId}/complete-tdd`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null, tddSubmissionId: pendingSubmissionId }),
       });
       localStorage.removeItem("activeRequestId");
-      setCompletedRequestId(pendingRequestId);
       setPendingRequestId(null);
-      setReviewCompleted(true);
+      setLocation(`/requests/${targetId}`);
     } catch {
       /* best-effort */
     } finally {
@@ -1001,8 +1001,21 @@ ${articleEl.innerHTML}
                 Use <span className="font-semibold text-amber-700">"Edit Document"</span> above to make changes before signing off. Confirm all items below when ready.
               </p>
             </div>
-            <div className="text-sm font-medium text-slate-600 shrink-0">
-              {Object.values(reviewChecked).filter(Boolean).length} / {REVIEW_CHECKLIST.length} confirmed
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-sm font-medium text-slate-600">
+                {Object.values(reviewChecked).filter(Boolean).length} / {REVIEW_CHECKLIST.length} confirmed
+              </span>
+              <button
+                type="button"
+                className="text-xs font-medium text-amber-700 hover:text-amber-900 underline underline-offset-2"
+                onClick={() => {
+                  const allChecked = REVIEW_CHECKLIST.every((item) => reviewChecked[item.id]);
+                  const newVal = !allChecked;
+                  setReviewChecked(Object.fromEntries(REVIEW_CHECKLIST.map((item) => [item.id, newVal])));
+                }}
+              >
+                {REVIEW_CHECKLIST.every((item) => reviewChecked[item.id]) ? "Deselect All" : "Select All"}
+              </button>
             </div>
           </div>
 

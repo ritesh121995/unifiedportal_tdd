@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/store/auth-context";
 import { useAppContext, type FormDraft } from "@/store/app-context";
 import { getApiBase } from "@/lib/api-base";
@@ -1112,8 +1113,8 @@ export default function RequestDetail() {
               {isAdmin ? "Phase Progress" : "Your Request Progress"}
             </p>
 
-            {/* Feature 4 — Visual package-tracking stepper (requestors only) */}
-            {!isAdmin && (() => {
+            {/* Horizontal phase stepper — shown for all users */}
+            {(() => {
               const phases = isCloudTenant
                 ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Cost Management"]
                 : ["Submitted", "Architecture Review", "Cost Management"];
@@ -1174,54 +1175,63 @@ export default function RequestDetail() {
               );
             })()}
 
-            <PhaseCard
-              phase={1}
-              title="Architecture Review"
-              desc={
-                isAdmin
-                  ? (p1Status === "active"   ? "Pending Architecture Review. Use the action button to go to the review section." :
-                     p1Status === "done"     ? `Architecture Review complete — approved by ${request.eaReviewerName ?? "Enterprise Architect"}.` :
-                     p1Status === "revision" ? "Changes requested by Enterprise Architect. Awaiting requestor resubmission." :
-                     "Rejected at Architecture Review stage. See reviewer comments in the approval section below.")
-                  : (p1Status === "active"   ? "Your submission is currently being reviewed by the Enterprise Architecture team." :
-                     p1Status === "done"     ? "Architecture Review is complete and your request has been approved to proceed." :
-                     p1Status === "revision" ? "The Enterprise Architect has reviewed your submission and is requesting changes before proceeding." :
-                     "Your request was not approved at this stage. See the reviewer comments below.")
-              }
-              status={p1Status}
-              eaName={request.eaReviewerName ?? undefined}
-              eaComment={!isAdmin ? (request.eaComments ?? undefined) : undefined}
-              adminContinuePath="#ea-review-section"
-              adminContinueLabel="Go to Architecture Review ↓"
-            />
-            {isCloudTenant && (
-              <PhaseCard
-                phase={2}
-                title="Technical Design"
-                desc={p2Status === "done" ? "The Technical Design Document has been completed and approved." : p2Status === "active" ? "The Cloud Architect is currently preparing the Technical Design Document." : "Awaiting completion of Phase 1 before Technical Design can begin."}
-                status={p2Status}
-                adminContinuePath="#tdd-action-section"
-                adminContinueLabel="Generate / Continue Technical Design"
-              />
-            )}
-            {isCloudTenant && (
-              <PhaseCard
-                phase={3}
-                title="Infrastructure Deployment"
-                desc={p3Status === "done" ? "Infrastructure Deployment pipeline has been approved." : p3Status === "active" ? "The completed Technical Design is under Infrastructure review for pipeline and security gate approval." : p3Status === "rejected" ? "Infrastructure Deployment review was not approved. The Cloud Architect team will be in contact." : "This phase begins after the Technical Design is completed and reviewed."}
-                status={p3Status}
-                adminContinuePath="#devsecops-section"
-                adminContinueLabel="Review & Approve"
-              />
-            )}
-            <PhaseCard
-              phase={isCloudTenant ? 4 : 2}
-              title="Cost Management"
-              desc={p4Status === "done" ? "Your workload has been approved and is ready for provisioning. Cost Management controls are active." : p4Status === "active" ? "Your workload is in the final Cost Management stage. Cost allocation and budget controls are being configured." : "Cost Management begins once all prior phases are approved."}
-              status={p4Status}
-              adminContinuePath="#finops-section"
-              adminContinueLabel="Go to Cost Management ↓"
-            />
+            {/* Current phase card — shows the first incomplete phase */}
+            {p4Status === "done" ? null
+              : p1Status !== "done" ? (
+                <PhaseCard
+                  phase={1}
+                  title="Architecture Review"
+                  desc={
+                    isAdmin
+                      ? (p1Status === "active"   ? "Pending Architecture Review. Use the action button to go to the review section." :
+                         p1Status === "revision" ? "Changes requested by Enterprise Architect. Awaiting requestor resubmission." :
+                         "Rejected at Architecture Review stage. See reviewer comments in the approval section below.")
+                      : (p1Status === "active"   ? "Your submission is currently being reviewed by the Enterprise Architecture team." :
+                         p1Status === "revision" ? "The Enterprise Architect has reviewed your submission and is requesting changes before proceeding." :
+                         "Your request was not approved at this stage. See the reviewer comments below.")
+                  }
+                  status={p1Status}
+                  eaName={request.eaReviewerName ?? undefined}
+                  eaComment={!isAdmin ? (request.eaComments ?? undefined) : undefined}
+                  adminContinuePath="#ea-review-section"
+                  adminContinueLabel="Go to Architecture Review ↓"
+                />
+              ) : isCloudTenant && p2Status !== "done" ? (
+                <PhaseCard
+                  phase={2}
+                  title="Technical Design"
+                  desc={p2Status === "active"
+                    ? (isAdmin ? "Architecture Review is approved. Generate the Technical Design Document to proceed." : "The Cloud Architect is currently preparing the Technical Design Document.")
+                    : (isAdmin ? "Architecture Review complete — Technical Design can now be started." : "Architecture Review is complete. The Cloud Architect team will begin the Technical Design.")}
+                  status={p2Status}
+                  adminContinuePath="#tdd-action-section"
+                  adminContinueLabel="Generate / Continue Technical Design"
+                />
+              ) : isCloudTenant && p3Status !== "done" && p3Status !== "skipped" ? (
+                <PhaseCard
+                  phase={3}
+                  title="Infrastructure Deployment"
+                  desc={p3Status === "active"
+                    ? (isAdmin ? "Technical Design is complete. Review and approve for deployment." : "The completed Technical Design is under Infrastructure review for pipeline and security gate approval.")
+                    : p3Status === "rejected" ? "Infrastructure Deployment review was not approved. The Cloud Architect team will be in contact."
+                    : "Awaiting Technical Design completion before Infrastructure Deployment can begin."}
+                  status={p3Status}
+                  adminContinuePath="#devsecops-section"
+                  adminContinueLabel="Review & Approve"
+                />
+              ) : (
+                <PhaseCard
+                  phase={isCloudTenant ? 4 : 2}
+                  title="Cost Management"
+                  desc={p4Status === "active"
+                    ? (isAdmin ? "Cost Management is now active. Use the action button to finalize provisioning." : "Your workload is in the final Cost Management stage. Cost allocation and budget controls are being configured.")
+                    : (isAdmin ? "All phases complete. Activate Cost Management to finalize." : "Cost Management begins once all prior phases are approved.")}
+                  status={p4Status}
+                  adminContinuePath="#finops-section"
+                  adminContinueLabel="Go to Cost Management ↓"
+                />
+              )
+            }
 
             {/* ── Resubmit panel — requestors only (not admins) ── */}
             {!isAdmin && s === "modification_requested" && (
@@ -1924,73 +1934,82 @@ export default function RequestDetail() {
 
                   {/* Deploy to Azure */}
                   {iacSelectedServices.length > 0 && !iacDeploymentId && (
-                    <div>
+                    <>
                       <Button
                         size="sm"
                         className="gap-1.5 font-semibold"
                         style={{ background: "#0078d4", color: "#fff" }}
-                        onClick={() => setIacDeployFormOpen((v) => !v)}
+                        onClick={() => setIacDeployFormOpen(true)}
                       >
                         <Rocket className="w-4 h-4" />
                         Deploy to Azure
                       </Button>
-                      {iacDeployFormOpen && (
-                        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
-                          <p className="text-xs text-blue-700">
-                            Deploys the selected services to the McCain Azure subscription via Container App service principal.
-                          </p>
-                          <div className="space-y-1">
-                            <Label>Admin Password (VM / SQL initial password)</Label>
-                            <Input
-                              type="password"
-                              value={iacDeployPassword}
-                              onChange={(e) => setIacDeployPassword(e.target.value)}
-                              placeholder="Minimum 12 characters, must include uppercase, number, symbol"
-                              className="bg-white"
-                            />
-                          </div>
-                          {iacSelectedServices.includes("vm") && (
-                            <div className="space-y-1">
-                              <Label>Allowed RDP Source CIDR</Label>
+                      <Dialog open={iacDeployFormOpen} onOpenChange={setIacDeployFormOpen}>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <Rocket className="w-5 h-5 text-[#0078d4]" />
+                              Deploy to Azure
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-2">
+                            <p className="text-sm text-slate-600">
+                              Deploys the selected services to the McCain Azure subscription via Container App service principal.
+                            </p>
+                            <div className="space-y-1.5">
+                              <Label>Admin Password <span className="text-red-500">*</span></Label>
                               <Input
-                                value={iacDeployRdpSource}
-                                onChange={(e) => setIacDeployRdpSource(e.target.value)}
-                                placeholder="e.g. 203.0.113.10/32 — your office or VPN public IP"
-                                className="bg-white font-mono text-xs"
+                                type="password"
+                                value={iacDeployPassword}
+                                onChange={(e) => setIacDeployPassword(e.target.value)}
+                                placeholder="Min 12 chars, uppercase, number, symbol"
                               />
-                              <p className="text-[11px] text-blue-600">Only public IPs are accepted. Use <code>whatismyip.com</code> to find yours.</p>
                             </div>
-                          )}
-                          <Button
-                            disabled={!iacDeployPassword || (iacSelectedServices.includes("vm") && !iacDeployRdpSource) || iacDeployLoading}
-                            onClick={() => { void handleIacDeploy(); }}
-                            style={{ background: "#0078d4", color: "#fff" }}
-                            size="sm"
-                          >
-                            {iacDeployLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
-                            Start Deployment
-                          </Button>
-                          {iacDeployError && (
-                            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 space-y-1">
-                              <p>{iacDeployError}</p>
-                              {iacDeployError.toLowerCase().includes("subscription") && (
-                                <p className="text-xs">
-                                  Go to{" "}
-                                  <button
-                                    type="button"
-                                    className="underline font-medium text-red-700 hover:text-red-900"
-                                    onClick={() => setLocation("/integrations")}
-                                  >
-                                    Integrations → Azure
-                                  </button>{" "}
-                                  to configure your Azure Service Principal credentials.
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                            {iacSelectedServices.includes("vm") && (
+                              <div className="space-y-1.5">
+                                <Label>Allowed RDP Source CIDR <span className="text-red-500">*</span></Label>
+                                <Input
+                                  value={iacDeployRdpSource}
+                                  onChange={(e) => setIacDeployRdpSource(e.target.value)}
+                                  placeholder="e.g. 203.0.113.10/32"
+                                  className="font-mono text-xs"
+                                />
+                                <p className="text-[11px] text-slate-500">Only public IPs are accepted. Use <code>whatismyip.com</code> to find yours.</p>
+                              </div>
+                            )}
+                            {iacDeployError && (
+                              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 space-y-1">
+                                <p>{iacDeployError}</p>
+                                {iacDeployError.toLowerCase().includes("subscription") && (
+                                  <p className="text-xs">
+                                    Go to{" "}
+                                    <button
+                                      type="button"
+                                      className="underline font-medium text-red-700 hover:text-red-900"
+                                      onClick={() => { setIacDeployFormOpen(false); setLocation("/integrations"); }}
+                                    >
+                                      Integrations → Azure
+                                    </button>{" "}
+                                    to configure your Azure Service Principal credentials.
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIacDeployFormOpen(false)}>Cancel</Button>
+                            <Button
+                              disabled={!iacDeployPassword || (iacSelectedServices.includes("vm") && !iacDeployRdpSource) || iacDeployLoading}
+                              onClick={() => { void handleIacDeploy(); }}
+                              style={{ background: "#0078d4", color: "#fff" }}
+                            >
+                              {iacDeployLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
+                              Start Deployment
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </>
                   )}
 
                   {/* Deployment Status */}
@@ -2165,24 +2184,32 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* FinOps active display */}
-      {request.status === "finops_active" && request.finopsActivatedBy && (
-        <Card className="border-emerald-200 bg-emerald-50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-sm text-emerald-800">
-                  Cost Management Activated by {request.finopsActivatedBy}
-                </p>
-                {request.finopsActivatedAt && (
-                  <p className="text-xs text-slate-500 mt-0.5">{new Date(request.finopsActivatedAt).toLocaleString()}</p>
-                )}
-                <p className="text-xs text-emerald-700 mt-1">Workload is fully onboarded and enrolled in cost governance.</p>
+      {/* Request fully complete — prominent completion banner */}
+      {request.status === "finops_active" && (
+        <div className="rounded-2xl border-2 border-emerald-400 overflow-hidden shadow-md">
+          <div className="px-6 py-5 text-center space-y-2" style={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%)" }}>
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <CheckCircle className="w-8 h-8 text-emerald-500" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <h3 className="text-xl font-bold text-emerald-900">Request Complete</h3>
+            <p className="text-sm text-emerald-800 max-w-sm mx-auto">
+              All phases are complete. This workload is fully onboarded into McCain's governance framework and actively monitored.
+            </p>
+          </div>
+          {request.finopsActivatedBy && (
+            <div className="bg-white px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+              <span className="text-slate-600">
+                Cost Management activated by{" "}
+                <span className="font-semibold text-slate-800">{request.finopsActivatedBy}</span>
+              </span>
+              {request.finopsActivatedAt && (
+                <span className="text-xs text-slate-400">{new Date(request.finopsActivatedAt).toLocaleString()}</span>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ─── Comments (EA/CA/admin only) — activity timeline is in the notification panel ── */}
