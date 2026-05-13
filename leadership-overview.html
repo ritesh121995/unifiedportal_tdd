@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McCain Unified Cloud Onboarding Portal — Leadership Overview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --yellow: #FFCD00;
+      --yellow-dim: #b49000;
+      --navy: #1a1a2e;
+      --navy-mid: #2d1a35;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #f8fafc;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #e8edf3;
+      color: var(--text);
+      padding: 32px 16px;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 8px 60px rgba(0,0,0,0.14);
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 36px 44px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .header-circle1 {
+      position: absolute; top: -50px; right: -50px;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: var(--yellow); opacity: 0.07;
+    }
+    .header-circle2 {
+      position: absolute; bottom: -80px; right: 140px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: var(--yellow); opacity: 0.04;
+    }
+    .header-inner {
+      position: relative; z-index: 1;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 32px;
+    }
+    .header-eyebrow {
+      font-family: 'Outfit', sans-serif;
+      font-size: 9.5px; font-weight: 700;
+      letter-spacing: 3.5px; text-transform: uppercase;
+      color: var(--yellow); margin-bottom: 10px;
+    }
+    .header-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 30px; font-weight: 900;
+      color: white; line-height: 1.12; margin-bottom: 12px;
+    }
+    .header-title em { color: var(--yellow); font-style: normal; }
+    .header-tagline {
+      font-size: 12.5px; color: rgba(255,255,255,0.62);
+      max-width: 460px; line-height: 1.65;
+    }
+    .header-tags {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px;
+    }
+    .header-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 3px 11px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.07);
+    }
+    .stat-column {
+      display: flex; flex-direction: column; gap: 0;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      overflow: hidden; min-width: 168px; flex-shrink: 0;
+    }
+    .stat-item {
+      padding: 16px 22px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-item:last-child { border-bottom: none; }
+    .stat-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px; font-weight: 900; color: var(--yellow);
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 10px; color: rgba(255,255,255,0.5);
+      margin-top: 4px; line-height: 1.4;
+    }
+
+    /* ── Divider label ─────────────────────────────────────── */
+    .section-label {
+      font-size: 9.5px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--yellow-dim); margin-bottom: 14px;
+    }
+
+    /* ── Challenge / Solution ─────────────────────────────── */
+    .cs-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      padding: 28px 44px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cs-box {
+      border-radius: 14px; padding: 20px 22px;
+    }
+    .cs-box.challenge { background: #fff5f5; border: 1px solid #fecaca; }
+    .cs-box.solution  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .cs-box-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px; font-weight: 700;
+      margin-bottom: 13px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cs-box.challenge .cs-box-title { color: #b91c1c; }
+    .cs-box.solution  .cs-box-title { color: #15803d; }
+    .cs-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .cs-list li {
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 11.5px; color: var(--text); line-height: 1.55;
+    }
+    .cs-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      margin-top: 5px; flex-shrink: 0;
+    }
+    .challenge .cs-dot { background: #ef4444; }
+    .solution  .cs-dot { background: #22c55e; }
+
+    /* ── Phase Journey ─────────────────────────────────────── */
+    .phase-section {
+      background: var(--navy);
+      padding: 28px 44px 32px;
+    }
+    .phase-section .section-label { color: rgba(255,205,0,0.7); }
+    .phase-section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px; font-weight: 700;
+      color: white; margin-bottom: 4px;
+    }
+    .phase-section-sub {
+      font-size: 11.5px; color: rgba(255,255,255,0.45);
+      margin-bottom: 22px;
+    }
+    .phases-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .phase-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 18px 16px;
+      position: relative;
+    }
+    .phase-connector {
+      position: absolute; right: -18px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px; color: rgba(255,205,0,0.35);
+      z-index: 2; pointer-events: none;
+    }
+    .phase-num-badge {
+      display: inline-block;
+      font-family: 'Outfit', sans-serif;
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--yellow); opacity: 0.75;
+      margin-bottom: 10px;
+    }
+    .phase-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13.5px; font-weight: 700;
+      color: white; line-height: 1.3; margin-bottom: 7px;
+    }
+    .phase-desc {
+      font-size: 10.5px; color: rgba(255,255,255,0.5);
+      line-height: 1.55; margin-bottom: 13px;
+    }
+    .phase-meta {
+      border-top: 1px solid rgba(255,255,255,0.09);
+      padding-top: 10px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .phase-meta-row {
+      font-size: 9.5px; color: rgba(255,255,255,0.38);
+    }
+    .phase-meta-row b { color: rgba(255,205,0,0.75); font-weight: 600; }
+
+    /* ── Capabilities ──────────────────────────────────────── */
+    .caps-section {
+      padding: 28px 44px;
+      border-bottom: 1px solid var(--border);
+    }
+    .caps-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    .cap-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px;
+    }
+    .cap-icon {
+      font-size: 20px; margin-bottom: 9px; display: block;
+    }
+    .cap-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px; font-weight: 700;
+      color: var(--text); margin-bottom: 5px;
+    }
+    .cap-desc {
+      font-size: 11px; color: var(--muted); line-height: 1.55;
+    }
+
+    /* ── Bottom Row ────────────────────────────────────────── */
+    .bottom-row {
+      display: grid; grid-template-columns: 1.1fr 1fr; gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .bottom-col {
+      padding: 26px 44px;
+    }
+    .bottom-col + .bottom-col {
+      border-left: 1px solid var(--border);
+      padding-left: 32px;
+    }
+
+    .integration-chips {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px;
+      border: 1px solid var(--border); background: white;
+      font-size: 11px; font-weight: 600; color: var(--text);
+    }
+    .chip-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .roles-list { display: flex; flex-direction: column; gap: 11px; }
+    .role-row { display: flex; align-items: flex-start; gap: 10px; }
+    .role-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 3px 9px; border-radius: 6px;
+      white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+    }
+    .role-txt { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Footer ────────────────────────────────────────────── */
+    .footer {
+      background: var(--navy);
+      padding: 16px 44px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-left {
+      font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.5;
+    }
+    .footer-left strong { color: rgba(255,255,255,0.85); }
+    .footer-right {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .footer-pill {
+      font-size: 9.5px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 20px;
+      border: 1px solid rgba(255,205,0,0.3);
+      color: rgba(255,205,0,0.7);
+    }
+    .footer-copy {
+      font-size: 10px; color: rgba(255,255,255,0.3);
+    }
+
+    /* ── Print ─────────────────────────────────────────────── */
+    @media print {
+      body { background: white; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; max-width: 100%; }
+      @page { margin: 0; size: A4 portrait; }
+      .header { padding: 24px 36px 20px; }
+      .cs-row, .caps-section, .bottom-col { padding: 20px 36px; }
+      .phase-section { padding: 20px 36px 24px; }
+      .footer { padding: 12px 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ── Header ── -->
+    <div class="header">
+      <div class="header-circle1"></div>
+      <div class="header-circle2"></div>
+      <div class="header-inner">
+        <div>
+          <div class="header-eyebrow">McCain Foods &nbsp;·&nbsp; Cloud Centre of Excellence</div>
+          <div class="header-title">Unified Cloud<br/><em>Onboarding Portal</em></div>
+          <div class="header-tagline">
+            A single, governed platform that takes every cloud workload from initial business request
+            to provisioned infrastructure — with AI-assisted design, structured reviews, and full cost governance.
+          </div>
+          <div class="header-tags">
+            <span class="header-tag">AI-Assisted Design</span>
+            <span class="header-tag">Structured Governance</span>
+            <span class="header-tag">Azure Native</span>
+            <span class="header-tag">Automated IaC</span>
+            <span class="header-tag">Full Audit Trail</span>
+          </div>
+        </div>
+        <div class="stat-column">
+          <div class="stat-item">
+            <div class="stat-val">4</div>
+            <div class="stat-lbl">Governance<br/>Phases</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val">AI</div>
+            <div class="stat-lbl">Design Doc<br/>Generation</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val">360°</div>
+            <div class="stat-lbl">Cost<br/>Visibility</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Challenge / Solution ── -->
+    <div class="cs-row">
+      <div class="cs-box challenge">
+        <div class="cs-box-title">
+          <span>⚠</span> The Challenge
+        </div>
+        <ul class="cs-list">
+          <li><span class="cs-dot"></span>Cloud requests managed via email and spreadsheets with no standardised process</li>
+          <li><span class="cs-dot"></span>Inconsistent architecture reviews leading to security gaps and unplanned costs</li>
+          <li><span class="cs-dot"></span>No single source of truth for design decisions or cloud workload inventory</li>
+          <li><span class="cs-dot"></span>Limited leadership visibility into cloud spend, risk, and governance status</li>
+        </ul>
+      </div>
+      <div class="cs-box solution">
+        <div class="cs-box-title">
+          <span>✓</span> Our Solution
+        </div>
+        <ul class="cs-list">
+          <li><span class="cs-dot"></span>Single portal for end-to-end cloud onboarding with structured, repeatable workflows</li>
+          <li><span class="cs-dot"></span>AI-assisted risk assessment and automated Technical Design Document generation</li>
+          <li><span class="cs-dot"></span>Full audit trail with role-based approvals, delegation, and modification tracking</li>
+          <li><span class="cs-dot"></span>Integrated cost governance with budget alerts, tagging, and chargeback reporting</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── 4-Phase Journey ── -->
+    <div class="phase-section">
+      <div class="section-label">The Onboarding Journey</div>
+      <div class="phase-section-title">From Business Request to Provisioned Workload</div>
+      <div class="phase-section-sub">Every cloud workload follows a consistent, auditable path through four governance phases.</div>
+      <div class="phases-grid">
+
+        <div class="phase-card">
+          <span class="phase-connector">›</span>
+          <div class="phase-num-badge">Phase 01</div>
+          <div class="phase-name">Architecture Review</div>
+          <div class="phase-desc">Enterprise and Security Architects assess the request for risk, compliance, and technical fit before any design work begins.</div>
+          <div class="phase-meta">
+            <div class="phase-meta-row">Duration &nbsp;<b>≤ 1 week</b></div>
+            <div class="phase-meta-row">Gate &nbsp;<b>Architecture sign-off</b></div>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <span class="phase-connector">›</span>
+          <div class="phase-num-badge">Phase 02</div>
+          <div class="phase-name">Technical Design</div>
+          <div class="phase-desc">Cloud Architects generate an AI-assisted Technical Design Document covering infrastructure, security controls, and cost estimates.</div>
+          <div class="phase-meta">
+            <div class="phase-meta-row">Duration &nbsp;<b>1–2 hours</b></div>
+            <div class="phase-meta-row">Gate &nbsp;<b>CA sign-off</b></div>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <span class="phase-connector">›</span>
+          <div class="phase-num-badge">Phase 03</div>
+          <div class="phase-name">Infrastructure Deployment</div>
+          <div class="phase-desc">The approved design is deployed to Azure via automated, policy-enforced Terraform pipelines across all target environments.</div>
+          <div class="phase-meta">
+            <div class="phase-meta-row">Duration &nbsp;<b>~2 weeks</b></div>
+            <div class="phase-meta-row">Gate &nbsp;<b>Dual approval for Prod</b></div>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-num-badge">Phase 04</div>
+          <div class="phase-name">Cost Management</div>
+          <div class="phase-desc">Ongoing budget alerts, cost allocation, savings recommendations, and monthly chargeback reporting for all active workloads.</div>
+          <div class="phase-meta">
+            <div class="phase-meta-row">Duration &nbsp;<b>Ongoing</b></div>
+            <div class="phase-meta-row">Gate &nbsp;<b>Monthly review</b></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Key Capabilities ── -->
+    <div class="caps-section">
+      <div class="section-label">Key Capabilities</div>
+      <div class="caps-grid">
+
+        <div class="cap-card">
+          <span class="cap-icon">🤖</span>
+          <div class="cap-title">AI-Assisted Design Generation</div>
+          <div class="cap-desc">Powered by Claude AI — auto-generates Technical Design Documents with architecture diagrams, risk analysis, and infrastructure recommendations in under 2 hours.</div>
+        </div>
+
+        <div class="cap-card">
+          <span class="cap-icon">🛡️</span>
+          <div class="cap-title">Structured Architecture Review</div>
+          <div class="cap-desc">Standardised EA review workflow with AI-identified risk flags, scoring, recommended architect assignment, and modification tracking.</div>
+        </div>
+
+        <div class="cap-card">
+          <span class="cap-icon">⚙️</span>
+          <div class="cap-title">Infrastructure as Code</div>
+          <div class="cap-desc">Terraform modules auto-generated from approved designs. Supports 15+ Azure services including AKS, SQL, App Service, APIM, and Key Vault.</div>
+        </div>
+
+        <div class="cap-card">
+          <span class="cap-icon">💰</span>
+          <div class="cap-title">Cost Governance</div>
+          <div class="cap-desc">Azure Cost Management integration with real-time budget alerts, savings recommendations (ROI-ranked), and monthly subscription chargeback reports.</div>
+        </div>
+
+        <div class="cap-card">
+          <span class="cap-icon">👥</span>
+          <div class="cap-title">Role-Based Access & Delegation</div>
+          <div class="cap-desc">Four roles — Requestor, Enterprise Architect, Cloud Architect, Admin — with full delegation and substitution support for business continuity.</div>
+        </div>
+
+        <div class="cap-card">
+          <span class="cap-icon">📋</span>
+          <div class="cap-title">Audit Trail & Compliance</div>
+          <div class="cap-desc">Every action is logged — approvals, comments, design versions, and deployment events. Downloadable audit reports for compliance and governance reviews.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Integrations + Roles ── -->
+    <div class="bottom-row">
+      <div class="bottom-col">
+        <div class="section-label">Integration Ecosystem</div>
+        <div class="integration-chips">
+          <div class="chip"><span class="chip-dot" style="background:#0078d4;"></span>Microsoft Azure</div>
+          <div class="chip"><span class="chip-dot" style="background:#ee4a27;"></span>LeanIX</div>
+          <div class="chip"><span class="chip-dot" style="background:#0052CC;"></span>Confluence</div>
+          <div class="chip"><span class="chip-dot" style="background:#7B42BC;"></span>Terraform</div>
+          <div class="chip"><span class="chip-dot" style="background:#0078d4;"></span>Azure DevOps</div>
+          <div class="chip"><span class="chip-dot" style="background:#24292e;"></span>GitHub Actions</div>
+          <div class="chip"><span class="chip-dot" style="background:#d97706;"></span>Claude AI</div>
+          <div class="chip"><span class="chip-dot" style="background:#ef4444;"></span>Azure Cost Mgmt</div>
+        </div>
+      </div>
+      <div class="bottom-col">
+        <div class="section-label">Who Uses It</div>
+        <div class="roles-list">
+          <div class="role-row">
+            <span class="role-badge" style="background:#fef3c7; color:#92400e;">Application Teams</span>
+            <div class="role-txt">Submit and track cloud onboarding requests from end to end.</div>
+          </div>
+          <div class="role-row">
+            <span class="role-badge" style="background:#ede9fe; color:#5b21b6;">Enterprise Architects</span>
+            <div class="role-txt">Review, assess risk, and approve or route incoming workload requests.</div>
+          </div>
+          <div class="role-row">
+            <span class="role-badge" style="background:#dbeafe; color:#1e40af;">Cloud Architects</span>
+            <div class="role-txt">Generate Technical Designs, manage IaC pipelines, and govern infrastructure.</div>
+          </div>
+          <div class="role-row">
+            <span class="role-badge" style="background:#dcfce7; color:#166534;">CCoE Admins</span>
+            <div class="role-txt">Manage platform configuration, users, integrations, and governance.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="footer">
+      <div class="footer-left">
+        <strong>McCain Foods — Cloud Centre of Excellence</strong><br/>
+        Unified Cloud Onboarding Portal &nbsp;·&nbsp; Internal Use Only &nbsp;·&nbsp; © 2025 McCain Foods Limited
+      </div>
+      <div class="footer-right">
+        <span class="footer-pill">Confidential</span>
+        <span class="footer-copy">Built on React · Azure · Claude AI</span>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
