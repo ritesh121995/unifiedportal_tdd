@@ -98,13 +98,13 @@ export default function Phase5DevSecOps() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 04 · Terraform via McCain Certified Modules</p>
-            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>DevSecOps / IaC Deployment</h1>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 4 · Infrastructure Setup</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Infrastructure Setup & Deployment</h1>
             <p className="text-sm opacity-80 max-w-xl">
-              Deploy approved services through the McCain DevSecOps pipeline using certified Terraform modules. Enforces policy-as-code, Checkov scanning, and OPA gates across QA → STG → PRD.
+              Deploy approved services through the McCain infrastructure pipeline using certified modules. Automated security scanning and policy checks run across all environments before production.
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
-              {["Terraform IaC", "McCain Registry", "Policy-as-Code", "Azure DevOps", "4-Stage Pipeline"].map((tag) => (
+              {["Certified Modules", "Security Scanning", "Policy Checks", "4-Stage Pipeline"].map((tag) => (
                 <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-mono border border-white/30 bg-white/10">{tag}</span>
               ))}
             </div>

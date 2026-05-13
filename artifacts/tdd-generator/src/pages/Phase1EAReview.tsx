@@ -132,13 +132,13 @@ export default function Phase1EAReview() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 01 · Unified Architecture Review</p>
-            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>CCoE Architecture Intake</h1>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 1 · Submit & Review</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Architecture Review</h1>
             <p className="text-sm opacity-80 max-w-xl">
-              Single consolidated review covering Enterprise, Cloud Architecture, and Cloud Security — completed within one week with ARB sign-off.
+              Single consolidated review covering Enterprise, Cloud Architecture, and Cloud Security — completed within one week with architecture board sign-off.
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
-              {["TOGAF 9.2", "Cloud Architecture", "Cloud Security", "Azure WAF", "ARB Gate"].map((tag) => (
+              {["Cloud Architecture", "Cloud Security", "Azure WAF"].map((tag) => (
                 <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-mono border border-white/30 bg-white/10">{tag}</span>
               ))}
             </div>
@@ -233,7 +233,7 @@ export default function Phase1EAReview() {
                 { label: "Business Case Document", status: "uploaded", size: "2.4 MB" },
                 { label: "Current Architecture Diagrams", status: "uploaded", size: "8.1 MB" },
                 { label: "Integration Catalogue v3.xlsx", status: "pending", size: "—" },
-                { label: "ARB Review Package Template", status: "required", size: "—" },
+                { label: "Architecture Review Package", status: "required", size: "—" },
               ].map((doc) => (
                 <div key={doc.label} className="flex items-center justify-between text-xs p-2 bg-slate-50 rounded-lg">
                   <div className="flex items-center gap-2">
@@ -253,8 +253,8 @@ export default function Phase1EAReview() {
         {/* Review Scoring Metrics */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">CCoE Intake Scoring</CardTitle>
-            <p className="text-xs text-slate-500">Architecture Review Board assessment across key evaluation criteria.</p>
+            <CardTitle className="text-sm">Architecture Review Scoring</CardTitle>
+            <p className="text-xs text-slate-500">Architecture team assessment across key evaluation criteria.</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {SCORING_METRICS.map((metric) => (
@@ -275,14 +275,14 @@ export default function Phase1EAReview() {
                 <div className="text-right">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: "#f59e0b" }}>
                     <Clock className="w-3 h-3" />
-                    Pending ARB
+                    Pending Review
                   </span>
                 </div>
               </div>
             </div>
 
             <Button className="w-full font-semibold mt-2" style={{ background: PHASE_COLOR, color: "#1a1a2e" }} onClick={() => setLocation("/requests/new")}>
-              Submit for ARB Review
+              Submit for Review
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </CardContent>
@@ -296,7 +296,7 @@ export default function Phase1EAReview() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {["Architecture Domain Assessment", "Capability Gap Report", "Integration Catalogue", "ARB Review Package", "Architecture Decision Records"].map((d, i) => (
+            {["Architecture Domain Assessment", "Capability Gap Report", "Integration Catalogue", "Architecture Review Package", "Architecture Decision Records"].map((d, i) => (
               <div key={d} className="flex items-start gap-2 p-3 bg-slate-50 rounded-xl">
                 <span className="text-xs font-mono font-bold shrink-0" style={{ color: PHASE_COLOR }}>0{i + 1}</span>
                 <p className="text-xs text-slate-600 leading-relaxed">{d}</p>

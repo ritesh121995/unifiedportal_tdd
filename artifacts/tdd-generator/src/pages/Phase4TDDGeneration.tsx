@@ -28,13 +28,13 @@ export default function Phase4TDDGeneration() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 03 · TDD Generation & Approval</p>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 3 · Technical Design</p>
             <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Technical Design Document</h1>
             <p className="text-sm opacity-80 max-w-xl">
-              Auto-generate a comprehensive TDD consolidating all Phase 1–3 outputs. Architecture decisions, security controls, data flows, and operational requirements for ARB approval.
+              Auto-generate a comprehensive technical design document covering architecture decisions, security controls, data flows, and operational requirements.
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
-              {["McCain TDD v3.2", "Auto-Generated", "ARB Approval", "Version Control"].map((tag) => (
+              {["AI-Assisted", "Version Control", "Architecture Sign-off"].map((tag) => (
                 <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-mono border border-white/30 bg-white/10">{tag}</span>
               ))}
             </div>
@@ -43,7 +43,7 @@ export default function Phase4TDDGeneration() {
             <div className="text-4xl font-black mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>{autoSections}/6</div>
             <div className="text-xs opacity-70 font-mono">Sections Ready</div>
             <div className="mt-2 px-3 py-1 rounded-full text-xs font-mono bg-yellow-500/30">
-              {pendingSections} Pending Data
+              {pendingSections} Needs Input
             </div>
           </div>
         </div>
@@ -54,8 +54,8 @@ export default function Phase4TDDGeneration() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">6-Section Document Builder</CardTitle>
-              <p className="text-xs text-slate-500">Auto-populate status per section. Sections sourced from Phase 1–3 outputs.</p>
+              <CardTitle className="text-sm">Document Sections</CardTitle>
+              <p className="text-xs text-slate-500">Each section is generated from your submitted request details. Review before final submission.</p>
             </CardHeader>
             <CardContent className="space-y-3">
               {TDD_SECTIONS.map((section) => {
@@ -72,8 +72,8 @@ export default function Phase4TDDGeneration() {
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-sm font-semibold text-slate-800">{section.title}</p>
                         {section.status === "auto"
-                          ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 font-medium"><CheckCircle2 className="w-3 h-3" />Auto-populate</span>
-                          : <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-yellow-100 text-yellow-700 font-medium"><Clock className="w-3 h-3" />Pending Data</span>
+                          ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700 font-medium"><CheckCircle2 className="w-3 h-3" />Ready</span>
+                          : <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-yellow-100 text-yellow-700 font-medium"><Clock className="w-3 h-3" />Needs Input</span>
                         }
                       </div>
                       <p className="text-xs text-slate-500 leading-relaxed">{section.desc}</p>
@@ -94,14 +94,14 @@ export default function Phase4TDDGeneration() {
                   <Zap className="w-6 h-6" style={{ color: PHASE_COLOR }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800">Generate TDD</p>
-                  <p className="text-xs text-slate-500 mt-1">Auto-generates all 6 sections using AI + Phase 1–3 inputs. Review before final ARB submission.</p>
+                  <p className="text-sm font-bold text-slate-800">Generate Design Document</p>
+                  <p className="text-xs text-slate-500 mt-1">Auto-generates all sections using AI from your submitted request details. Review before final submission.</p>
                 </div>
                 <Button className="w-full font-semibold" style={{ background: PHASE_COLOR, color: "#1a1a2e" }} onClick={() => setLocation("/requests")}>
                   One-Click Generate
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <p className="text-[10px] text-slate-400 font-mono">Requires EA-approved request · v3.2 template</p>
+                <p className="text-[10px] text-slate-400 font-mono">Requires an approved request</p>
               </div>
             </CardContent>
           </Card>
@@ -112,7 +112,7 @@ export default function Phase4TDDGeneration() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-1.5">
-                {["Full TDD Document (.docx)", "Architecture Diagrams", "Component Spec Sheets", "Data Flow Documentation", "ARB Approval Record"].map((d) => (
+                {["Technical Design Document (.docx)", "Architecture Diagrams", "Component Spec Sheets", "Data Flow Documentation", "Architecture Approval Record"].map((d) => (
                   <li key={d} className="flex items-center gap-2 text-xs text-slate-600">
                     <span style={{ color: PHASE_COLOR }}>→</span>
                     {d}

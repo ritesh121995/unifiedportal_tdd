@@ -126,10 +126,10 @@ export default function Phase3RiskAnalysis() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 02 · Threat Modelling & Compliance</p>
-            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Risk Analysis</h1>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 2 · Risk & Compliance Review</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Risk & Compliance Review</h1>
             <p className="text-sm opacity-80 max-w-xl">
-              Comprehensive risk assessment covering CVSS-scored threat modelling, an interactive 5×5 risk heat map, and multi-framework compliance checklists.
+              Identifies and scores security risks, maps them to a risk heat map, and verifies compliance across key regulatory frameworks.
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
               {["NIST CSF 2.0", "ISO 27001", "Risk Register", "PIPEDA"].map((tag) => (
