@@ -91,10 +91,14 @@ export default function Dashboard() {
 
   const submitted = requests.filter((r) => r.status === "submitted").length;
   const eaTriage = requests.filter((r) => r.status === "ea_triage").length;
+  const modificationRequested = requests.filter((r) => r.status === "modification_requested").length;
   const approved = requests.filter((r) => r.status === "ea_approved").length;
   const rejected = requests.filter((r) => r.status === "ea_rejected").length;
   const inProgress = requests.filter((r) => r.status === "tdd_in_progress").length;
   const completed = requests.filter((r) => r.status === "tdd_completed").length;
+  const devsecopsApproved = requests.filter((r) => r.status === "devsecops_approved").length;
+  const devsecopsRejected = requests.filter((r) => r.status === "devsecops_rejected").length;
+  const finopsActive = requests.filter((r) => r.status === "finops_active").length;
   const recent = requests.slice(0, 5);
 
   // Compute requestor banner state — most urgent status wins
@@ -133,11 +137,13 @@ export default function Dashboard() {
     : null;
 
   const statusChartData = [
-    { name: "Awaiting Review", value: submitted + eaTriage, fill: STATUS_COLORS.submitted },
-    { name: "Approved", value: approved, fill: STATUS_COLORS.ea_approved },
-    { name: "Not Approved", value: rejected, fill: STATUS_COLORS.ea_rejected },
+    { name: "Awaiting Review", value: submitted + eaTriage + modificationRequested, fill: STATUS_COLORS.submitted },
+    { name: "Arch Approved", value: approved, fill: STATUS_COLORS.ea_approved },
+    { name: "Not Approved", value: rejected + devsecopsRejected, fill: STATUS_COLORS.ea_rejected },
     { name: "Design Active", value: inProgress, fill: STATUS_COLORS.tdd_in_progress },
-    { name: "Complete", value: completed, fill: STATUS_COLORS.tdd_completed },
+    { name: "Design Complete", value: completed, fill: STATUS_COLORS.tdd_completed },
+    { name: "Infra Approved", value: devsecopsApproved, fill: "#8b5cf6" },
+    { name: "Complete", value: finopsActive, fill: "#16a34a" },
   ].filter((d) => d.value > 0);
 
   const priorityCounts: Record<string, number> = {};
@@ -284,14 +290,17 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {user.role !== "cloud_architect" && (
-              <StatCard label="Awaiting Review" value={submitted + eaTriage} icon={Clock} color="bg-yellow-100 text-yellow-600" />
+              <StatCard label="Awaiting Review" value={submitted + eaTriage + modificationRequested} icon={Clock} color="bg-yellow-100 text-yellow-600" />
             )}
-            <StatCard label="Approved" value={approved} icon={CheckCircle} color="bg-green-100 text-green-600" />
+            <StatCard label="Arch Approved" value={approved} icon={CheckCircle} color="bg-green-100 text-green-600" />
             {user.role !== "requestor" && (
-              <StatCard label="Not Approved" value={rejected} icon={XCircle} color="bg-red-100 text-red-600" />
+              <StatCard label="Not Approved" value={rejected + devsecopsRejected} icon={XCircle} color="bg-red-100 text-red-600" />
             )}
             <StatCard label="Design In Progress" value={inProgress} icon={Cloud} color="bg-blue-100 text-blue-600" />
             <StatCard label="Design Complete" value={completed} icon={FileText} color="bg-purple-100 text-purple-600" />
+            {devsecopsApproved + finopsActive > 0 && (
+              <StatCard label="Infra & Complete" value={devsecopsApproved + finopsActive} icon={ShieldCheck} color="bg-emerald-100 text-emerald-600" />
+            )}
             {avgDays !== null && (
               <StatCard label="Avg. Review Time (days)" value={parseFloat(avgDays)} icon={BarChart3} color="bg-slate-100 text-slate-600" />
             )}

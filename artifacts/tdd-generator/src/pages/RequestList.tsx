@@ -11,6 +11,11 @@ import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge
 
 const PHASE_STEPS = ["Arch Review", "Tech Design", "Infrastructure", "Cost Mgmt"];
 
+function toRequestNumber(id: number, createdAt: string): string {
+  const year = new Date(createdAt).getFullYear();
+  return `MCN-${year}-${id.toString().padStart(4, "0")}`;
+}
+
 // activeStep is 1-based: 1 = first phase active, 5 = all done
 function statusToPhase(status: string): { activeStep: number; rejected: boolean } {
   switch (status) {
@@ -180,7 +185,8 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
       const matchesPriority = priorityFilter === "all" || r.priority === priorityFilter;
       const matchesDeployment = deploymentFilter === "all" || r.deploymentModel === deploymentFilter;
       const q = query.toLowerCase();
-      const matchesQuery = !q || r.title.toLowerCase().includes(q) || r.applicationName.toLowerCase().includes(q) || r.businessUnit.toLowerCase().includes(q) || r.requestorName.toLowerCase().includes(q);
+      const reqNum = toRequestNumber(r.id, r.createdAt).toLowerCase();
+      const matchesQuery = !q || r.title.toLowerCase().includes(q) || r.applicationName.toLowerCase().includes(q) || r.businessUnit.toLowerCase().includes(q) || r.requestorName.toLowerCase().includes(q) || reqNum.includes(q);
       let matchesDate = true;
       if (dateFilter !== "any") {
         const days = parseInt(dateFilter, 10);
@@ -306,12 +312,16 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="submitted">Submitted — awaiting review</SelectItem>
+              <SelectItem value="submitted">Submitted</SelectItem>
               <SelectItem value="ea_triage">Under review</SelectItem>
-              <SelectItem value="ea_approved">Approved</SelectItem>
+              <SelectItem value="modification_requested">Changes requested</SelectItem>
+              <SelectItem value="ea_approved">Architecture approved</SelectItem>
               <SelectItem value="ea_rejected">Not approved</SelectItem>
               <SelectItem value="tdd_in_progress">Technical design in progress</SelectItem>
               <SelectItem value="tdd_completed">Technical design complete</SelectItem>
+              <SelectItem value="devsecops_approved">Infrastructure approved</SelectItem>
+              <SelectItem value="devsecops_rejected">Infrastructure rejected</SelectItem>
+              <SelectItem value="finops_active">Complete</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -467,6 +477,9 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
                     onClick={() => setLocation(`/requests/${req.id}`)}
                   >
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-[10px] font-mono font-semibold text-slate-400 shrink-0 tracking-wide">
+                        {toRequestNumber(req.id, req.createdAt)}
+                      </span>
                       <p className="font-medium text-sm truncate">{req.title}</p>
                       <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${PRIORITY_COLORS[req.priority] ?? "text-slate-600"}`}>
                         {req.priority}

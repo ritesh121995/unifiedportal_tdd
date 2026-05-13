@@ -68,6 +68,11 @@ interface StoredTddFormData {
   securityAssessmentRequired?: boolean;
 }
 
+function toRequestNumber(id: number, createdAt: string): string {
+  const year = new Date(createdAt).getFullYear();
+  return `MCN-${year}-${id.toString().padStart(4, "0")}`;
+}
+
 /** Map any display-label variant → the canonical API enum value */
 function normalizeNetworkPosture(raw: string | undefined): FormDraft["networkPosture"] {
   const map: Record<string, FormDraft["networkPosture"]> = {
@@ -792,6 +797,11 @@ export default function RequestDetail() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono font-semibold text-slate-400 tracking-widest bg-slate-100 px-2 py-0.5 rounded">
+              {toRequestNumber(request.id, request.createdAt)}
+            </span>
+          </div>
           <h1 className="text-2xl font-bold leading-tight">{request.title}</h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <StatusBadge status={request.status} />
