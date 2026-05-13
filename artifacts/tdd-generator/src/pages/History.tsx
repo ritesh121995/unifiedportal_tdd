@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw, Trash2, ListTodo, History as HistoryIcon } from "lucide-react";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import { getApiBase } from "@/lib/api-base";
 import { useAuth } from "@/store/auth-context";
@@ -37,6 +37,8 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
+type ActiveTab = "queue" | "history";
+
 export default function History() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -47,6 +49,7 @@ export default function History() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("queue");
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -57,7 +60,7 @@ export default function History() {
       const d = await res.json();
       setSubmissions(d.submissions ?? []);
     } catch {
-      setError("Could not load TDD history. Please try again.");
+      setError("Could not load TDD documents. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -95,15 +98,17 @@ export default function History() {
     }
   };
 
+  const queueItems = submissions.filter((s) => s.status !== "completed");
+  const historyItems = submissions.filter((s) => s.status === "completed");
+  const visibleItems = activeTab === "queue" ? queueItems : historyItems;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">TDD History</h2>
-          <p className="text-slate-500 mt-1">
-            {loading ? "Loading…" : submissions.length === 0
-              ? "No TDD documents generated yet."
-              : `${submissions.length} document${submissions.length !== 1 ? "s" : ""} in the database.`}
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">TDD Documents</h2>
+          <p className="text-slate-500 mt-1 text-sm">
+            {loading ? "Loading…" : `${queueItems.length} in queue · ${historyItems.length} completed`}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -118,6 +123,46 @@ export default function History() {
         </div>
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
+        <button
+          onClick={() => { setActiveTab("queue"); setSelected(null); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            activeTab === "queue"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <ListTodo className="w-4 h-4" />
+          TDD Queue
+          {queueItems.length > 0 && (
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+              activeTab === "queue" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-500"
+            }`}>
+              {queueItems.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => { setActiveTab("history"); setSelected(null); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            activeTab === "history"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <HistoryIcon className="w-4 h-4" />
+          TDD History
+          {historyItems.length > 0 && (
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+              activeTab === "history" ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-500"
+            }`}>
+              {historyItems.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</div>
       )}
@@ -125,22 +170,28 @@ export default function History() {
       {loading ? (
         <div className="flex items-center justify-center py-24 text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin mr-3" />
-          <span className="text-sm">Loading TDD history…</span>
+          <span className="text-sm">Loading TDD documents…</span>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <FileText className="w-16 h-16 mb-4 opacity-30" />
-          <p className="text-lg font-medium">No history yet</p>
-          <p className="text-sm mt-1">Generated TDD documents will appear here.</p>
-          <Button className="mt-6" onClick={() => setLocation("/dashboard")}>
-            Generate a TDD
-          </Button>
+          {activeTab === "queue" ? (
+            <>
+              <p className="text-lg font-medium">No TDDs in queue</p>
+              <p className="text-sm mt-1">TDDs awaiting Cloud Architect review will appear here.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium">No completed TDDs yet</p>
+              <p className="text-sm mt-1">TDDs signed off by the Cloud Architect will appear here.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* List */}
           <div className="lg:col-span-1 space-y-3">
-            {submissions.map((sub) => (
+            {visibleItems.map((sub) => (
               <Card
                 key={sub.id}
                 className={`cursor-pointer transition-all border shadow-sm hover:shadow-md ${
@@ -165,8 +216,15 @@ export default function History() {
                         {sub.environments.slice(0, 3).map((e) => (
                           <span key={e} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{e}</span>
                         ))}
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${sub.status === "completed" ? "border-green-200 text-green-700" : "border-slate-200 text-slate-500"}`}>
-                          {sub.status}
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1.5 py-0 ${
+                            sub.status === "completed"
+                              ? "border-green-200 text-green-700 bg-green-50"
+                              : "border-amber-200 text-amber-700 bg-amber-50"
+                          }`}
+                        >
+                          {sub.status === "completed" ? "Signed off" : "In review"}
                         </Badge>
                       </div>
                     </div>

@@ -422,6 +422,17 @@ export default function RequestDetail() {
     }).finally(() => setLoading(false));
   }, [id]);
 
+  // After data loads, scroll to the section referenced in the URL hash (e.g. #devsecops-section)
+  useEffect(() => {
+    if (loading) return;
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        document.querySelector(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [loading]);
+
   // Load TDD content when the request is in tdd_completed status (needed for Phase 3 IaC)
   useEffect(() => {
     if (!request || request.status !== "tdd_completed" || !request.tddSubmissionId) return;

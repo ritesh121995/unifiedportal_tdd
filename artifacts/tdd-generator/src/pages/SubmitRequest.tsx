@@ -996,11 +996,28 @@ export default function SubmitRequest() {
         </div>
       )}
 
-      <div>
-        <h1 className="text-2xl font-bold">Submit a Request</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Complete the sections below to submit your request for review by the CCoE Enterprise Architecture team. Your progress is saved automatically as you type.
-        </p>
+      {/* ── Page intro ── */}
+      <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 space-y-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Outfit, sans-serif" }}>New Application Request</h1>
+          <p className="text-slate-600 text-sm mt-1">
+            Use this form to request CCoE review for a new application, cloud migration, enhancement, or technology evaluation.
+            Your answers help the architecture team understand your project and assign the right reviewers.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3 pt-1">
+          {[
+            { icon: "1", text: "Fill in the form below — most fields are dropdowns or short text." },
+            { icon: "2", text: "Submit — the EA team is notified and your request enters the review queue." },
+            { icon: "3", text: "Track progress — follow along in 'My Requests' as each phase completes." },
+          ].map(({ icon, text }) => (
+            <div key={icon} className="flex items-start gap-2.5 flex-1 min-w-[200px]">
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 mt-0.5" style={{ background: "#FFCD00", color: "#1a1a2e" }}>{icon}</span>
+              <p className="text-xs text-slate-600 leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] text-slate-400 pt-1">Your progress is saved automatically as you type — you can leave and return anytime.</p>
       </div>
 
       {/* ── 2. What you'll need checklist ── */}
@@ -1011,23 +1028,24 @@ export default function SubmitRequest() {
           className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-slate-100 transition-colors"
         >
           <ClipboardList className="w-4 h-4 text-[#1a1a2e] flex-shrink-0" />
-          <span className="text-sm font-semibold text-[#1a1a2e]">What you'll need before you start</span>
+          <span className="text-sm font-semibold text-[#1a1a2e]">What information do you need before starting?</span>
           <span className="ml-auto text-[11px] text-slate-500">{showPrepChecklist ? "Hide" : "Show"}</span>
         </button>
         {showPrepChecklist && (
           <div className="px-5 pb-4 border-t border-slate-200 bg-white">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 pt-3">
+            <p className="text-xs text-slate-500 mt-3 mb-2">You don't need everything — approximate answers are fine. The EA team will follow up on anything unclear.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
               {[
-                { item: "Application or project name", tip: "What is the system called?" },
+                { item: "Application or project name", tip: "What is the system or project called?" },
                 { item: "Organization & Line of Business", tip: "Which business unit does this belong to?" },
-                { item: "SLT Leader sponsoring this request", tip: "Select from the dropdown" },
+                { item: "SLT Leader sponsoring this", tip: "Select from the dropdown — ask your manager if unsure" },
                 { item: "Target go-live date", tip: "An approximate date is fine" },
-                { item: "Deployment model", tip: "Cloud (Azure), SaaS, On-prem, etc." },
-                { item: "Business Owner name & email", tip: "The business stakeholder accountable" },
-                { item: "IT Owner name & email", tip: "The technology owner within your team" },
+                { item: "Deployment model", tip: "Where will it run? (Azure, SaaS, on-premises, etc.)" },
+                { item: "Business Owner name & email", tip: "The business stakeholder accountable for the project" },
+                { item: "IT Owner name & email", tip: "The technology owner in your team" },
                 { item: "Billing Cost Object / GL Account", tip: "For cloud spend allocation — ask Finance if unsure" },
-                { item: "Brief project description", tip: "What problem does this solve?" },
-                { item: "Security & Data impact level", tip: "Approximate is fine — EA team will validate" },
+                { item: "Brief project description", tip: "What problem does this solve? 2–3 sentences is plenty" },
+                { item: "Security & Data impact (approximate)", tip: "Best guess is fine — EA team will validate during review" },
               ].map(({ item, tip }) => (
                 <div key={item} className="flex items-start gap-2 py-1">
                   <CheckSquare className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />

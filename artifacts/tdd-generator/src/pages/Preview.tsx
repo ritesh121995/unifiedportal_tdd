@@ -339,6 +339,7 @@ export default function Preview() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewCompleting, setReviewCompleting] = useState(false);
   const [reviewCompleted, setReviewCompleted] = useState(false);
+  const [completedRequestId, setCompletedRequestId] = useState<string | null>(null);
 
   const [iacCopied, setIacCopied] = useState(false);
   const [iacDeployOpen, setIacDeployOpen] = useState(false);
@@ -699,6 +700,7 @@ ${articleEl.innerHTML}
         body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null, tddSubmissionId: pendingSubmissionId }),
       });
       localStorage.removeItem("activeRequestId");
+      setCompletedRequestId(pendingRequestId);
       setPendingRequestId(null);
       setReviewCompleted(true);
     } catch {
@@ -1138,8 +1140,12 @@ ${articleEl.innerHTML}
                   This Technical Design Document has been reviewed and marked as complete. It is now visible to all stakeholders on the request.
                 </p>
               </div>
-              <Button variant="outline" onClick={() => setLocation("/requests")} className="shrink-0 border-green-300 text-green-700 hover:bg-green-100">
-                Back to Requests
+              <Button
+                variant="outline"
+                onClick={() => setLocation(completedRequestId ? `/requests/${completedRequestId}#devsecops-section` : "/requests")}
+                className="shrink-0 border-green-300 text-green-700 hover:bg-green-100"
+              >
+                View Request &amp; DevSecOps
               </Button>
             </div>
 

@@ -77,10 +77,11 @@ function buildCompletionParams(options: {
  * - gpt-4.1 / gpt-4.1-mini: up to 32,768 output tokens (1M context)
  * - o1 / o3-mini:         100,000+ output tokens (200k context)
  *
- * The complete TDD document typically requires 8,000–14,000 output tokens
- * because heavy deterministic tables (networking, NSG, naming, cost) are
- * injected server-side via placeholders. We set a generous default of
- * 16,000 so the model never needs to truncate prose.
+ * The complete TDD document typically requires 8,000–16,000 output tokens
+ * across all 8 sections. We request 32,000 to give the model maximum room —
+ * the Azure OpenAI / OpenAI service will cap this at the model's actual limit
+ * (e.g. 16,384 for gpt-4o) so over-requesting is safe. Sections 7 & 8 appear
+ * near the end and were being truncated at the old 16,000 default.
  */
 function resolveMaxOutputTokens(usesAzure: boolean): number {
   const envOverride = process.env.TDD_GENERATE_MAX_TOKENS;
@@ -95,6 +96,10 @@ function resolveMaxOutputTokens(usesAzure: boolean): number {
     ? (process.env.AZURE_OPENAI_DEPLOYMENT ?? "").toLowerCase()
     : (process.env.AI_INTEGRATIONS_OPENAI_MODEL ?? "gpt-4o").toLowerCase();
 
+  // o-series and newer high-capacity models can handle 32k output tokens natively.
+  // For gpt-4o and others, the service caps the value at the model's actual limit
+  // (typically 16,384) — requesting 32,000 is safe and ensures we never leave
+  // tokens on the table artificially.
   if (deployment.includes("o1") || deployment.includes("o3") || deployment.includes("o4")) {
     return 32_000;
   }
@@ -102,7 +107,7 @@ function resolveMaxOutputTokens(usesAzure: boolean): number {
     return 32_000;
   }
 
-  return 16_000;
+  return 32_000;
 }
 
 interface TddPersistenceContext {
