@@ -8,6 +8,7 @@ import settingsRouter from "./settings";
 import iacRouter from "./iac";
 import confluenceRouter from "./confluence";
 import delegationsRouter from "./delegations";
+import leanixRouter from "./leanix";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/settings", settingsRouter);
 router.use("/iac", iacRouter);
 router.use("/confluence", confluenceRouter);
 router.use("/delegations", delegationsRouter);
+router.use("/leanix", leanixRouter);
 
 export default router;

@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   Cloud, LayoutDashboard, FileText, PlusCircle, CheckSquare, History,
   LogOut, ChevronRight, Users, Bell, X, Building2, ShieldCheck,
-  Code2, DollarSign, Layers, UserCog, Plug, MessageSquare, Activity, UserCheck,
+  Code2, DollarSign, Layers, UserCog, Plug, MessageSquare, Activity, UserCheck, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/store/auth-context";
@@ -25,6 +25,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"] },
       { label: "Submit a Request", path: "/requests/new", icon: PlusCircle, roles: ["requestor", "admin"] },
+      { label: "LeanIX Initiatives", path: "/leanix-initiatives", icon: Link2, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"] },
     ],
   },
   {

@@ -23,6 +23,7 @@ import AdminUsers from "@/pages/AdminUsers";
 import Integrations from "@/pages/Integrations";
 import TddViewer from "@/pages/TddViewer";
 import DelegationManager from "@/pages/DelegationManager";
+import LeanIXInitiatives from "@/pages/LeanIXInitiatives";
 import "@/lib/api-base";
 import { useEffect } from "react";
 
@@ -146,6 +147,9 @@ function Router() {
       </Route>
       <Route path="/history">
         <ProtectedRoute component={History} />
+      </Route>
+      <Route path="/leanix-initiatives">
+        <ProtectedRoute component={LeanIXInitiatives} />
       </Route>
 
       {/* Root redirect */}

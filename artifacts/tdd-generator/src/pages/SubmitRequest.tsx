@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
+import { LEANIX_PREFILL_KEY } from "./LeanIXInitiatives";
 import {
   ArrowLeft, ArrowRight, Loader2, CheckCircle, CalendarIcon,
   Users, AlertTriangle, Info, CheckCircle2, ChevronRight, Upload, X,
@@ -341,6 +342,7 @@ export default function SubmitRequest() {
   const isPrivileged = ["admin", "enterprise_architect", "cloud_architect"].includes(user?.role ?? "");
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [leanixInitiativeName, setLeanixInitiativeName] = useState<string | null>(null);
 
   // ── 1. Auto-fill requestor email from session ──────────────────────────────
   useEffect(() => {
@@ -348,6 +350,31 @@ export default function SubmitRequest() {
       setForm((prev) => prev.requestorEmail ? prev : { ...prev, requestorEmail: user.email ?? "" });
     }
   }, [user?.email]);
+
+  // ── LeanIX pre-fill — reads data stored by the LeanIX Initiatives page ────
+  useEffect(() => {
+    const raw = sessionStorage.getItem(LEANIX_PREFILL_KEY);
+    if (!raw) return;
+    try {
+      const prefill = JSON.parse(raw) as Record<string, unknown>;
+      sessionStorage.removeItem(LEANIX_PREFILL_KEY);
+      setForm((prev) => ({
+        ...prev,
+        title:                prefill.title               as string || prev.title,
+        applicationName:      prefill.applicationName     as string || prev.applicationName,
+        description:          prefill.description         as string || prev.description,
+        businessOwner:        prefill.businessOwner       as string || prev.businessOwner,
+        businessOwnerEmail:   prefill.businessOwnerEmail  as string || prev.businessOwnerEmail,
+        itOwner:              prefill.itOwner             as string || prev.itOwner,
+        technologyOwnerEmail: prefill.technologyOwnerEmail as string || prev.technologyOwnerEmail,
+        targetGoLiveDate:     prefill.targetGoLiveDate    as string || prev.targetGoLiveDate,
+        existingAppId:        prefill.existingAppId       as string || prev.existingAppId,
+      }));
+      if (prefill._leanixInitiativeName) {
+        setLeanixInitiativeName(prefill._leanixInitiativeName as string);
+      }
+    } catch { /* ignore malformed data */ }
+  }, []);
 
   // ── 7. Draft auto-save ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -983,6 +1010,29 @@ export default function SubmitRequest() {
           </span>
         )}
       </div>
+
+      {/* ── LeanIX pre-fill banner ── */}
+      {leanixInitiativeName && (
+        <div className="flex items-start gap-3 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3">
+          <div className="w-5 h-5 rounded shrink-0 mt-0.5 overflow-hidden bg-white border border-purple-200 flex items-center justify-center p-0.5">
+            <img
+              src="https://www.leanix.net/hubfs/LeanIX_June2022/Images/leanix-logo-icon.svg"
+              alt="LeanIX"
+              className="w-full h-full object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-purple-800">Pre-filled from LeanIX Initiative</p>
+            <p className="text-xs text-purple-700 mt-0.5">
+              <strong>{leanixInitiativeName}</strong> — some fields have been populated automatically. Review them below and fill in any remaining details.
+            </p>
+          </div>
+          <button type="button" onClick={() => setLeanixInitiativeName(null)} className="text-purple-400 hover:text-purple-600 shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── Draft restore banner ── */}
       {showDraftBanner && (

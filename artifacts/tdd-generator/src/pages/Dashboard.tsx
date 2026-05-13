@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   FileText, CheckCircle, Clock, XCircle, PlusCircle, ArrowRight,
-  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign,
+  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,6 +143,12 @@ export default function Dashboard() {
               <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests/new")}>
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Submit New Request
+              </Button>
+            )}
+            {(user.role === "requestor" || user.role === "admin") && (
+              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => setLocation("/leanix-initiatives")}>
+                <Link2 className="w-4 h-4 mr-2" />
+                Browse LeanIX Initiatives
               </Button>
             )}
             <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => setLocation("/phase/1")}>
