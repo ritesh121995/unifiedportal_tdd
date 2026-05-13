@@ -729,9 +729,9 @@ export default function RequestDetail() {
 
   const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack;
   const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack;
-  // TDD generation triggers directly from ea_approved (Cloud Tenant only)
-  const canGenerateTDD = isCA && request.status === "ea_approved" && isCloudTenant;
-  const canViewTDD     = ["tdd_in_progress", "tdd_completed"].includes(request.status) && isCA;
+  // TDD generation triggers from ea_approved or tdd_in_progress (re-generation after going back)
+  const canGenerateTDD = isCA && ["ea_approved", "tdd_in_progress"].includes(request.status) && isCloudTenant;
+  const canViewTDD     = request.status === "tdd_completed" && isCA;
   const canDevSecOps   = isCA && request.status === "tdd_completed";
   // FinOps: from devsecops_approved (Cloud) OR ea_approved (non-Cloud)
   const canFinOps      = isEA && (
@@ -1538,7 +1538,9 @@ export default function RequestDetail() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-slate-700">
-              This request has been approved. Network CIDRs have been pre-filled with standard McCain address ranges — adjust if needed, then click <strong>Generate TDD</strong>.
+              {request.status === "tdd_in_progress"
+                ? "A TDD generation was started but not confirmed. Adjust CIDRs if needed, then click Re-generate TDD to create a new draft."
+                : "This request has been approved. Network CIDRs have been pre-filled with standard McCain address ranges — adjust if needed, then click Generate TDD."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {environments.map((env) => (
@@ -1567,6 +1569,8 @@ export default function RequestDetail() {
             >
               {actionLoading === "start-tdd" ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
+              ) : request.status === "tdd_in_progress" ? (
+                <><FileText className="w-4 h-4 mr-2" />Re-generate TDD</>
               ) : (
                 <><FileText className="w-4 h-4 mr-2" />Generate TDD</>
               )}

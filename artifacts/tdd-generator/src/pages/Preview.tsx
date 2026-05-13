@@ -801,7 +801,14 @@ ${articleEl.innerHTML}
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
-          <Button variant="outline" onClick={() => setLocation("/dashboard")} disabled={isGenerating}>
+          <Button
+            variant="outline"
+            disabled={isGenerating}
+            onClick={() => {
+              const reqId = localStorage.getItem("activeRequestId");
+              setLocation(reqId ? `/wizard/${reqId}` : "/wizard");
+            }}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Form
           </Button>
 

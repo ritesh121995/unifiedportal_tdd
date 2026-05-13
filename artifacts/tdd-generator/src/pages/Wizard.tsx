@@ -324,12 +324,35 @@ export default function Wizard() {
     setLocation("/preview");
   };
 
+  const hasExistingDraft = !!(formData.applicationName && formData.requestorEmail && formData.applicationOverview);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Generate Technical Design Document</h2>
         <p className="text-slate-500 mt-1">Complete the intake form to generate a structured Azure TDD.</p>
       </div>
+
+      {/* Re-generate shortcut — shown when returning from Preview with a filled draft */}
+      {hasExistingDraft && requestId && (
+        <div className="flex items-center gap-4 rounded-lg border border-yellow-200 bg-yellow-50 px-5 py-4">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-yellow-900">Draft from previous generation detected</p>
+            <p className="text-xs text-yellow-700 mt-0.5">
+              Form data for <strong>{formData.applicationName}</strong> is pre-filled. You can re-generate the TDD immediately or edit steps below first.
+            </p>
+          </div>
+          <Button
+            type="button"
+            className="shrink-0"
+            style={{ background: "#FFCD00", color: "#1a1a1a" }}
+            onClick={() => form.handleSubmit(onSubmit)()}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Re-generate TDD
+          </Button>
+        </div>
+      )}
 
       {/* Progress Stepper */}
       <div className="flex items-center justify-between relative mb-12">
