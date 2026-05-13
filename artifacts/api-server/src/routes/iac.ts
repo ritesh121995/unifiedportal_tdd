@@ -209,8 +209,8 @@ async function runAzureDeployment(deploymentId: number, opts: AzureDeploymentOpt
 
 router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), async (req, res) => {
   try {
-    const { appName, region = "canadacentral", requestId, adminPassword, allowedRdpSource } = req.body as {
-      appName: string; region?: string; requestId?: number; adminPassword: string; allowedRdpSource?: string;
+    const { appName, region = "canadacentral", requestId, adminPassword, allowedRdpSource, selectedServices } = req.body as {
+      appName: string; region?: string; requestId?: number; adminPassword: string; allowedRdpSource?: string; selectedServices?: string[];
     };
 
     if (!appName || !adminPassword) {
@@ -218,8 +218,9 @@ router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), as
       return;
     }
 
-    const rdpSource = normalizeRdpSource(allowedRdpSource);
-    if (!rdpSource) {
+    const needsRdp = !selectedServices || selectedServices.includes("vm");
+    const rdpSource = normalizeRdpSource(allowedRdpSource) ?? (needsRdp ? null : "Internet");
+    if (needsRdp && !rdpSource) {
       res.status(400).json({ error: "allowedRdpSource must be a public CIDR, for example 203.0.113.10/32." });
       return;
     }
@@ -246,7 +247,7 @@ router.post("/deploy", authenticate, requireRole("admin", "cloud_architect"), as
 
     void runAzureDeployment(deploymentId, {
       tenantId, clientId, clientSecret, subscriptionId,
-      resourceGroup, appName, region, adminPassword, allowedRdpSource: rdpSource,
+      resourceGroup, appName, region, adminPassword, allowedRdpSource: rdpSource!,
     }).catch(() => {});
 
     res.json({ deploymentId, resourceGroup, status: "pending" });

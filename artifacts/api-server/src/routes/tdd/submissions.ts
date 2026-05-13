@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { tddSubmissionsTable } from "@workspace/db/schema";
+import { tddSubmissionsTable, architectureRequestsTable } from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireRole } from "../../middleware/authenticate.js";
 
@@ -39,7 +39,15 @@ router.get("/submissions/:id", async (req, res) => {
 
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   if (user.role === "requestor" && row.requestorEmail !== user.email) {
-    res.status(403).json({ error: "Forbidden" }); return;
+    // Also allow if this submission is linked to an architecture request owned by this user
+    const [linkedRequest] = await db
+      .select({ requestorEmail: architectureRequestsTable.requestorEmail })
+      .from(architectureRequestsTable)
+      .where(eq(architectureRequestsTable.tddSubmissionId, id))
+      .limit(1);
+    if (!linkedRequest || linkedRequest.requestorEmail !== user.email) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
   }
 
   res.json({ submission: row });

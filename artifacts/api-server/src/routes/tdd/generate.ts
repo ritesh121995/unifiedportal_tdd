@@ -1636,7 +1636,7 @@ function applyOutputGuardrails(
     }
 
     const sectionRegex = new RegExp(
-      `(^##\\s+${escapeForRegex(heading)}\\s*$)([\\s\\S]*?)(?=^##\\s+\\d+\\.|$)`,
+      `(^#{1,6}\\s+${escapeForRegex(heading)}\\s*$)([\\s\\S]*?)(?=^#{1,6}\\s+\\d+\\.|$)`,
       "mi",
     );
     const matched = guarded.match(sectionRegex);
@@ -1649,7 +1649,10 @@ function applyOutputGuardrails(
     }
     const replacementBody = `\n\n${fallbackBody}\n\n`;
     guarded = guarded.replace(
-      sectionRegex,
+      new RegExp(
+        `(^#{1,6}\\s+${escapeForRegex(heading)}\\s*$)([\\s\\S]*?)(?=^#{1,6}\\s+\\d+\\.|$)`,
+        "mi",
+      ),
       (_all, headingLine: string) => `${headingLine}${replacementBody}`,
     );
     rebuiltSections.push(heading);

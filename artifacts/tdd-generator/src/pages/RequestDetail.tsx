@@ -329,6 +329,7 @@ export default function RequestDetail() {
   const [iacSelectedServices, setIacSelectedServices] = useState<string[]>([]);
   const [iacDeployFormOpen, setIacDeployFormOpen] = useState(false);
   const [iacDeployPassword, setIacDeployPassword] = useState("");
+  const [iacDeployRdpSource, setIacDeployRdpSource] = useState("");
   const [iacDeployLoading, setIacDeployLoading] = useState(false);
   const [iacDeploymentId, setIacDeploymentId] = useState<number | null>(null);
   const [iacDeployment, setIacDeployment] = useState<IacDeployStatus | null>(null);
@@ -514,6 +515,7 @@ export default function RequestDetail() {
           appName: request.applicationName ?? "mccain-app",
           region: (request.azureRegions?.[0] ?? "canadacentral").toLowerCase().replace(/\s+/g, ""),
           adminPassword: iacDeployPassword,
+          allowedRdpSource: iacDeployRdpSource || undefined,
           selectedServices: iacSelectedServices,
         }),
       });
@@ -1771,8 +1773,20 @@ export default function RequestDetail() {
                               className="bg-white"
                             />
                           </div>
+                          {iacSelectedServices.includes("vm") && (
+                            <div className="space-y-1">
+                              <Label>Allowed RDP Source CIDR</Label>
+                              <Input
+                                value={iacDeployRdpSource}
+                                onChange={(e) => setIacDeployRdpSource(e.target.value)}
+                                placeholder="e.g. 203.0.113.10/32 — your office or VPN public IP"
+                                className="bg-white font-mono text-xs"
+                              />
+                              <p className="text-[11px] text-blue-600">Only public IPs are accepted. Use <code>whatismyip.com</code> to find yours.</p>
+                            </div>
+                          )}
                           <Button
-                            disabled={!iacDeployPassword || iacDeployLoading}
+                            disabled={!iacDeployPassword || (iacSelectedServices.includes("vm") && !iacDeployRdpSource) || iacDeployLoading}
                             onClick={() => { void handleIacDeploy(); }}
                             style={{ background: "#0078d4", color: "#fff" }}
                             size="sm"
@@ -1934,8 +1948,8 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* ─── Activity Timeline + Comments (Feature 8 audit download for EA/admin) ── */}
-      <Card className="border-slate-200">
+      {/* ─── Activity Timeline + Comments (EA/CA/admin only — requestors use notification panel) ── */}
+      {!isRequestor && <Card className="border-slate-200">
         <CardHeader className="pb-2 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -1981,7 +1995,7 @@ export default function RequestDetail() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Request Details — requestors only (admins see the full "Submitted Request Details" card above) */}
       {isRequestor && (<Card>

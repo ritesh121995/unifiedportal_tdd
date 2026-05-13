@@ -1064,11 +1064,8 @@ export default function SubmitRequest() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {APP_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      <div className="flex flex-col py-0.5">
-                        <span className="font-medium">{t.icon} {t.label}</span>
-                        <span className="text-[11px] text-slate-500 leading-snug max-w-[440px]">{t.desc}</span>
-                      </div>
+                    <SelectItem key={t.value} value={t.value} description={t.desc}>
+                      {t.icon} {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1095,11 +1092,8 @@ export default function SubmitRequest() {
                 <SelectTrigger><SelectValue placeholder="Select the impact if this app goes down" /></SelectTrigger>
                 <SelectContent>
                   {BUSINESS_CRITICALITY_OPTIONS.map((b) => (
-                    <SelectItem key={b.value} value={b.value}>
-                      <div className="flex flex-col py-0.5">
-                        <span className="font-medium">{b.label}</span>
-                        <span className="text-[11px] text-slate-500 leading-snug max-w-[440px]">{b.desc}</span>
-                      </div>
+                    <SelectItem key={b.value} value={b.value} description={b.desc}>
+                      {b.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1352,15 +1346,8 @@ export default function SubmitRequest() {
                         </SelectTrigger>
                         <SelectContent className="w-full">
                           {options.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>
-                              <div className="flex flex-col py-0.5 gap-0.5">
-                                <span className="font-medium">{o.label}</span>
-                                {o.desc && (
-                                  <span className="text-[11px] text-slate-500 whitespace-pre-line leading-snug max-w-[480px]">
-                                    {o.desc}
-                                  </span>
-                                )}
-                              </div>
+                            <SelectItem key={o.value} value={o.value} description={o.desc || undefined}>
+                              {o.label}
                             </SelectItem>
                           ))}
                         </SelectContent>

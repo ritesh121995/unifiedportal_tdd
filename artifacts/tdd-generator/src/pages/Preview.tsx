@@ -45,6 +45,7 @@ interface SseChunkPayload {
   error?: string;
   markdownBlobUploadError?: string | null;
   rebuiltSections?: string[];
+  submissionId?: number | null;
 }
 
 interface SectionRegenerateResponse {
@@ -194,6 +195,7 @@ function isSseChunkPayload(value: unknown): value is SseChunkPayload {
   const errorValue = Reflect.get(value, "error");
   const markdownBlobUploadErrorValue = Reflect.get(value, "markdownBlobUploadError");
   const rebuiltSectionsValue = Reflect.get(value, "rebuiltSections");
+  const submissionIdValue = Reflect.get(value, "submissionId");
 
   return (
     (contentValue === undefined || typeof contentValue === "string") &&
@@ -203,7 +205,8 @@ function isSseChunkPayload(value: unknown): value is SseChunkPayload {
     (markdownBlobUploadErrorValue === undefined ||
       markdownBlobUploadErrorValue === null ||
       typeof markdownBlobUploadErrorValue === "string") &&
-    (rebuiltSectionsValue === undefined || Array.isArray(rebuiltSectionsValue))
+    (rebuiltSectionsValue === undefined || Array.isArray(rebuiltSectionsValue)) &&
+    (submissionIdValue === undefined || submissionIdValue === null || typeof submissionIdValue === "number")
   );
 }
 
@@ -331,6 +334,7 @@ export default function Preview() {
 
   // Review gate state
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+  const [pendingSubmissionId, setPendingSubmissionId] = useState<number | null>(null);
   const [reviewChecked, setReviewChecked] = useState<Record<string, boolean>>({});
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewCompleting, setReviewCompleting] = useState(false);
@@ -339,6 +343,7 @@ export default function Preview() {
   const [iacCopied, setIacCopied] = useState(false);
   const [iacDeployOpen, setIacDeployOpen] = useState(false);
   const [iacDeployPassword, setIacDeployPassword] = useState("");
+  const [iacDeployRdpSource, setIacDeployRdpSource] = useState("");
   const [iacDeployLoading, setIacDeployLoading] = useState(false);
   const [iacDeploymentId, setIacDeploymentId] = useState<number | null>(null);
   const [iacDeployment, setIacDeployment] = useState<IacDeployment | null>(null);
@@ -462,6 +467,9 @@ export default function Preview() {
               if (parsedChunk.rebuiltSections) {
                 setRebuiltSections(parsedChunk.rebuiltSections);
               }
+              if (parsedChunk.submissionId != null) {
+                setPendingSubmissionId(parsedChunk.submissionId);
+              }
             }
           }
         }
@@ -501,6 +509,9 @@ export default function Preview() {
             setContent(stripRenderBreakingArtifacts(aggregatedContent));
             if (parsedChunk.rebuiltSections) {
               setRebuiltSections(parsedChunk.rebuiltSections);
+            }
+            if (parsedChunk.submissionId != null) {
+              setPendingSubmissionId(parsedChunk.submissionId);
             }
           }
         }
@@ -685,7 +696,7 @@ ${articleEl.innerHTML}
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null }),
+        body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null, tddSubmissionId: pendingSubmissionId }),
       });
       localStorage.removeItem("activeRequestId");
       setPendingRequestId(null);
@@ -710,6 +721,7 @@ ${articleEl.innerHTML}
           appName: formData.applicationName ?? "mccain-app",
           region: (formData.azureRegions?.[0] ?? "canadacentral").toLowerCase().replace(/\s+/g, ""),
           adminPassword: iacDeployPassword,
+          allowedRdpSource: iacDeployRdpSource || undefined,
           selectedServices,
         }),
       });
@@ -1344,6 +1356,21 @@ ${articleEl.innerHTML}
                   />
                   <p className="text-xs text-slate-400">Required by Azure for Windows VM provisioning. This is only sent to your Azure subscription and never stored in the portal.</p>
                 </div>
+                {selectedServices.includes("vm") && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="rdpSource" className="text-xs font-medium text-slate-700">
+                      Allowed RDP Source CIDR <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="rdpSource"
+                      placeholder="e.g. 203.0.113.10/32 — your office or VPN public IP"
+                      value={iacDeployRdpSource}
+                      onChange={(e) => setIacDeployRdpSource(e.target.value)}
+                      className="text-xs font-mono"
+                    />
+                    <p className="text-xs text-slate-400">Only public IPs are accepted. Required for NSG RDP rule.</p>
+                  </div>
+                )}
                 {iacDeployError && (
                   <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                     <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />{iacDeployError}
@@ -1354,7 +1381,7 @@ ${articleEl.innerHTML}
                     size="sm"
                     className="text-xs font-semibold gap-1.5"
                     style={{ background: "#0078d4", color: "#fff" }}
-                    disabled={!iacDeployPassword || iacDeployLoading}
+                    disabled={!iacDeployPassword || (selectedServices.includes("vm") && !iacDeployRdpSource) || iacDeployLoading}
                     onClick={() => void handleDeploy()}
                   >
                     {iacDeployLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Rocket className="w-3.5 h-3.5" />}

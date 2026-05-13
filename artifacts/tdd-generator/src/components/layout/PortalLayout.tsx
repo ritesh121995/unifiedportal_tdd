@@ -335,7 +335,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             <span className="text-xs text-green-600 font-mono">Live</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400 font-mono">McCain CCoE · v2.0 · 2026</span>
+            <span className="text-xs text-slate-400 font-mono">McCain CCoE · 2026</span>
             {/* Notifications bell */}
             <div className="relative" ref={notifRef}>
               <button

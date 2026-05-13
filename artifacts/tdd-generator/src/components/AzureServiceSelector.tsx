@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, ChevronUp, Search, Zap } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Search, Zap, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -110,6 +110,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
   const [search, setSearch] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CATEGORIES));
   const [autoDetected] = useState<string[]>(() => detectServicesFromTdd(tddContent));
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     if (selectedIds.length === 0 && autoDetected.length > 0) {
@@ -118,16 +119,26 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
     }
   }, []);
 
+  // The working catalog: only TDD-detected + alwaysIncluded unless "show all" is toggled
+  const activeCatalog = useMemo(() => {
+    if (showAll || autoDetected.length === 0) return AZURE_SERVICE_CATALOG;
+    const allowedIds = new Set([
+      ...autoDetected,
+      ...AZURE_SERVICE_CATALOG.filter((s) => s.alwaysIncluded).map((s) => s.id),
+    ]);
+    return AZURE_SERVICE_CATALOG.filter((s) => allowedIds.has(s.id));
+  }, [showAll, autoDetected]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return AZURE_SERVICE_CATALOG;
-    return AZURE_SERVICE_CATALOG.filter(
+    if (!q) return activeCatalog;
+    return activeCatalog.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q) ||
         s.keywords.some((k) => k.includes(q))
     );
-  }, [search]);
+  }, [search, activeCatalog]);
 
   const toggle = (id: string) => {
     const next = new Set(selectedIds);
@@ -207,12 +218,15 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
           )}
         </span>
         <div className="flex gap-3">
-          <button
-            className="text-blue-600 hover:underline"
-            onClick={() => onChange([...new Set([...AZURE_SERVICE_CATALOG.map((s) => s.id)])])}
-          >
-            Select all
-          </button>
+          {autoDetected.length > 0 && (
+            <button
+              className="flex items-center gap-1 text-slate-500 hover:underline"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              <Plus className="w-3 h-3" />
+              {showAll ? "Show TDD services only" : "Show all Azure services"}
+            </button>
+          )}
           <button
             className="text-slate-500 hover:underline"
             onClick={() => onChange(AZURE_SERVICE_CATALOG.filter((s) => s.alwaysIncluded).map((s) => s.id))}
