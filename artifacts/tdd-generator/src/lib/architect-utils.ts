@@ -330,6 +330,209 @@ export function computeRisksAndInsights(f: FormSnapshot): RiskInsight[] {
   return items.map(enrichRiskInsight);
 }
 
+export interface ArchitecturePattern {
+  name: string;
+  category: string;
+  confidence: "high" | "medium" | "low";
+  summary: string;
+  rationale: string;
+  keyComponents: string[];
+  wafPillars: string[];
+  cafAlignment: string;
+}
+
+export function computeArchitecturePattern(f: FormSnapshot): ArchitecturePattern {
+  const isCloud      = f.deploymentModel === "Cloud (McCain Tenant)";
+  const isThirdParty = THIRD_PARTY_MODELS.includes(f.deploymentModel);
+  const isOnPrem     = f.deploymentModel === "On-Premises (McCain Data Center)";
+  const isHybrid     = f.deploymentModel === "Hybrid";
+  const internetFacing  = f.networkPosture === "Internet-Facing" || f.networkPosture === "Hybrid";
+  const highIntegration = ["High", "Medium"].includes(f.integrationImpact);
+  const highSecurity    = ["High", "Medium"].includes(f.securityImpact);
+  const highAI          = ["High", "Medium"].includes(f.aiImpact);
+  const missionCritical = ["Tier 0", "Tier 1"].includes(f.businessCriticality);
+  const isMigration     = f.applicationType === "Cloud Migration";
+
+  if (highAI && isCloud) {
+    return {
+      name: "AI-Augmented Application Pattern",
+      category: "Intelligent Workload",
+      confidence: "high",
+      summary: "Integrates Azure OpenAI / Cognitive Services within a secure, private-network PaaS architecture governed by McCain's Responsible AI framework.",
+      rationale: `AI impact rated ${f.aiImpact} on a Cloud (McCain Tenant) workload. Azure WAF recommends isolating AI inference endpoints in a dedicated subnet with Private Endpoints and prompt/output logging for governance.`,
+      keyComponents: [
+        "Azure OpenAI (Private Endpoint)",
+        "Azure API Management (AI gateway & rate limiting)",
+        "Azure App Service / Container Apps",
+        "Azure Key Vault (secrets & model config)",
+        "Azure Monitor + Log Analytics (prompt audit logging)",
+        "Azure Content Safety",
+      ],
+      wafPillars: ["Security", "Operational Excellence", "Cost Optimization"],
+      cafAlignment: "Innovate — AI-driven digital transformation aligned to McCain's digital strategy with Responsible AI guardrails.",
+    };
+  }
+
+  if (isCloud && internetFacing && highIntegration) {
+    return {
+      name: "API-Led Integration Architecture",
+      category: "Integration Hub",
+      confidence: "high",
+      summary: "Centralised API gateway pattern using Azure API Management to broker all external and internal integrations with built-in WAF, throttling, and observability.",
+      rationale: `Internet-facing posture combined with ${f.integrationImpact} integration complexity. Azure CAF recommends API Management as the integration frontier with Azure Front Door for global routing and DDoS protection.`,
+      keyComponents: [
+        "Azure API Management (integration gateway)",
+        "Azure Front Door + WAF (global edge & DDoS)",
+        "Azure Service Bus / Event Grid (async messaging)",
+        "Azure Functions (lightweight processors)",
+        "Azure Private Endpoints (backend connectivity)",
+        "Azure Monitor + Application Insights",
+      ],
+      wafPillars: ["Security", "Reliability", "Performance Efficiency"],
+      cafAlignment: "Migrate/Modernise — adopts cloud-native integration patterns aligned to CAF integration design area.",
+    };
+  }
+
+  if (isMigration && isCloud) {
+    return {
+      name: "Lift-and-Shift Landing Zone Migration",
+      category: "Cloud Migration",
+      confidence: "high",
+      summary: "Azure CAF-aligned migration using a dedicated landing zone subscription with Azure Migrate tooling, followed by optional modernisation of compute to PaaS.",
+      rationale: "Cloud Migration request type maps directly to Azure CAF Migrate methodology. A landing zone is provisioned first, then workloads are assessed, replicated, and cut over with tested rollback procedures.",
+      keyComponents: [
+        "Azure Migrate (discovery & replication)",
+        "Azure Landing Zone (dedicated subscription)",
+        "Azure Site Recovery (DR & failback)",
+        "Azure Virtual Network (hub-spoke connectivity)",
+        "Azure Bastion (secure admin access)",
+        "Azure Policy (guardrail enforcement post-migration)",
+      ],
+      wafPillars: ["Reliability", "Operational Excellence", "Cost Optimization"],
+      cafAlignment: "Migrate — follows CAF Migrate phase: Assess → Replicate → Optimize → Secure & Manage.",
+    };
+  }
+
+  if (isCloud && highSecurity && !internetFacing) {
+    return {
+      name: "Zero-Trust Hub-and-Spoke Landing Zone",
+      category: "Secure Workload",
+      confidence: "high",
+      summary: "Private, Zero-Trust architecture deployed within McCain's hub-spoke topology. All traffic traverses central Azure Firewall; no public endpoints.",
+      rationale: `Security impact rated ${f.securityImpact} with private network posture. Azure WAF Reliability and Security pillars prescribe hub-spoke with centralised egress, Private Endpoints, and PIM-based just-in-time access.`,
+      keyComponents: [
+        "Hub VNet + Azure Firewall Premium (centralised egress)",
+        "Spoke VNet (dedicated workload network)",
+        "Azure Private DNS Zones",
+        "Private Endpoints for all PaaS services",
+        "Microsoft Entra ID PIM (just-in-time privileged access)",
+        "Microsoft Defender for Cloud (CSPM)",
+      ],
+      wafPillars: ["Security", "Reliability", "Operational Excellence"],
+      cafAlignment: "Ready — implements CAF enterprise-scale landing zone with Zero Trust network design principles.",
+    };
+  }
+
+  if (isCloud && missionCritical && (f.haEnabled || f.drEnabled)) {
+    return {
+      name: "Resilient Active-Active Multi-Region Pattern",
+      category: "Mission-Critical Workload",
+      confidence: "high",
+      summary: "Active-active or active-passive multi-region deployment across Canada Central and Canada East for maximum availability aligned to Tier 0/1 RTO/RPO.",
+      rationale: `Business criticality ${f.businessCriticality} with HA/DR requirements. Azure WAF Reliability pillar requires geo-redundant, zone-redundant PaaS services with automated failover and tested recovery runbooks.`,
+      keyComponents: [
+        "Azure Traffic Manager / Front Door (global load balancing)",
+        "Zone-redundant PaaS (App Service, Azure SQL, Storage)",
+        "Azure SQL Geo-Replication (Canada Central ↔ Canada East)",
+        "Azure Site Recovery (compute failover)",
+        "Azure Monitor + Alerts (health probes & runbooks)",
+        "Azure Backup (policy-enforced, tested restores)",
+      ],
+      wafPillars: ["Reliability", "Operational Excellence", "Security"],
+      cafAlignment: "Manage — CAF operational compliance with business continuity management and SLA governance.",
+    };
+  }
+
+  if (isThirdParty) {
+    return {
+      name: "SaaS Governance & Identity Federation Pattern",
+      category: "Third-Party / SaaS",
+      confidence: "medium",
+      summary: "Secure SSO federation via Microsoft Entra ID with vendor access governed through McCain's PAM tooling, and data flows monitored via Microsoft Defender for Cloud Apps.",
+      rationale: "Third-party/SaaS deployment model. CAF guidance requires identity governance, vendor risk review, and data egress monitoring rather than infrastructure provisioning.",
+      keyComponents: [
+        "Microsoft Entra ID (SAML/OIDC federation)",
+        "Conditional Access Policies (MFA, device compliance)",
+        "Microsoft Defender for Cloud Apps (CASB)",
+        "Microsoft Entra PIM (vendor privileged access)",
+        "Azure Monitor (activity log forwarding)",
+        "Data Loss Prevention (DLP) policies",
+      ],
+      wafPillars: ["Security", "Operational Excellence"],
+      cafAlignment: "Govern — enforces CAF identity & access management and vendor risk compliance controls.",
+    };
+  }
+
+  if (isOnPrem) {
+    return {
+      name: "Hardened On-Premises Deployment Pattern",
+      category: "On-Premises",
+      confidence: "medium",
+      summary: "Secure on-premises deployment within McCain data centres with network segmentation, privileged access management, and hybrid connectivity to Azure Monitor.",
+      rationale: "On-premises deployment model. Azure CAF hybrid guidance applies for log forwarding to central SIEM and Azure Arc management plane for unified governance.",
+      keyComponents: [
+        "Dedicated VLAN / network segment (micro-segmentation)",
+        "Active Directory integration (Kerberos/LDAP)",
+        "Azure Arc (unified management & policy)",
+        "Azure Monitor Agent (log forwarding to Log Analytics)",
+        "HashiCorp Vault or Azure Key Vault (secrets via hybrid)",
+        "CyberArk PAM (privileged session management)",
+      ],
+      wafPillars: ["Security", "Operational Excellence", "Reliability"],
+      cafAlignment: "Hybrid — CAF hybrid and multi-cloud design area with Arc-enabled servers for governance parity.",
+    };
+  }
+
+  if (isHybrid) {
+    return {
+      name: "Hybrid Cloud Bridge Architecture",
+      category: "Hybrid Workload",
+      confidence: "medium",
+      summary: "Extends McCain on-premises workloads to Azure via ExpressRoute or VPN, using Azure Arc for unified governance and Azure Monitor for end-to-end observability.",
+      rationale: "Hybrid deployment model with both on-premises and cloud components. CAF prescribes a well-defined network topology, consistent identity plane, and unified policy management via Azure Arc.",
+      keyComponents: [
+        "Azure ExpressRoute / Site-to-Site VPN",
+        "Hub VNet (connectivity hub)",
+        "Azure Arc (on-premises server governance)",
+        "Azure Active Directory Connect (identity sync)",
+        "Private DNS Resolver",
+        "Azure Monitor (unified observability)",
+      ],
+      wafPillars: ["Reliability", "Security", "Operational Excellence"],
+      cafAlignment: "Hybrid & Multi-Cloud — CAF connectivity design area with private, non-internet-routed integration.",
+    };
+  }
+
+  // Default: Standard cloud workload
+  return {
+    name: "Standard Cloud Application Pattern",
+    category: "Cloud Workload",
+    confidence: "medium",
+    summary: "Azure PaaS-first deployment within McCain's Cloud (McCain Tenant) landing zone following CCoE guardrails and Azure CAF best practices.",
+    rationale: "Cloud deployment with standard risk profile. CAF recommends PaaS-first approach, mandatory CCoE tagging, Canada-only region constraints, and Azure Policy compliance.",
+    keyComponents: [
+      "Azure App Service / Container Apps",
+      "Azure SQL Database / Cosmos DB",
+      "Azure Key Vault (secrets management)",
+      "Azure Monitor + Application Insights",
+      "Azure Policy (CCoE guardrails)",
+      "Azure Managed Identity (credential-free auth)",
+    ],
+    wafPillars: ["Cost Optimization", "Operational Excellence", "Reliability"],
+    cafAlignment: "Ready — CAF-aligned landing zone with subscription vending and required CCoE policy initiative.",
+  };
+}
+
 function enrichRiskInsight(risk: Omit<RiskInsight, "remediation" | "bestPractice">): RiskInsight {
   const categoryGuidance: Record<string, Pick<RiskInsight, "remediation" | "bestPractice">> = {
     "AI Risk": {

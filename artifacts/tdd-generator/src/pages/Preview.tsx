@@ -806,7 +806,7 @@ ${articleEl.innerHTML}
             disabled={isGenerating}
             onClick={() => {
               const reqId = localStorage.getItem("activeRequestId");
-              setLocation(reqId ? `/wizard/${reqId}` : "/wizard");
+              setLocation(reqId ? `/requests/${reqId}` : "/requests");
             }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Form
@@ -1284,12 +1284,6 @@ ${articleEl.innerHTML}
             ) : (
               <>
                 {/* Warning banner */}
-                <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                  <p className="text-sm text-amber-800">
-                    <span className="font-semibold">Security review required.</span> Review all Terraform configurations and validate security settings before deploying to production environments.
-                  </p>
-                </div>
 
                 {/* Selected services summary */}
                 <div className="flex flex-wrap gap-2">

@@ -88,7 +88,7 @@ const SelectContent = React.forwardRef<
         className={cn(
           "p-1",
           position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+            "min-h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}
@@ -131,7 +131,7 @@ const SelectItem = React.forwardRef<
     <div className="flex flex-col">
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       {description && (
-        <span className="text-[11px] text-muted-foreground leading-snug mt-0.5">{description}</span>
+        <span className="text-[11px] text-muted-foreground leading-snug mt-0.5 whitespace-pre-line">{description}</span>
       )}
     </div>
   </SelectPrimitive.Item>

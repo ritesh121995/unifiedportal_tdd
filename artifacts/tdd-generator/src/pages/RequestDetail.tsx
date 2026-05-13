@@ -4,7 +4,7 @@ import {
   ArrowLeft, Loader2, CheckCircle, XCircle, Clock, MessageSquare,
   Cloud, FileText, Calendar, User, Building2, AlertTriangle, Info,
   Send, ShieldCheck, ShieldX, Play, Flag, Network,
-  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine, Copy, Check, Download,
+  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine, Copy, Check, Download, Cpu,
 } from "lucide-react";
 import AzureServiceSelector, { detectServicesFromTdd } from "@/components/AzureServiceSelector";
 import { generateMultiServiceTerraform } from "@/lib/terraformGenerator";
@@ -17,7 +17,7 @@ import { useAuth } from "@/store/auth-context";
 import { useAppContext, type FormDraft } from "@/store/app-context";
 import { getApiBase } from "@/lib/api-base";
 import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge";
-import { computeArchitectRecommendations, computeRisksAndInsights, type FormSnapshot } from "@/lib/architect-utils";
+import { computeArchitectRecommendations, computeRisksAndInsights, computeArchitecturePattern, type FormSnapshot } from "@/lib/architect-utils";
 
 interface StoredTddFormData {
   businessCriticality?: string;
@@ -133,6 +133,19 @@ interface RequestEvent {
   description: string;
   createdAt: string;
 }
+
+const CA_REVIEW_CHECKLIST = [
+  "TDD document reviewed and technically accurate",
+  "Checkov policy scans completed — no critical violations",
+  "Terraform IaC peer-reviewed by a second Cloud Architect",
+  "QA environment deployment verified and tested",
+  "STG environment deployment verified and tested",
+  "PRD deployment plan confirmed with change management",
+  "Network Security Groups and firewall rules validated",
+  "Identity & Access Management roles reviewed (RBAC/ABAC)",
+  "Backup and DR configuration confirmed per RTO/RPO requirements",
+  "Cost estimate and tagging policy reviewed with FinOps",
+];
 
 const PRIORITY_COLORS: Record<string, string> = {
   Critical: "text-red-600",
@@ -336,6 +349,7 @@ export default function RequestDetail() {
   const [iacDeployError, setIacDeployError] = useState<string | null>(null);
   const [iacCopied, setIacCopied] = useState(false);
   const [iacShowPlan, setIacShowPlan] = useState(false);
+  const [caReviewChecks, setCaReviewChecks] = useState<string[]>([]);
 
   // Network CIDR state — keyed by environment name
   const DEFAULT_CIDRS: Record<string, string> = {
@@ -465,8 +479,9 @@ export default function RequestDetail() {
     };
   }, [request]);
 
-  const architectRecs  = useMemo(() => formSnapshot ? computeArchitectRecommendations(formSnapshot) : [], [formSnapshot]);
-  const riskInsights   = useMemo(() => formSnapshot ? computeRisksAndInsights(formSnapshot)         : [], [formSnapshot]);
+  const architectRecs     = useMemo(() => formSnapshot ? computeArchitectRecommendations(formSnapshot) : [], [formSnapshot]);
+  const riskInsights      = useMemo(() => formSnapshot ? computeRisksAndInsights(formSnapshot)         : [], [formSnapshot]);
+  const architecturePattern = useMemo(() => formSnapshot ? computeArchitecturePattern(formSnapshot)    : null,  [formSnapshot]);
 
   // Minimal FormDraft for Terraform generation in Phase 3
   const iacFormDraft = useMemo((): FormDraft => ({
@@ -1313,6 +1328,68 @@ export default function RequestDetail() {
       </Card>}
 
 
+      {/* ─── AI Architecture Pattern Suggestion (admin / EA / CA) ─── */}
+      {!isRequestor && architecturePattern && (
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-blue-600" />
+              AI-Suggested Architecture Pattern
+              <span className={`ml-auto text-[10px] font-mono px-2 py-0.5 rounded border ${
+                architecturePattern.confidence === "high"
+                  ? "bg-green-100 text-green-700 border-green-300"
+                  : "bg-amber-100 text-amber-700 border-amber-300"
+              }`}>
+                {architecturePattern.confidence === "high" ? "High Confidence" : "Medium Confidence"}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base font-bold text-blue-900">{architecturePattern.name}</span>
+                  <span className="text-[10px] font-mono text-blue-600 border border-blue-200 bg-white px-2 py-0.5 rounded">{architecturePattern.category}</span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{architecturePattern.summary}</p>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-blue-100 bg-white px-3 py-2 text-xs text-slate-600 leading-relaxed">
+              <span className="font-medium text-blue-800">Why this pattern:</span> {architecturePattern.rationale}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">Key Azure Components</p>
+                <ul className="space-y-1">
+                  {architecturePattern.keyComponents.map((c) => (
+                    <li key={c} className="text-[11px] text-slate-700 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">WAF Pillars</p>
+                  <div className="flex flex-wrap gap-1">
+                    {architecturePattern.wafPillars.map((p) => (
+                      <span key={p} className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 border border-indigo-200">{p}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">CAF Alignment</p>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">{architecturePattern.cafAlignment}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Error */}
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2 flex items-center gap-2">
@@ -1614,16 +1691,10 @@ export default function RequestDetail() {
             </div>
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={() => {
-                if (request.status === "tdd_completed") {
-                  setLocation(`/tdd-view/${request.id}`);
-                } else {
-                  setLocation(`/wizard/${request.id}`);
-                }
-              }}
+              onClick={() => setLocation(`/tdd-view/${request.id}`)}
             >
               <FileText className="w-4 h-4 mr-2" />
-              {request.status === "tdd_completed" ? "View TDD" : "Continue TDD"}
+              View TDD
             </Button>
           </CardContent>
         </Card>
@@ -1798,7 +1869,24 @@ export default function RequestDetail() {
                             {iacDeployLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
                             Start Deployment
                           </Button>
-                          {iacDeployError && <p className="text-sm text-red-600">{iacDeployError}</p>}
+                          {iacDeployError && (
+                            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 space-y-1">
+                              <p>{iacDeployError}</p>
+                              {iacDeployError.toLowerCase().includes("subscription") && (
+                                <p className="text-xs">
+                                  Go to{" "}
+                                  <button
+                                    type="button"
+                                    className="underline font-medium text-red-700 hover:text-red-900"
+                                    onClick={() => setLocation("/integrations")}
+                                  >
+                                    Integrations → Azure
+                                  </button>{" "}
+                                  to configure your Azure Service Principal credentials.
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1836,10 +1924,53 @@ export default function RequestDetail() {
 
             {/* DevSecOps Approval */}
             <div className="space-y-3 border-t border-indigo-200 pt-4">
-              <h4 className="text-sm font-semibold text-indigo-800">DevSecOps Approval</h4>
+              <h4 className="text-sm font-semibold text-indigo-800">DevSecOps Sign-off Checklist</h4>
               <p className="text-xs text-slate-600">
-                Once IaC is reviewed and pipeline gates are confirmed (Checkov policy scans, QA → STG → PRD), approve below to proceed to FinOps.
+                Complete all checklist items before approving. All gates must pass before proceeding to FinOps.
               </p>
+              <div className="rounded-lg border border-indigo-100 bg-white p-3 space-y-2">
+                <div className="flex items-center justify-between pb-1 border-b border-indigo-100">
+                  <span className="text-xs font-medium text-indigo-700">
+                    {caReviewChecks.length}/{CA_REVIEW_CHECKLIST.length} items confirmed
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-indigo-600 hover:text-indigo-800 underline underline-offset-2"
+                    onClick={() =>
+                      setCaReviewChecks(
+                        caReviewChecks.length === CA_REVIEW_CHECKLIST.length
+                          ? []
+                          : [...CA_REVIEW_CHECKLIST],
+                      )
+                    }
+                  >
+                    {caReviewChecks.length === CA_REVIEW_CHECKLIST.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+                {CA_REVIEW_CHECKLIST.map((item) => {
+                  const checked = caReviewChecks.includes(item);
+                  return (
+                    <label
+                      key={item}
+                      className={`flex items-start gap-2.5 rounded-md px-2 py-1.5 cursor-pointer select-none transition-colors ${checked ? "bg-indigo-50" : "hover:bg-slate-50"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="accent-indigo-600 w-3.5 h-3.5 mt-0.5 shrink-0"
+                        checked={checked}
+                        onChange={() =>
+                          setCaReviewChecks((prev) =>
+                            prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item],
+                          )
+                        }
+                      />
+                      <span className={`text-xs leading-relaxed ${checked ? "text-indigo-800 line-through decoration-indigo-400" : "text-slate-700"}`}>
+                        {item}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
               <div className="space-y-1.5">
                 <Label>Review Notes (optional)</Label>
                 <Textarea
@@ -1852,8 +1983,9 @@ export default function RequestDetail() {
               <div className="flex gap-3">
                 <Button
                   className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                  disabled={!!actionLoading}
+                  disabled={!!actionLoading || caReviewChecks.length < CA_REVIEW_CHECKLIST.length}
                   onClick={() => doAction("devsecops-review", { action: "approve", comments: devsecopsComments })}
+                  title={caReviewChecks.length < CA_REVIEW_CHECKLIST.length ? "Complete all checklist items before approving" : undefined}
                 >
                   {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                   Approve — Proceed to FinOps
@@ -1952,13 +2084,13 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* ─── Activity Timeline + Comments (EA/CA/admin only — requestors use notification panel) ── */}
+      {/* ─── Comments (EA/CA/admin only) — activity timeline is in the notification panel ── */}
       {!isRequestor && <Card className="border-slate-200">
         <CardHeader className="pb-2 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-slate-400" />
-              Activity &amp; Comments
+              Team Comments
             </CardTitle>
             {(isEA || isAdmin) && (
               <Button
@@ -1973,31 +2105,24 @@ export default function RequestDetail() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          {events.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">No activity yet.</p>
-          ) : (
-            <ActivityTimeline events={events} />
-          )}
-          <div className="pt-3 border-t border-slate-100 space-y-2">
-            <Textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment or note for the team…"
-              rows={2}
-              className="text-sm"
-            />
-            <Button
-              size="sm"
-              disabled={!commentText.trim() || submittingComment}
-              onClick={() => { void handleAddComment(); }}
-            >
-              {submittingComment
-                ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                : <MessageSquare className="w-3.5 h-3.5 mr-1.5" />}
-              Add Comment
-            </Button>
-          </div>
+        <CardContent className="space-y-3 pt-4">
+          <Textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Add a comment or note for the team…"
+            rows={3}
+            className="text-sm"
+          />
+          <Button
+            size="sm"
+            disabled={!commentText.trim() || submittingComment}
+            onClick={() => { void handleAddComment(); }}
+          >
+            {submittingComment
+              ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              : <MessageSquare className="w-3.5 h-3.5 mr-1.5" />}
+            Add Comment
+          </Button>
         </CardContent>
       </Card>}
 

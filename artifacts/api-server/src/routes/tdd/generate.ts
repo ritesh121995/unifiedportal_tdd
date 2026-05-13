@@ -205,6 +205,34 @@ const AUTHORING_GUARDRAILS = `
 ## Diagram Guardrails (Mandatory)
 - Do NOT generate any Mermaid diagrams or code fences. An architecture diagram is auto-generated and injected by the system — any diagram you produce will be discarded.
 - Use your token budget on prose, tables, and technical detail instead.
+
+## Azure Well-Architected Framework (WAF) — Mandatory Design Lens
+Every TDD section must be evaluated against the five WAF pillars. Embed WAF rationale explicitly where relevant:
+
+**Reliability** — Design for failure. Specify SLA, availability zones, autoscale rules, health probes, circuit breakers, and tested failover procedures. For Tier 0/1 workloads use active-active multi-region (Canada Central + Canada East). Always state RTO and RPO and confirm they are achievable with the proposed design.
+
+**Security** — Apply Zero Trust: verify explicitly, use least-privilege access, assume breach. Mandate Private Endpoints for all PaaS services. Use Azure Key Vault for all secrets. Enable Microsoft Defender for Cloud plans. Document IAM/RBAC assignments in a table. No public storage accounts or databases.
+
+**Cost Optimization** — Right-size compute (use B-series or serverless for dev/test). Apply mandatory Cost Center, Owner, and Environment tags. Define budget alerts at 80% and 100%. Use reserved capacity or savings plans for predictable workloads. Show estimated monthly cost in the design.
+
+**Operational Excellence** — Infrastructure-as-Code (Terraform) for all provisioning. Use Azure Monitor, Log Analytics, and Application Insights for observability. Define alert rules for P1 scenarios. Document runbooks and escalation paths. Enforce naming conventions from CCoE standards.
+
+**Performance Efficiency** — Specify performance targets (latency p95, throughput). Use CDN for static assets. Choose appropriate storage tiers. Document autoscale thresholds. Avoid single points of bottleneck.
+
+## Azure Cloud Adoption Framework (CAF) — Mandatory Governance Lens
+Align every TDD to the relevant CAF phase and guidance:
+
+**Strategy** — Confirm the business motivation (modernisation, migration, innovation) and expected outcomes align with McCain's digital strategy.
+
+**Plan** — Identify dependencies, skill gaps, and migration sequencing where applicable.
+
+**Ready (Landing Zone)** — All Cloud (McCain Tenant) workloads MUST deploy into a CAF-aligned landing zone subscription. Confirm: subscription vending, management group placement, mandatory Azure Policy initiatives (CCoE guardrails), RBAC, and budget assignment.
+
+**Adopt (Migrate / Innovate)** — For migrations: follow Assess → Replicate → Optimize → Secure & Manage. For new workloads: apply cloud-native design patterns (PaaS-first, serverless where appropriate).
+
+**Govern** — Enforce Azure Policy for region restriction (Canada Central / Canada East only), mandatory tags, and SKU allowlists. Document policy exemptions with justification.
+
+**Manage** — Define platform operations: patch management, backup verification, cost review cadence, and incident response runbooks.
 `;
 
 const FEW_SHOT_SECTION_EXAMPLE = `
@@ -1632,30 +1660,7 @@ function applyOutputGuardrails(
     if (!headingRegex.test(guarded)) {
       guarded += `\n\n## ${heading}\n\n${fallbackBody}\n`;
       rebuiltSections.push(heading);
-      continue;
     }
-
-    const sectionRegex = new RegExp(
-      `(^#{1,6}\\s+${escapeForRegex(heading)}\\s*$)([\\s\\S]*?)(?=^#{1,6}\\s+\\d+\\.|$)`,
-      "mi",
-    );
-    const matched = guarded.match(sectionRegex);
-    if (!matched) {
-      continue;
-    }
-    const sectionBody = matched[2] ?? "";
-    if (!isLowValueSectionBody(sectionBody)) {
-      continue;
-    }
-    const replacementBody = `\n\n${fallbackBody}\n\n`;
-    guarded = guarded.replace(
-      new RegExp(
-        `(^#{1,6}\\s+${escapeForRegex(heading)}\\s*$)([\\s\\S]*?)(?=^#{1,6}\\s+\\d+\\.|$)`,
-        "mi",
-      ),
-      (_all, headingLine: string) => `${headingLine}${replacementBody}`,
-    );
-    rebuiltSections.push(heading);
   }
 
   // Second injection pass: ensures placeholders embedded in any guardrail-rebuilt
