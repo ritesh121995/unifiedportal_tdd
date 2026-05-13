@@ -52,10 +52,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const PHASES = [
-  { num: 1, label: "Architecture Review", sub: "Your request is reviewed by Enterprise and Security Architects — they assess risk, compliance, and technical fit before any design work begins.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
-  { num: 2, label: "Technical Design", sub: "Cloud Architects create a detailed Technical Design Document for your solution — covering infrastructure, security, and cost.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours (AI-assisted)", gate: "CA sign-off" },
-  { num: 3, label: "Infrastructure Deployment", sub: "The approved design is deployed to Azure using automated, policy-enforced pipelines. Environments are provisioned and tested.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
-  { num: 4, label: "Cost Management", sub: "Ongoing governance of cloud spend — budget alerts, tagging, chargeback reporting, and monthly cost reviews.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
+  { num: 1, label: "Architecture Review", sub: "Enterprise architects assess your request for risk, compliance, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
+  { num: 2, label: "Technical Design", sub: "Cloud architects produce an AI-assisted Technical Design Document for your solution.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours", gate: "CA sign-off" },
+  { num: 3, label: "Infrastructure Deployment", sub: "Approved design is deployed to Azure via automated, policy-enforced pipelines.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
+  { num: 4, label: "Cost Management", sub: "Ongoing budget alerts, cost allocation, tagging, and monthly chargeback reporting.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
 ];
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
@@ -160,33 +160,35 @@ export default function Dashboard() {
 
       {/* Phase overview cards */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-700 mb-1">How does the onboarding process work?</h2>
-        <p className="text-xs text-slate-400 mb-3">Click any phase to learn more or take action.</p>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="flex items-baseline justify-between mb-3">
+          <div>
+            <h2 className="text-base font-bold text-slate-800">Onboarding Journey</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Four phases from request to provisioned workload. Click any phase to explore.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {PHASES.map((p) => {
             const Icon = p.icon;
             return (
               <button
                 key={p.num}
                 onClick={() => setLocation(p.path)}
-                className="text-left bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all group"
-                style={{ borderLeftWidth: 4, borderLeftColor: p.color }}
+                className="text-left bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-lg hover:border-yellow-300 transition-all group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg shrink-0" style={{ background: `${p.color}18` }}>
-                    <span className="text-[9px] font-mono" style={{ color: p.color }}>P{String(p.num).padStart(2, "0")}</span>
-                    <Icon className="w-3.5 h-3.5" style={{ color: p.color }} />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl" style={{ background: "#FFCD0020" }}>
+                    <Icon className="w-5 h-5" style={{ color: "#b49000" }} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 leading-tight">{p.label}</p>
-                    <p className="text-[10px] font-mono mt-0.5" style={{ color: p.color }}>{p.sub}</p>
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <span className="text-[10px] text-slate-400">{p.duration}</span>
-                      <span className="text-[10px] text-slate-400">·</span>
-                      <span className="text-[10px] text-slate-400">Gate: {p.gate}</span>
-                    </div>
+                  <span className="text-[10px] font-bold font-mono tracking-widest text-slate-400 uppercase">Phase {p.num}</span>
+                </div>
+                <p className="text-sm font-bold text-slate-900 leading-snug mb-1.5">{p.label}</p>
+                <p className="text-xs text-slate-500 leading-relaxed mb-4">{p.sub}</p>
+                <div className="flex items-end justify-between border-t border-slate-100 pt-3">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] text-slate-400">Duration: <span className="font-semibold text-slate-700">{p.duration}</span></p>
+                    <p className="text-[10px] text-slate-400">Gate: <span className="font-semibold text-slate-700">{p.gate}</span></p>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 shrink-0 mt-1" />
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-yellow-500 group-hover:translate-x-0.5 transition-all shrink-0" />
                 </div>
               </button>
             );

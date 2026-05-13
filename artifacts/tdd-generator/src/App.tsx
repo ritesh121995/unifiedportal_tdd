@@ -100,7 +100,7 @@ function Router() {
         <ProtectedRoute component={RequestList} />
       </Route>
       <Route path="/ea-queue">
-        <ProtectedRoute component={() => <RequestList fixedStatuses={["submitted", "ea_triage"]} pageTitle="EA Review Queue" />} />
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["submitted", "ea_triage"]} pageTitle="Architecture Review Queue" />} />
       </Route>
       <Route path="/tdd-queue">
         <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "tdd_in_progress"]} pageTitle="Design Document Queue" />} />
