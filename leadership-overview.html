@@ -238,6 +238,12 @@
     .caps-section {
       padding: 30px 48px;
       border-bottom: 1px solid var(--border);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .caps-section .slabel {
+      break-after: avoid;
+      page-break-after: avoid;
     }
     .caps-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
@@ -314,7 +320,7 @@
       .status-bar    { padding: 7px 38px; }
       .cs-row        { padding: 22px 38px; gap: 18px; }
       .phase-section { padding: 22px 38px 26px; }
-      .caps-section  { padding: 22px 38px; }
+      .caps-section  { padding: 22px 38px; page-break-before: always; break-before: always; }
       .bcol          { padding: 20px 38px; }
       .bcol + .bcol  { padding-left: 28px; }
       .footer        { padding: 12px 38px; }
@@ -533,8 +539,7 @@
   <!-- ── Footer ── -->
   <div class="footer">
     <div class="footer-left">
-      <strong>McCain Foods — Cloud Centre of Excellence</strong><br/>
-      Unified Cloud Onboarding Portal &nbsp;·&nbsp; Internal Use Only &nbsp;·&nbsp; © 2026 McCain Foods Limited
+      © 2026 McCain Foods Limited &nbsp;·&nbsp; Internal Use Only
     </div>
     <div class="footer-right">
       <span class="fpill">Confidential</span>
