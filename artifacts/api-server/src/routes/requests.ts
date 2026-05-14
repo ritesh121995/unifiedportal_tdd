@@ -818,6 +818,39 @@ router.patch("/:id/devsecops-review", requireRole("cloud_architect"), async (req
   res.json({ request: row });
 });
 
+// PATCH /api/requests/:id/observability-complete
+router.patch("/:id/observability-complete", requireRole("cloud_architect"), async (req, res) => {
+  const user = req.user!;
+  const id = parseRequestId(req.params.id);
+  const { comments } = req.body as { comments?: string };
+
+  const existing = await db.query.architectureRequestsTable.findFirst({ where: eq(architectureRequestsTable.id, id) });
+  if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
+  if (existing.status !== "devsecops_approved") {
+    res.status(400).json({ error: `Cannot complete Observability from status: ${existing.status}` });
+    return;
+  }
+
+  const [row] = await db
+    .update(architectureRequestsTable)
+    .set({
+      status: "observability_approved",
+      observabilityReviewerName: user.name,
+      observabilityReviewedAt: new Date(),
+      observabilityComments: comments ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(architectureRequestsTable.id, id))
+    .returning();
+
+  if (!row) { res.status(404).json({ error: "Request not found" }); return; }
+
+  await logEvent(id, user.name, user.role, "observability_approved",
+    `Observability setup confirmed by ${user.name}${comments ? ` — "${comments}"` : ""}`);
+  sendWebhookNotification(existing.title, user.name, "observability_approved", id);
+  res.json({ request: row });
+});
+
 // PATCH /api/requests/:id/finops-activate
 router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async (req, res) => {
   const user = req.user!;
@@ -828,7 +861,7 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
 
   const isCloudTenant = existing.deploymentModel === "Cloud (McCain Tenant)";
   const validFromStatus = isCloudTenant
-    ? ["devsecops_approved"]
+    ? ["observability_approved"]
     : ["ea_approved", "vendor_active"];
 
   if (!validFromStatus.includes(existing.status)) {

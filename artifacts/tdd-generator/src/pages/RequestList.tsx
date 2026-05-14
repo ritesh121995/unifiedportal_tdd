@@ -9,7 +9,7 @@ import { useAuth } from "@/store/auth-context";
 import { getApiBase } from "@/lib/api-base";
 import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge";
 
-const PHASE_STEPS = ["Arch Review", "Tech Design", "Infrastructure", "Cost Mgmt"];
+const PHASE_STEPS = ["Arch Review", "Tech Design", "Infrastructure", "Observability", "Cost Mgmt"];
 
 function toRequestNumber(id: number, createdAt: string): string {
   const year = new Date(createdAt).getFullYear();
@@ -29,7 +29,8 @@ function statusToPhase(status: string): { activeStep: number; rejected: boolean 
     case "devsecops_rejected":     return { activeStep: 3, rejected: true };
     case "devsecops_approved":
     case "vendor_active":          return { activeStep: 4, rejected: false };
-    case "finops_active":          return { activeStep: 5, rejected: false };
+    case "observability_approved": return { activeStep: 5, rejected: false };
+    case "finops_active":          return { activeStep: 6, rejected: false };
     default:                       return { activeStep: 1, rejected: false };
   }
 }
@@ -321,6 +322,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
               <SelectItem value="tdd_completed">Technical design complete</SelectItem>
               <SelectItem value="devsecops_approved">Infrastructure approved</SelectItem>
               <SelectItem value="devsecops_rejected">Infrastructure rejected</SelectItem>
+              <SelectItem value="observability_approved">Observability approved</SelectItem>
               <SelectItem value="finops_active">Complete</SelectItem>
             </SelectContent>
           </Select>

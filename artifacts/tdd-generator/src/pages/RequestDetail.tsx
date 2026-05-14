@@ -122,6 +122,10 @@ interface ArchitectureRequest {
   devsecopsApprovedAt: string | null;
   devsecopsComments: string | null;
   // Phase 5
+  observabilityReviewerName: string | null;
+  observabilityReviewedAt: string | null;
+  observabilityComments: string | null;
+  // Phase 6
   finopsActivatedAt: string | null;
   finopsActivatedBy: string | null;
   tddFormData: StoredTddFormData | null;
@@ -306,6 +310,8 @@ export default function RequestDetail() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [eaComments, setEaComments] = useState("");
   const [devsecopsComments, setDevsecopsComments] = useState("");
+  const [obsComments, setObsComments] = useState("");
+  const [obsChecks, setObsChecks] = useState<string[]>([]);
   const [domainArchsConsulted, setDomainArchsConsulted] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -757,23 +763,25 @@ export default function RequestDetail() {
   const canViewTDD     = request.status === "tdd_completed" && isCA;
   const canDevSecOps   = isCA && request.status === "tdd_completed";
   // FinOps: from devsecops_approved (Cloud) OR ea_approved (non-Cloud)
+  const canObservability = isCA && isCloudTenant && request.status === "devsecops_approved";
   const canFinOps      = isEA && (
-    (isCloudTenant && request.status === "devsecops_approved") ||
+    (isCloudTenant && request.status === "observability_approved") ||
     (isThirdParty  && request.status === "ea_approved")
   );
   // True when ea_approved but no action is available for the current user (unknown/future model)
   const noActionAfterApproval = request.status === "ea_approved" && !canGenerateTDD && !canFinOps;
   // Requestor can view their completed TDD in read-only mode
   const canRequestorViewTDD = isRequestor &&
-    ["tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"].includes(request.status) &&
+    ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(request.status) &&
     !!request.tddSubmissionId;
 
   // Phase progress steps — dynamic based on workflow type
   const PHASE_STEPS_CLOUD: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
-    { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"] },
-    { label: "Technical Design",    statuses: ["ea_approved", "tdd_in_progress"], doneStatuses: ["tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"] },
-    { label: "Infrastructure",      statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected", "finops_active"] },
-    { label: "Cost Management",     statuses: ["devsecops_approved"], doneStatuses: ["finops_active"] },
+    { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Technical Design",    statuses: ["ea_approved", "tdd_in_progress"], doneStatuses: ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Infrastructure",      statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Observability",       statuses: ["devsecops_approved"], doneStatuses: ["observability_approved", "finops_active"] },
+    { label: "Cost Management",     statuses: ["observability_approved"], doneStatuses: ["finops_active"] },
   ];
   const PHASE_STEPS_3P: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
     { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "finops_active"] },
@@ -1030,26 +1038,30 @@ export default function RequestDetail() {
         type PhaseStatus = "pending" | "active" | "done" | "rejected" | "revision" | "skipped";
 
         const p1Status: PhaseStatus =
-          ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"].includes(s) ? "done"
+          ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "ea_rejected" ? "rejected"
           : s === "modification_requested" ? "revision"
           : "active";
 
         const p2Status: PhaseStatus = !isCloudTenant ? "skipped"
-          : ["tdd_completed", "devsecops_approved", "devsecops_rejected", "finops_active"].includes(s) ? "done"
+          : ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "tdd_in_progress" ? "active"
-          : s === "ea_approved" ? "pending"
           : "pending";
 
         const p3Status: PhaseStatus = !isCloudTenant ? "skipped"
-          : s === "devsecops_approved" || s === "finops_active" ? "done"
+          : ["devsecops_approved", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "devsecops_rejected" ? "rejected"
           : s === "tdd_completed" ? "active"
           : "pending";
 
+        const p4ObsStatus: PhaseStatus = !isCloudTenant ? "skipped"
+          : s === "observability_approved" || s === "finops_active" ? "done"
+          : s === "devsecops_approved" ? "active"
+          : "pending";
+
         const p4Status: PhaseStatus =
           s === "finops_active" ? "done"
-          : (isCloudTenant && s === "devsecops_approved") || (isThirdParty && s === "ea_approved") ? "active"
+          : (isCloudTenant && s === "observability_approved") || (isThirdParty && s === "ea_approved") ? "active"
           : "pending";
 
         const PhaseCard = ({
@@ -1126,18 +1138,18 @@ export default function RequestDetail() {
             {/* Horizontal phase stepper — shown for all users */}
             {(() => {
               const phases = isCloudTenant
-                ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Cost Management"]
+                ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Observability", "Cost Management"]
                 : ["Submitted", "Architecture Review", "Cost Management"];
               const phaseForStatus: Record<string, number> = isCloudTenant
-                ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, tdd_in_progress: 2, tdd_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, finops_active: 4 }
+                ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, tdd_in_progress: 2, tdd_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, observability_approved: 5, finops_active: 5 }
                 : { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, finops_active: 2 };
               const phaseIdx = phaseForStatus[s] ?? 0;
               const daysSince = Math.floor((Date.now() - new Date(request.createdAt).getTime()) / 86400000);
               const responsibleNow =
                 s === "modification_requested" ? "You — Action Required" :
                 ["submitted", "ea_triage"].includes(s) ? "Enterprise Architecture" :
-                ["ea_approved", "tdd_in_progress", "tdd_completed"].includes(s) ? "Cloud Architecture" :
-                s === "devsecops_approved" ? "Enterprise Architecture" :
+                ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(s) ? "Cloud Architecture" :
+                s === "observability_approved" ? "Enterprise Architecture" :
                 s === "finops_active" ? "Completed" :
                 s === "ea_rejected" ? "Rejected" : "—";
               return (
@@ -1187,7 +1199,16 @@ export default function RequestDetail() {
 
             {/* Current phase card — shows the first incomplete phase */}
             {p4Status === "done" ? null
-              : p1Status !== "done" ? (
+              : p4ObsStatus === "active" ? (
+                <PhaseCard
+                  phase={isCloudTenant ? 5 : 4}
+                  title="Observability"
+                  desc={isAdmin ? "Infrastructure approved. Cloud Architect to confirm monitoring setup before Cost Management." : "The Cloud Architecture team is configuring monitoring, alerts, and logging for your workload."}
+                  status={p4ObsStatus}
+                  adminContinuePath="#observability-section"
+                  adminContinueLabel="Go to Observability ↓"
+                />
+              ) : p1Status !== "done" ? (
                 <PhaseCard
                   phase={1}
                   title="Architecture Review"
@@ -1231,11 +1252,11 @@ export default function RequestDetail() {
                 />
               ) : (
                 <PhaseCard
-                  phase={isCloudTenant ? 4 : 2}
+                  phase={isCloudTenant ? 6 : 2}
                   title="Cost Management"
                   desc={p4Status === "active"
-                    ? (isAdmin ? "Cost Management is now active. Use the action button to finalize provisioning." : "Your workload is in the final Cost Management stage. Cost allocation and budget controls are being configured.")
-                    : (isAdmin ? "All phases complete. Activate Cost Management to finalize." : "Cost Management begins once all prior phases are approved.")}
+                    ? (isAdmin ? "Observability confirmed. Activate Cost Management to complete onboarding." : "Your workload is in the final Cost Management stage. Cost allocation and budget controls are being configured.")
+                    : (isAdmin ? "Cost Management begins once Observability is confirmed." : "Cost Management begins once all prior phases are approved.")}
                   status={p4Status}
                   adminContinuePath="#finops-section"
                   adminContinueLabel="Go to Cost Management ↓"
@@ -2162,7 +2183,109 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* Phase 4 — FinOps Activation (Cloud: after DevSecOps | 3rd Party: after ARR approval) */}
+      {/* Phase 5 — Observability Setup (Cloud only, CA signs off after Infrastructure) */}
+      {canObservability && (() => {
+        const OBS_CHECKLIST = [
+          { id: "monitor",   label: "Azure Monitor workspace linked to all provisioned resources" },
+          { id: "insights",  label: "Application Insights configured and telemetry flowing" },
+          { id: "alerts",    label: "Alert rules defined: availability, error rate, and resource thresholds" },
+          { id: "logs",      label: "Log Analytics retention policy set (minimum 30 days)" },
+          { id: "dashboard", label: "Monitoring dashboard created in Azure Portal" },
+          { id: "oncall",    label: "On-call escalation path and runbook documented" },
+        ];
+        const allObsChecked = OBS_CHECKLIST.every((item) => obsChecks.includes(item.id));
+        return (
+          <Card id="observability-section" className="border-2 border-cyan-200 shadow-sm">
+            <div className="px-6 py-4 border-b border-cyan-100 flex items-center gap-3 flex-wrap" style={{ background: "linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)" }}>
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-cyan-500">
+                <ShieldCheck className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-slate-900 text-base">Phase 5 — Observability Setup</h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Confirm that monitoring, alerting, and logging are configured before activating Cost Management.
+                </p>
+              </div>
+              <span className="text-[10px] font-mono text-cyan-700 border border-cyan-300 bg-cyan-100 px-2 py-0.5 rounded shrink-0">Cloud Architect</span>
+            </div>
+            <CardContent className="p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {OBS_CHECKLIST.map((item) => {
+                  const checked = obsChecks.includes(item.id);
+                  return (
+                    <label key={item.id} htmlFor={`obs-${item.id}`} className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors select-none ${checked ? "bg-cyan-50 border-cyan-200" : "bg-slate-50 border-slate-200 hover:bg-slate-100"}`}>
+                      <input
+                        type="checkbox"
+                        id={`obs-${item.id}`}
+                        checked={checked}
+                        onChange={() => setObsChecks((prev) => checked ? prev.filter((x) => x !== item.id) : [...prev, item.id])}
+                        className="mt-0.5 shrink-0 w-4 h-4 accent-cyan-600"
+                      />
+                      <span className={`text-sm leading-snug ${checked ? "text-cyan-800 line-through decoration-cyan-400 decoration-1" : "text-slate-700"}`}>{item.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5">
+                <div className="h-1.5 rounded-full transition-all duration-500 bg-cyan-500" style={{ width: `${(obsChecks.length / OBS_CHECKLIST.length) * 100}%` }} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-slate-700">Notes <span className="text-slate-400 font-normal">(optional)</span></Label>
+                <Textarea
+                  placeholder="Add any observability notes, tool links, or exceptions…"
+                  rows={3}
+                  value={obsComments}
+                  onChange={(e) => setObsComments(e.target.value)}
+                  className="resize-none"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+                {!allObsChecked && (
+                  <p className="text-xs text-amber-700 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    Complete all {OBS_CHECKLIST.length} items to confirm Observability
+                  </p>
+                )}
+                <Button
+                  disabled={!allObsChecked || !!actionLoading}
+                  className="ml-auto font-semibold px-6"
+                  style={allObsChecked ? { background: "#06b6d4", color: "#fff" } : {}}
+                  onClick={() => doAction("observability-complete", { comments: obsComments.trim() || undefined })}
+                >
+                  {actionLoading === "observability-complete"
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>
+                    : <><ShieldCheck className="w-4 h-4 mr-2" />Confirm Observability Setup</>}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Observability decision display */}
+      {["observability_approved", "finops_active"].includes(request.status) && request.observabilityReviewerName && (
+        <Card className="border-cyan-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-sm text-cyan-800">Observability confirmed by {request.observabilityReviewerName}</p>
+                {request.observabilityReviewedAt && (
+                  <p className="text-xs text-slate-500 mt-0.5">{new Date(request.observabilityReviewedAt).toLocaleString()}</p>
+                )}
+                {request.observabilityComments && (
+                  <div className="mt-2 p-2 bg-white rounded border text-sm text-slate-700">
+                    <MessageSquare className="w-3.5 h-3.5 inline mr-1.5 text-slate-400" />
+                    {request.observabilityComments}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Phase 6 — FinOps Activation (Cloud: after Observability | 3rd Party: after ARR approval) */}
       {canFinOps && (
         <Card id="finops-section" className="border-emerald-200 bg-emerald-50">
           <CardHeader className="pb-3">

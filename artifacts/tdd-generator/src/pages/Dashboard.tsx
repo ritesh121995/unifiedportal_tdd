@@ -98,6 +98,7 @@ export default function Dashboard() {
   const completed = requests.filter((r) => r.status === "tdd_completed").length;
   const devsecopsApproved = requests.filter((r) => r.status === "devsecops_approved").length;
   const devsecopsRejected = requests.filter((r) => r.status === "devsecops_rejected").length;
+  const observabilityApproved = requests.filter((r) => r.status === "observability_approved").length;
   const finopsActive = requests.filter((r) => r.status === "finops_active").length;
   const recent = requests.slice(0, 5);
 
@@ -106,7 +107,7 @@ export default function Dashboard() {
   const hasRejected = requests.some((r) => r.status === "ea_rejected" || r.status === "devsecops_rejected");
   const allComplete = requests.length > 0 && requests.every((r) => r.status === "finops_active");
   const hasActive = requests.some((r) =>
-    ["submitted", "ea_triage", "ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(r.status)
+    ["submitted", "ea_triage", "ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "observability_approved"].includes(r.status)
   );
   const requestorBanner: { icon: string; color: string; title: string; body: string } | null =
     user.role !== "requestor" || requests.length === 0 ? null
@@ -143,6 +144,7 @@ export default function Dashboard() {
     { name: "Design Active", value: inProgress, fill: STATUS_COLORS.tdd_in_progress },
     { name: "Design Complete", value: completed, fill: STATUS_COLORS.tdd_completed },
     { name: "Infra Approved", value: devsecopsApproved, fill: "#8b5cf6" },
+    { name: "Observability", value: observabilityApproved, fill: "#06b6d4" },
     { name: "Complete", value: finopsActive, fill: "#16a34a" },
   ].filter((d) => d.value > 0);
 
@@ -298,8 +300,8 @@ export default function Dashboard() {
             )}
             <StatCard label="Design In Progress" value={inProgress} icon={Cloud} color="bg-blue-100 text-blue-600" />
             <StatCard label="Design Complete" value={completed} icon={FileText} color="bg-purple-100 text-purple-600" />
-            {devsecopsApproved + finopsActive > 0 && (
-              <StatCard label="Infra & Complete" value={devsecopsApproved + finopsActive} icon={ShieldCheck} color="bg-emerald-100 text-emerald-600" />
+            {devsecopsApproved + observabilityApproved + finopsActive > 0 && (
+              <StatCard label="Infra & Complete" value={devsecopsApproved + observabilityApproved + finopsActive} icon={ShieldCheck} color="bg-emerald-100 text-emerald-600" />
             )}
             {avgDays !== null && (
               <StatCard label="Avg. Review Time (days)" value={parseFloat(avgDays)} icon={BarChart3} color="bg-slate-100 text-slate-600" />

@@ -30,9 +30,9 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
 
   // Status lifecycle:
   // submitted → ea_triage → ea_approved | ea_rejected
-  //   → risk_approved | risk_rejected
-  //     → tdd_in_progress → tdd_completed
-  //       → devsecops_approved | devsecops_rejected
+  //   → tdd_in_progress → tdd_completed
+  //     → devsecops_approved | devsecops_rejected
+  //       → observability_approved
   //         → finops_active
   status: text("status").notNull().default("submitted"),
 
@@ -59,7 +59,12 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   devsecopsApprovedAt: timestamp("devsecops_approved_at"),
   devsecopsComments: text("devsecops_comments"),
 
-  // Phase 5 — FinOps
+  // Phase 5 — Observability
+  observabilityReviewerName: text("observability_reviewer_name"),
+  observabilityReviewedAt: timestamp("observability_reviewed_at"),
+  observabilityComments: text("observability_comments"),
+
+  // Phase 6 — FinOps
   finopsActivatedAt: timestamp("finops_activated_at"),
   finopsActivatedBy: text("finops_activated_by"),
 
@@ -106,10 +111,10 @@ export type RequestStatus =
   | "ea_triage"
   | "ea_approved"
   | "ea_rejected"
-  | "risk_approved"
-  | "risk_rejected"
+  | "modification_requested"
   | "tdd_in_progress"
   | "tdd_completed"
   | "devsecops_approved"
   | "devsecops_rejected"
+  | "observability_approved"
   | "finops_active";
