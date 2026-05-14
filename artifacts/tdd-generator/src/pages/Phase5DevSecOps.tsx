@@ -231,6 +231,8 @@ export default function Phase5DevSecOps() {
             </pre>
           </CardContent>
         </Card>
+      </div>
+
       {/* SPOC */}
       <Card className="border-yellow-200 bg-yellow-50">
         <CardContent className="p-5 flex items-start gap-4">
