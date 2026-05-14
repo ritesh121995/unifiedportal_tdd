@@ -34,7 +34,8 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { label: "Phase 1 — Architecture Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
       { label: "Phase 2 — Technical Design", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
       { label: "Phase 3 — Infrastructure Deployment", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
-      { label: "Phase 4 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 4 },
+      { label: "Phase 4 — Observability", path: "/phase/observability", icon: Activity, roles: ["requestor", "cloud_architect", "admin"], phase: 4 },
+      { label: "Phase 5 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 5 },
     ],
   },
   {
@@ -86,6 +87,7 @@ const STATUS_CHANGE_LABELS: Record<string, string> = {
   tdd_in_progress: "technical design document is being created",
   tdd_completed: "technical design is complete and signed off",
   devsecops_approved: "infrastructure setup has been approved",
+  observability_approved: "observability setup has been confirmed",
   finops_active: "is now live in cost management",
 };
 

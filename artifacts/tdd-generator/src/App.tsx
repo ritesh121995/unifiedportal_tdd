@@ -17,6 +17,7 @@ import SubmitRequest from "@/pages/SubmitRequest";
 import Phase1EAReview from "@/pages/Phase1EAReview";
 import Phase4TDDGeneration from "@/pages/Phase4TDDGeneration";
 import Phase5DevSecOps from "@/pages/Phase5DevSecOps";
+import Phase5Observability from "@/pages/Phase5Observability";
 import Phase6FinOps from "@/pages/Phase6FinOps";
 import AdminUsers from "@/pages/AdminUsers";
 import Integrations from "@/pages/Integrations";
@@ -126,6 +127,9 @@ function Router() {
       </Route>
       <Route path="/phase/4">
         <ProtectedRoute component={Phase5DevSecOps} />
+      </Route>
+      <Route path="/phase/observability">
+        <ProtectedRoute component={Phase5Observability} />
       </Route>
       <Route path="/phase/5">
         <ProtectedRoute component={Phase6FinOps} />

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   FileText, CheckCircle, Clock, XCircle, PlusCircle, ArrowRight,
-  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign, Link2,
+  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign, Link2, Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +55,8 @@ const PHASES = [
   { num: 1, label: "Architecture Review", sub: "Enterprise architects assess your request for risk, compliance, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
   { num: 2, label: "Technical Design", sub: "Cloud architects produce an AI-assisted Technical Design Document for your solution.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours", gate: "CA sign-off" },
   { num: 3, label: "Infrastructure Deployment", sub: "Approved design is deployed to Azure via automated, policy-enforced pipelines.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
-  { num: 4, label: "Cost Management", sub: "Ongoing budget alerts, cost allocation, tagging, and monthly chargeback reporting.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
+  { num: 4, label: "Observability", sub: "Monitoring, alerting, dashboards, and on-call runbooks confirmed before cost tracking begins.", color: "#FFCD00", icon: Activity, path: "/phase/observability", duration: "~2 days", gate: "CA sign-off" },
+  { num: 5, label: "Cost Management", sub: "Ongoing budget alerts, cost allocation, tagging, and monthly chargeback reporting.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
 ];
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
@@ -206,10 +207,10 @@ export default function Dashboard() {
         <div className="flex items-baseline justify-between mb-3">
           <div>
             <h2 className="text-base font-bold text-slate-800">Onboarding Journey</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Four phases from request to provisioned workload. Click any phase to explore.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Five phases from request to provisioned workload. Click any phase to explore.</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {PHASES.map((p) => {
             const Icon = p.icon;
             return (
@@ -245,10 +246,11 @@ export default function Dashboard() {
         <p className="text-[11px] text-slate-400 mb-3">Times are approximate — complexity and approvals affect actual duration.</p>
         <div className="flex h-9 rounded-lg overflow-hidden text-[10px] font-semibold">
           {[
-            { label: "Architecture Review", w: "20%", sub: "≤1 wk" },
-            { label: "Technical Design", w: "20%", sub: "1–2 hrs" },
-            { label: "Infrastructure Deployment", w: "42%", sub: "~2 weeks" },
-            { label: "Cost Management", w: "18%", sub: "ongoing" },
+            { label: "Architecture Review", w: "17%", sub: "≤1 wk" },
+            { label: "Technical Design", w: "17%", sub: "1–2 hrs" },
+            { label: "Infrastructure Deployment", w: "36%", sub: "~2 weeks" },
+            { label: "Observability", w: "15%", sub: "~2 days" },
+            { label: "Cost Management", w: "15%", sub: "ongoing" },
           ].map((seg, idx) => (
             <div
               key={seg.label}
