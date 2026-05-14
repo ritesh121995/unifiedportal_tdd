@@ -338,8 +338,6 @@ export default function Preview() {
   const [reviewChecked, setReviewChecked] = useState<Record<string, boolean>>({});
   const [reviewNotes, setReviewNotes] = useState("");
   const [reviewCompleting, setReviewCompleting] = useState(false);
-  const [reviewCompleted, setReviewCompleted] = useState(false);
-  const [completedRequestId, setCompletedRequestId] = useState<string | null>(null);
 
   const [iacCopied, setIacCopied] = useState(false);
   const [iacDeployOpen, setIacDeployOpen] = useState(false);
@@ -989,7 +987,7 @@ ${articleEl.innerHTML}
       </Card>
 
       {/* ─── Review Gate ─────────────────────────────────────────────────── */}
-      {pendingRequestId && !isGenerating && !reviewCompleted && (
+      {pendingRequestId && !isGenerating && (
         <Card className="border-2 border-yellow-300 shadow-lg">
           <div className="px-6 py-4 border-b border-yellow-200 flex items-center gap-3 flex-wrap" style={{ background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)" }}>
             <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "#FFCD00" }}>
@@ -1141,66 +1139,10 @@ ${articleEl.innerHTML}
         </Card>
       )}
 
-      {/* ─── Review Completed Banner ─────────────────────────────────────── */}
-      {reviewCompleted && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center gap-4">
-              <CheckCircle2 className="w-8 h-8 text-green-600 shrink-0" />
-              <div className="flex-1">
-                <p className="font-semibold text-green-800">Technical Design Signed Off &amp; Complete</p>
-                <p className="text-sm text-green-700 mt-0.5">
-                  This Technical Design Document has been reviewed and marked as complete. It is now visible to all stakeholders on the request.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setLocation(completedRequestId ? `/requests/${completedRequestId}#devsecops-section` : "/requests")}
-                className="shrink-0 border-green-300 text-green-700 hover:bg-green-100"
-              >
-                View Request &amp; Infrastructure
-              </Button>
-            </div>
-
-            {/* Confluence publish from completed banner */}
-            <div className="border-t border-green-200 pt-3 flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-2 text-sm text-green-700 flex-1">
-                <BookOpen className="w-4 h-4 text-[#0052CC]" />
-                <span>Publish this design document to your Confluence space for wider visibility</span>
-              </div>
-              {confluenceResult ? (
-                <a
-                  href={confluenceResult.pageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0052CC] hover:underline"
-                >
-                  <CheckCircle2 className="w-4 h-4" />View on Confluence <ExternalLink className="w-3 h-3" />
-                </a>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={confluencePublishing || !content}
-                  onClick={() => void handlePublishToConfluence()}
-                  className="gap-2 border-[#0052CC] text-[#0052CC] hover:bg-blue-50 shrink-0"
-                >
-                  {confluencePublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
-                  {confluencePublishing ? "Publishing…" : "Publish to Confluence"}
-                </Button>
-              )}
-              {confluenceError && (
-                <p className="text-xs text-red-600 w-full">{confluenceError} — check settings in Integrations.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* ─── Azure Service Selector ───────────────────────────────────────── */}
       {/* Shown only after "Mark TDD as Complete" (when coming from a request),
           or immediately after generation when there is no pending request. */}
-      {content && !isGenerating && (!pendingRequestId || reviewCompleted) && (
+      {content && !isGenerating && !pendingRequestId && (
         <Card className="border border-blue-200 shadow-sm overflow-hidden">
           <CardHeader className="pb-0 pt-5 px-6">
             <div className="flex items-center gap-3">
@@ -1228,7 +1170,7 @@ ${articleEl.innerHTML}
       )}
 
       {/* ─── IaC — Terraform ─────────────────────────────────────────────── */}
-      {content && !isGenerating && (!pendingRequestId || reviewCompleted) && (
+      {content && !isGenerating && !pendingRequestId && (
         <Card className="border border-slate-200 shadow-sm overflow-hidden">
           <CardHeader className="pb-0 pt-5 px-6">
             <div className="flex items-start justify-between gap-4 flex-wrap">

@@ -89,7 +89,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const SLA_THRESHOLD_DAYS = 3;
-const ACTIVE_STATUSES = ["submitted", "ea_triage"];
+const ACTIVE_STATUSES = ["submitted", "ea_triage", "modification_requested"];
 const BULK_ELIGIBLE_STATUSES = ["submitted", "ea_triage"];
 
 const DEPLOYMENT_MODEL_OPTIONS = [

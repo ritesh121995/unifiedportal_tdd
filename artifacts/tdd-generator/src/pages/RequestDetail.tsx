@@ -1954,7 +1954,7 @@ export default function RequestDetail() {
                         <Rocket className="w-4 h-4" />
                         Deploy to Azure
                       </Button>
-                      <Dialog open={iacDeployFormOpen} onOpenChange={setIacDeployFormOpen}>
+                      <Dialog open={iacDeployFormOpen} onOpenChange={(open) => { setIacDeployFormOpen(open); if (!open) { setIacDeployPassword(""); setIacDeployRdpSource(""); } }}>
                         <DialogContent className="sm:max-w-md">
                           <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
