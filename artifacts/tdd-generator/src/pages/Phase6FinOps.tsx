@@ -255,6 +255,58 @@ export default function Phase6FinOps() {
           </Card>
         </div>
       </div>
+
+      {/* SPOC */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-black text-sm" style={{ background: PHASE_COLOR, color: "#1a1a2e" }}>FA</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-mono uppercase tracking-widest text-yellow-700 mb-0.5">Phase 5 SPOC</p>
+            <p className="text-sm font-bold text-slate-900">FinOps Architect</p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Accountable for enrolling the workload in McCain's Azure Cost Management framework, establishing budget alerts, defining the tagging strategy, and producing monthly chargeback reports. Drives ongoing cost optimisation through Azure Advisor recommendations and Reserved Instance analysis.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {["Budget Governance", "Tagging Strategy", "Reserved Instances", "Chargeback Reports", "Cost Optimisation"].map((r) => (
+                <span key={r} className="text-[10px] px-2 py-0.5 rounded border font-medium" style={{ borderColor: "#FFCD0060", color: "#92400e", background: "#FFCD0018" }}>{r}</span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Best Practices */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${PHASE_COLOR}20` }}>
+              <span className="text-xs">🤖</span>
+            </div>
+            <CardTitle className="text-sm">AI-Recommended Best Practices — Cost Management</CardTitle>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Patterns that prevent budget surprises and build a mature FinOps practice at McCain.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { title: "Tag Before Deploy, Not After", body: "Enforce mandatory tags (CostCentre, BusinessUnit, Environment, Owner) via Azure Policy deny effect before any resource is deployed. Retroactive tagging on thousands of resources is a common FinOps failure mode that causes chargeback gaps for months.", tag: "Tagging" },
+              { title: "Set Budgets at 70%, Alert at 85%, Act at 95%", body: "Three-tier budget alerts give teams time to act before a budget breach. A 70% alert is an early warning; 85% requires a response plan; 95% triggers mandatory resource review. Waiting until 100% means the breach already happened.", tag: "Budgeting" },
+              { title: "Reserve Instances After 30 Days of Production Data", body: "Never purchase Reserved Instances during Phase 3 or 4. Wait 30 days of production load data to identify actual usage patterns before committing. Premature reservations on wrong SKUs waste 30–50% of the intended saving.", tag: "Optimisation" },
+              { title: "Allocate Dev/Test SKUs to All Non-Production Environments", body: "Dev/Test subscriptions with Azure Dev/Test pricing can reduce compute costs by up to 60% for non-production environments. This is the single highest-ROI, lowest-effort FinOps action available for most workloads.", tag: "Savings" },
+              { title: "Track Unit Economics, Not Just Absolute Spend", body: "Track cost per transaction, cost per active user, or cost per business event — not just total monthly spend. Unit economics expose efficiency regressions that flat spend numbers hide, and align cost conversations with business outcomes.", tag: "Metrics" },
+              { title: "Review Azure Advisor Weekly, Act Monthly", body: "Azure Advisor refreshes cost recommendations weekly. Assign a FinOps champion to triage new recommendations every week and implement approved actions on a monthly cadence. Unreviewed Advisor recommendations represent unacted savings.", tag: "Process" },
+            ].map((bp) => (
+              <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 mt-0.5" style={{ background: `${PHASE_COLOR}25`, color: "#92400e" }}>{bp.tag}</span>
+                  <p className="text-xs font-semibold text-slate-800">{bp.title}</p>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{bp.body}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

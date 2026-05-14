@@ -231,7 +231,57 @@ export default function Phase5DevSecOps() {
             </pre>
           </CardContent>
         </Card>
-      </div>
+      {/* SPOC */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-black text-sm" style={{ background: PHASE_COLOR, color: "#1a1a2e" }}>DSO</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-mono uppercase tracking-widest text-yellow-700 mb-0.5">Phase 3 SPOC</p>
+            <p className="text-sm font-bold text-slate-900">DevSecOps Architect</p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Owns the infrastructure deployment pipeline, IaC code quality, security scanning gates, and policy-as-code enforcement. Issues the dual-approval for Production deployments and ensures every environment meets the McCain security baseline before handoff to Observability.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {["Terraform IaC", "Security Scanning", "Policy-as-Code", "Pipeline Gates", "Prod Dual-Approval"].map((r) => (
+                <span key={r} className="text-[10px] px-2 py-0.5 rounded border font-medium" style={{ borderColor: "#FFCD0060", color: "#92400e", background: "#FFCD0018" }}>{r}</span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Best Practices */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#FFCD0020" }}>
+              <span className="text-xs">🤖</span>
+            </div>
+            <CardTitle className="text-sm">AI-Recommended Best Practices — Infrastructure Deployment</CardTitle>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Patterns that reduce deployment risk and maintain security posture at every environment.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { title: "Scan IaC Before Every Plan, Not Just Apply", body: "Run Checkov and OPA policy checks on every `terraform plan` output, not just before `apply`. Many misconfigurations are only visible in the plan diff — catching them early prevents costly rollbacks.", tag: "Security" },
+              { title: "Enforce Tagging via Policy-as-Code", body: "Use Azure Policy (deny effect) to block deployment of any resource missing required tags: CostCentre, Environment, Owner, CcoEApproved. Tagging gaps discovered post-deployment cause FinOps reporting failures.", tag: "Governance" },
+              { title: "Never Bypass the QA → STG → PRD Pipeline", body: "Production deployments that skip QA/STG environments are the leading cause of P0 incidents at McCain. Dual-approval gates exist for this reason — no exceptions, even for hotfixes.", tag: "Process" },
+              { title: "Use Terraform State Locking at All Times", body: "All remote state must use Azure Blob backend with state locking enabled. Concurrent apply operations without locking cause state corruption that can require full environment rebuild.", tag: "Reliability" },
+              { title: "Validate Cost Estimates Before Production Deploy", body: "Run Infracost diff between the approved TDD design and the terraform plan output. Any cost increase >20% above the TDD estimate must be reviewed by the FinOps Architect before Production deployment proceeds.", tag: "FinOps" },
+              { title: "Implement Drift Detection from Day One", body: "Configure Azure Defender for Resource Manager and Terraform drift detection to run daily. Infrastructure that drifts from its approved state is an unmanaged security and compliance risk.", tag: "Operations" },
+            ].map((bp) => (
+              <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 mt-0.5" style={{ background: `${PHASE_COLOR}25`, color: "#92400e" }}>{bp.tag}</span>
+                  <p className="text-xs font-semibold text-slate-800">{bp.title}</p>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{bp.body}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

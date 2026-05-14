@@ -305,6 +305,58 @@ export default function Phase1EAReview() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SPOC */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-black text-lg" style={{ background: PHASE_COLOR, color: "#1a1a2e" }}>EA</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-mono uppercase tracking-widest text-yellow-700 mb-0.5">Phase 1 SPOC</p>
+            <p className="text-sm font-bold text-slate-900">Enterprise Architect</p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Accountable for the end-to-end architecture review outcome. Assesses technical feasibility, strategic alignment, risk posture, and compliance fit. Issues the formal architecture sign-off required to advance to Phase 2.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {["Architecture Assessment", "Risk Governance", "Strategic Alignment", "ADR Sign-off"].map((r) => (
+                <span key={r} className="text-[10px] px-2 py-0.5 rounded border font-medium" style={{ borderColor: "#FFCD0060", color: "#92400e", background: "#FFCD0018" }}>{r}</span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Best Practices */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#FFCD0020" }}>
+              <span className="text-xs">🤖</span>
+            </div>
+            <CardTitle className="text-sm">AI-Recommended Best Practices — Architecture Review</CardTitle>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Curated patterns and guardrails for a high-quality Phase 1 review outcome.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { title: "Apply the Azure Well-Architected Framework", body: "Score every request against all five WAF pillars — Reliability, Security, Cost, Operational Excellence, and Performance. Flag any pillar scoring below 3/5 as a required remediation before approval.", tag: "WAF" },
+              { title: "Document Architecture Decision Records (ADRs)", body: "Capture every significant design decision with context, options considered, and rationale. ADRs become the audit-proof record that protects the organisation from future 'why did we do this?' questions.", tag: "Governance" },
+              { title: "Identify Integration Dependencies Early", body: "Map all upstream and downstream system dependencies at review time. Late-discovered integrations are the #1 cause of Phase 3 delays and cost overruns. Use the Integration Catalogue as input.", tag: "Integration" },
+              { title: "Classify Data Sovereignty Before Approval", body: "Confirm data residency requirements against McCain's data classification policy. Requests touching GDPR, PIPEDA, or industry-regulated data must route to the Security Architect before EA approval.", tag: "Compliance" },
+              { title: "Assess Landing Zone Fit", body: "Validate that the requested workload fits within an existing Azure Landing Zone subscription or identify if a new subscription vending request is needed. Misaligned landing zones cause deployment failures in Phase 3.", tag: "Cloud" },
+              { title: "Involve Stakeholders Early, Not Late", body: "Loop in the Application Owner, Business Owner, and IT Owner during review — not after approval. Misaligned expectations discovered late are the leading cause of modification requests and rework cycles.", tag: "Stakeholders" },
+            ].map((bp) => (
+              <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 mt-0.5" style={{ background: `${PHASE_COLOR}25`, color: "#92400e" }}>{bp.tag}</span>
+                  <p className="text-xs font-semibold text-slate-800">{bp.title}</p>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{bp.body}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

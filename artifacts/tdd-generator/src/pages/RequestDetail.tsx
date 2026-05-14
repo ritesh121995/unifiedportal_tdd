@@ -4,7 +4,7 @@ import {
   ArrowLeft, Loader2, CheckCircle, XCircle, Clock, MessageSquare,
   Cloud, FileText, Calendar, User, Building2, AlertTriangle, Info,
   Send, ShieldCheck, ShieldX, Play, Flag, Network,
-  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine, Copy, Check, Download, Cpu,
+  Code2, DollarSign, Rocket, Trash2, RefreshCw, PenLine, Copy, Check, Download, Cpu, Activity,
 } from "lucide-react";
 import AzureServiceSelector, { detectServicesFromTdd } from "@/components/AzureServiceSelector";
 import { generateMultiServiceTerraform } from "@/lib/terraformGenerator";
@@ -974,16 +974,16 @@ export default function RequestDetail() {
             color: "border-indigo-400 bg-indigo-50",
             icon: <Code2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />,
             heading: "Infrastructure Deployment Approval Required — Awaiting Cloud Architect Sign-off",
-            detail: "The Technical Design is complete. A Cloud Architect must review the Terraform IaC, complete the sign-off checklist, and approve the Infrastructure pipeline gates before Cost Management activation.",
+            detail: "The Technical Design is complete. A Cloud Architect must review the Terraform IaC, complete the sign-off checklist, and approve the Infrastructure pipeline gates before Observability setup.",
             anchor: "#devsecops-section",
             label: "Go to Infrastructure Sign-off ↓",
           } : s === "devsecops_approved" ? {
-            color: "border-emerald-400 bg-emerald-50",
-            icon: <DollarSign className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />,
-            heading: "Cost Management Activation Required — Final Step",
-            detail: "All technical approvals are complete. An Enterprise Architect must activate Cost Management monitoring to enrol this workload in McCain's Azure Cost Management framework.",
-            anchor: "#finops-section",
-            label: "Go to Cost Management ↓",
+            color: "border-cyan-400 bg-cyan-50",
+            icon: <Activity className="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" />,
+            heading: "Observability Setup Required — Next Step",
+            detail: "Infrastructure has been approved. A Cloud Architect must confirm monitoring, alerting, dashboards, and on-call runbooks are configured before Cost Management can be activated.",
+            anchor: "#observability-section",
+            label: "Go to Observability ↓",
           } : s === "finops_active" ? {
             color: "border-green-400 bg-green-50",
             icon: <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />,
@@ -2077,7 +2077,7 @@ export default function RequestDetail() {
             <div className="space-y-3 border-t border-indigo-200 pt-4">
               <h4 className="text-sm font-semibold text-indigo-800">Infrastructure Deployment Sign-off Checklist</h4>
               <p className="text-xs text-slate-600">
-                Complete all checklist items before approving. All gates must pass before proceeding to Cost Management.
+                Complete all checklist items before approving. All gates must pass before proceeding to Observability.
               </p>
               <div className="rounded-lg border border-indigo-100 bg-white p-3 space-y-2">
                 <div className="flex items-center justify-between pb-1 border-b border-indigo-100">
@@ -2139,7 +2139,7 @@ export default function RequestDetail() {
                   title={caReviewChecks.length < CA_REVIEW_CHECKLIST.length ? "Complete all checklist items before approving" : undefined}
                 >
                   {actionLoading === "devsecops-review" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                  Approve — Proceed to Cost Management
+                  Approve — Proceed to Observability
                 </Button>
                 <Button
                   variant="outline"
@@ -2201,7 +2201,7 @@ export default function RequestDetail() {
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-slate-900 text-base">Phase 5 — Observability Setup</h3>
+                <h3 className="font-bold text-slate-900 text-base">Phase 4 — Observability Setup</h3>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Confirm that monitoring, alerting, and logging are configured before activating Cost Management.
                 </p>

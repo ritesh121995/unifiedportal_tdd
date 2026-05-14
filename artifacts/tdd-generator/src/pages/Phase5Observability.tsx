@@ -253,6 +253,58 @@ export default function Phase5Observability() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SPOC */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardContent className="p-5 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-black text-sm" style={{ background: "#FFCD00", color: "#1a1a2e" }}>OA</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-mono uppercase tracking-widest text-yellow-700 mb-0.5">Phase 4 SPOC</p>
+            <p className="text-sm font-bold text-slate-900">Observability Architect</p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Responsible for confirming that every observability pillar is in place before FinOps is activated. Reviews Azure Monitor, Application Insights, Log Analytics, dashboards, alert strategy, and on-call runbooks. Issues the formal Observability sign-off that gates Cost Management entry.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {["Azure Monitor", "Application Insights", "Alert Design", "Runbook Review", "Observability Sign-off"].map((r) => (
+                <span key={r} className="text-[10px] px-2 py-0.5 rounded border font-medium" style={{ borderColor: "#FFCD0060", color: "#92400e", background: "#FFCD0018" }}>{r}</span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Best Practices */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#FFCD0020" }}>
+              <span className="text-xs">🤖</span>
+            </div>
+            <CardTitle className="text-sm">AI-Recommended Best Practices — Observability</CardTitle>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Patterns that build durable, low-noise observability rather than alert fatigue.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { title: "Alert on Symptoms, Not Causes", body: "Build top-level alerts on user-visible symptoms (error rate, latency, availability) rather than low-level resource metrics. A CPU spike that doesn't cause user impact is noise — user-impacting latency always matters.", tag: "Alerting" },
+              { title: "Define Error Budgets, Not Just Uptime Targets", body: "Express SLA targets as error budgets (e.g., 99.9% = 43.8 min/month of downtime). Track budget burn rate in real time. When burn rate is 2× expected, trigger an incident — don't wait for the SLA to breach.", tag: "SRE" },
+              { title: "Instrument at the Boundary, Not Just the Middle", body: "Instrument every external boundary: user-facing endpoints, third-party API calls, database queries. Internal function calls rarely need tracing — boundaries always do. This gives you 80% of the observability value at 20% of the overhead.", tag: "Tracing" },
+              { title: "Suppress Maintenance Window Alerts", body: "Configure alert suppression rules for all known maintenance windows before infrastructure changes. Teams that receive alerts during planned downtime begin ignoring all alerts — which is far more dangerous than the maintenance itself.", tag: "Operations" },
+              { title: "Link Every Alert to a Runbook", body: "An alert without a runbook is an incomplete alert. The runbook link must be in the alert body — not in a wiki that requires searching. On-call engineers responding at 3am cannot afford to search for context.", tag: "Runbooks" },
+              { title: "Review Alert Fatigue Monthly", body: "Every month, review which alerts fired but triggered no action. Alerts that are acknowledged and immediately closed are false positives — tune or remove them. High-volume, low-value alerts degrade on-call response quality for all alerts.", tag: "Quality" },
+            ].map((bp) => (
+              <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded shrink-0 mt-0.5" style={{ background: "#06b6d420", color: "#0e7490" }}>{bp.tag}</span>
+                  <p className="text-xs font-semibold text-slate-800">{bp.title}</p>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{bp.body}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
