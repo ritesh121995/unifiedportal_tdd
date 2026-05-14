@@ -151,7 +151,10 @@ async function runStartupMigrations() {
         ADD COLUMN IF NOT EXISTS target_go_live_date DATE,
         ADD COLUMN IF NOT EXISTS deployment_model TEXT DEFAULT 'To be defined',
         ADD COLUMN IF NOT EXISTS ai_classification TEXT,
-        ADD COLUMN IF NOT EXISTS ai_classification_reason TEXT
+        ADD COLUMN IF NOT EXISTS ai_classification_reason TEXT,
+        ADD COLUMN IF NOT EXISTS observability_reviewer_name TEXT,
+        ADD COLUMN IF NOT EXISTS observability_reviewed_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS observability_comments TEXT
     `);
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS iac_deployments (
