@@ -859,7 +859,7 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
   const existing = await db.query.architectureRequestsTable.findFirst({ where: eq(architectureRequestsTable.id, id) });
   if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
 
-  const isCloudTenant = existing.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloudTenant = existing.deploymentModel === "Azure Cloud (McCain Tenant)";
   const validFromStatus = isCloudTenant
     ? ["observability_approved"]
     : ["ea_approved", "vendor_active"];
