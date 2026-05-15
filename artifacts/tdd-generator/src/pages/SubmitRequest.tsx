@@ -124,6 +124,11 @@ type OrgLobFill = {
   applicationSupportManager?: string;
   infrastructureSupportManager?: string;
   glAccountOwnerEmail?: string;
+  // Section 5 — Financial Governance
+  billingCompanyCode?: string;
+  billingCostObject?: string;
+  billingGlAccount?: string;
+  categoryOwner?: string;
 };
 
 // Auto-fill map keyed by "Organization|LineOfBusiness"
@@ -136,6 +141,10 @@ const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
     technologyOwnerEmail: "Saurabh.Jain@mccain.ca",
     applicationSupportManagerIsRequestor: true,
     infrastructureSupportManager: "Saurabh Jain",
+    billingCompanyCode: "1063",
+    billingCostObject: "102468",
+    billingGlAccount: "102468-63015",
+    categoryOwner: "Prashant Jain",
   },
   "McCain Foods Limited|Digital Agriculture": {
     sltLeader: "Jay Agarwal",
@@ -143,6 +152,10 @@ const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
     businessOwnerEmail: "jenna.milano@mccain.ca",
     applicationSupportManagerIsRequestor: true,
     glAccountOwnerEmail: "jay.agarwal@mccain.com",
+    billingCompanyCode: "1063",
+    billingCostObject: "102967",
+    billingGlAccount: "1063 102967 636015",
+    categoryOwner: "Jay Agarwal",
   },
   "McCain Foods Limited|Digital Manufacturing": {
     sltLeader: "Jay Agarwal",
@@ -153,6 +166,10 @@ const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
     applicationSupportManager: "Frank Hillman",
     infrastructureSupportManager: "Steve Moore",
     glAccountOwnerEmail: "jay.agarwal@mccain.com",
+    billingCompanyCode: "1063",
+    billingCostObject: "103028",
+    billingGlAccount: "103028 636015",
+    categoryOwner: "Jay Agarwal",
   },
   "McCain Foods Limited|Digital Growth": {
     sltLeader: "Angela Li",
@@ -162,6 +179,10 @@ const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
     technologyOwnerEmail: "Deepak.Sharma@mccain.com",
     applicationSupportManager: "Manoj Kumar",
     glAccountOwnerEmail: "Priya.Ratihalli@mccain.ca",
+    billingCompanyCode: "1063",
+    billingCostObject: "103003",
+    billingGlAccount: "636015",
+    categoryOwner: "Angela Li",
   },
 };
 const ENVIRONMENTS = ["QA/UAT", "Prod"];
@@ -446,6 +467,10 @@ export default function SubmitRequest() {
         : (fill.applicationSupportManager ?? ""),
       infrastructureSupportManager: fill.infrastructureSupportManager ?? "",
       glAccountOwnerEmail: fill.glAccountOwnerEmail ?? "",
+      billingCompanyCode: fill.billingCompanyCode ?? "",
+      billingCostObject: fill.billingCostObject ?? "",
+      billingGlAccount: fill.billingGlAccount ?? "",
+      categoryOwner: fill.categoryOwner ?? "",
     }));
     setAppSupportMgrCustom(false);
   }, [form.organization, form.lineOfBusiness]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1909,10 +1934,18 @@ export default function SubmitRequest() {
             <SectionTitle step={5} title="Financial Governance" desc="Cost allocation and budget information for cloud spend tracking." complete={sec6Done} />
           </CardHeader>
           <CardContent className="space-y-4">
+            {autoFillKeyData?.billingCompanyCode && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <Zap className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                <span>Financial fields auto-populated for <strong>{form.lineOfBusiness}</strong>. You can still edit any field.</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="billingCompanyCode">Company Code <span className="text-red-500">*</span></Label>
-                <Input id="billingCompanyCode" placeholder="e.g. CA01" value={form.billingCompanyCode} onChange={(e) => update("billingCompanyCode", e.target.value)} required />
+                <Label htmlFor="billingCompanyCode" className="flex items-center gap-1.5">Company Code <span className="text-red-500">*</span>
+                  {autoFillKeyData?.billingCompanyCode && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="billingCompanyCode" placeholder="e.g. CA01" value={form.billingCompanyCode} onChange={(e) => update("billingCompanyCode", e.target.value)} className={autoFillKeyData?.billingCompanyCode ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="billingPlant">Plant Code <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
@@ -1921,13 +1954,17 @@ export default function SubmitRequest() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="billingCostObject" className="flex items-center">Billing Cost Object <span className="text-red-500 ml-0.5">*</span><FieldHelp text="Your SAP WBS element or Internal Order number used to allocate cloud spend. Format: WBS-XXXX or IO-XXXX. Ask your Finance Business Partner if you don't have this." /></Label>
-                <Input id="billingCostObject" placeholder="e.g. CC-123456 or W-2024-001" value={form.billingCostObject} onChange={(e) => update("billingCostObject", e.target.value)} required />
+                <Label htmlFor="billingCostObject" className="flex items-center gap-1.5">Billing Cost Object <span className="text-red-500">*</span><FieldHelp text="Your SAP WBS element or Internal Order number used to allocate cloud spend. Format: WBS-XXXX or IO-XXXX. Ask your Finance Business Partner if you don't have this." />
+                  {autoFillKeyData?.billingCostObject && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="billingCostObject" placeholder="e.g. CC-123456 or W-2024-001" value={form.billingCostObject} onChange={(e) => update("billingCostObject", e.target.value)} className={autoFillKeyData?.billingCostObject ? "bg-amber-50 border-amber-200" : ""} required />
                 <p className="text-[11px] text-slate-400">Cost Centre or WBS Element used for billing allocation</p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="billingGlAccount" className="flex items-center">GL Account <span className="text-red-500 ml-0.5">*</span><FieldHelp text="General Ledger account number for cloud cost categorisation in your financial system. Typically a 6-digit code (e.g. 600000). Your Finance team can provide this." /></Label>
-                <Input id="billingGlAccount" placeholder="e.g. 6140100" value={form.billingGlAccount} onChange={(e) => update("billingGlAccount", e.target.value)} required />
+                <Label htmlFor="billingGlAccount" className="flex items-center gap-1.5">GL Account <span className="text-red-500">*</span><FieldHelp text="General Ledger account number for cloud cost categorisation in your financial system. Typically a 6-digit code (e.g. 600000). Your Finance team can provide this." />
+                  {autoFillKeyData?.billingGlAccount && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="billingGlAccount" placeholder="e.g. 6140100" value={form.billingGlAccount} onChange={(e) => update("billingGlAccount", e.target.value)} className={autoFillKeyData?.billingGlAccount ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1936,8 +1973,10 @@ export default function SubmitRequest() {
                 <Input id="budgetTrackerReference" placeholder="e.g. BTR-2026-0042" value={form.budgetTrackerReference} onChange={(e) => update("budgetTrackerReference", e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="categoryOwner">Category Owner <span className="text-red-500">*</span></Label>
-                <Input id="categoryOwner" placeholder="Full name" value={form.categoryOwner} onChange={(e) => update("categoryOwner", e.target.value)} required />
+                <Label htmlFor="categoryOwner" className="flex items-center gap-1.5">Category Owner <span className="text-red-500">*</span>
+                  {autoFillKeyData?.categoryOwner && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="categoryOwner" placeholder="Full name" value={form.categoryOwner} onChange={(e) => update("categoryOwner", e.target.value)} className={autoFillKeyData?.categoryOwner ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
           </CardContent>
