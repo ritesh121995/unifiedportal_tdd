@@ -190,20 +190,13 @@ const REGIONS = [
   { id: "canadacentral", label: "Canada Central (Toronto)" },
   { id: "canadaeast", label: "Canada East (Quebec City)" },
 ];
-const DEPLOYMENT_MODELS_CLOUD = ["Cloud (McCain Tenant)"];
+const CLOUD_TENANT_VALUE = "Azure Cloud (McCain Tenant)";
 const DEPLOYMENT_MODELS_THIRD_PARTY = [
   "SaaS Solution",
-  "Vendor Tenant",
-  "Other 3rd Party Solution",
-];
-const DEPLOYMENT_MODELS_OTHER = [
+  "Vendor Cloud Tenant (Azure/AWS/GCP/Others)",
   "On-Premises (McCain Data Center)",
-  "Hybrid",
-];
-const ALL_DEPLOYMENT_MODELS = [
-  ...DEPLOYMENT_MODELS_CLOUD,
-  ...DEPLOYMENT_MODELS_THIRD_PARTY,
-  ...DEPLOYMENT_MODELS_OTHER,
+  "Hybrid Solution (McCain Data Center & McCain Cloud)",
+  "Any other 3rd party Solution",
 ];
 const NETWORK_POSTURE_OPTIONS = ["Internal", "External", "Hybrid (Internal & External)"];
 const COMMERCIAL_MODELS = ["Subscription", "Perpetual License", "Consumption-based", "Pay-per-use", "Other"];
@@ -517,7 +510,7 @@ export default function SubmitRequest() {
     if (!form.businessCriticality) { setError("Please select a Business Criticality."); return; }
     if (!form.targetGoLiveDate) { setError("Please pick a Target Go-Live Date."); return; }
     if (!form.deploymentModel) { setError("Please choose a Deployment Model."); return; }
-    const isCloudSubmit = form.deploymentModel === "Cloud (McCain Tenant)";
+    const isCloudSubmit = form.deploymentModel === CLOUD_TENANT_VALUE;
     if (isCloudSubmit) {
       if (form.targetEnvironments.length === 0) { setError("Select at least one environment."); return; }
       if (form.azureRegions.length === 0) { setError("Select at least one Azure region."); return; }
@@ -945,7 +938,7 @@ export default function SubmitRequest() {
     );
   }
 
-  const isCloudTenant = form.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloudTenant = form.deploymentModel === CLOUD_TENANT_VALUE;
   const isThirdParty = DEPLOYMENT_MODELS_THIRD_PARTY.includes(form.deploymentModel);
 
   // Request-type routing helpers
@@ -1345,15 +1338,13 @@ export default function SubmitRequest() {
                 </Popover>
               </div>
               <div className="space-y-1.5">
-                <Label className="flex items-center">Deployment Model <span className="text-red-500 ml-0.5">*</span><FieldHelp text="Cloud (McCain Tenant) = hosted in McCain's Azure subscription (recommended for new apps). 3rd Party / SaaS = vendor-managed. On-Premises = hosted in a McCain data centre." /></Label>
+                <Label className="flex items-center">Deployment Model <span className="text-red-500 ml-0.5">*</span><FieldHelp text="Azure Cloud (McCain Tenant) = hosted in McCain's Azure subscription (recommended for new apps). All other options are 3rd party or external — vendor-managed, on-premises, or hybrid." /></Label>
                 <Select value={form.deploymentModel} onValueChange={(v) => update("deploymentModel", v)}>
                   <SelectTrigger><SelectValue placeholder="Select a deployment model" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Cloud (McCain Tenant)" className="font-medium text-blue-700">☁ Cloud (McCain Tenant)</SelectItem>
-                    <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-widest">3rd Party / External</div>
+                    <SelectItem value={CLOUD_TENANT_VALUE} className="font-medium text-blue-700">☁ Azure Cloud (McCain Tenant)</SelectItem>
+                    <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-widest">3rd Party / External Solutions</div>
                     {DEPLOYMENT_MODELS_THIRD_PARTY.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                    <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-widest">Other</div>
-                    {DEPLOYMENT_MODELS_OTHER.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
