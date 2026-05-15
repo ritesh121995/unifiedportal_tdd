@@ -742,12 +742,12 @@ export default function RequestDetail() {
   // Third-party and non-cloud models all skip TDD and go directly EA → FinOps
   const THIRD_PARTY_MODELS = [
     "SaaS Solution",
-    "Vendor Tenant",
-    "Other 3rd Party Solution",
+    "Vendor Cloud Tenant (Azure/AWS/GCP/Others)",
     "On-Premises (McCain Data Center)",
-    "Hybrid",
+    "Hybrid Solution (McCain Data Center & McCain Cloud)",
+    "Any other 3rd party Solution",
   ];
-  const isCloudTenant = request.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloudTenant = request.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty  = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
 
   // Simple app fast-track detection — AI classification takes precedence; fall back to legacy tddFormData field
@@ -1807,7 +1807,7 @@ export default function RequestDetail() {
               <p className="text-sm font-medium text-slate-700">Request Approved — Next Steps</p>
               <p className="text-xs text-slate-500">
                 {isCA && !isCloudTenant
-                  ? `Technical Design generation is only available for Cloud (McCain Tenant) requests. This request uses "${request.deploymentModel ?? "unknown"}" — a Cloud Architect action is not required. The Enterprise Architect will proceed to Cost Management activation.`
+                  ? `Technical Design generation is only available for Azure Cloud (McCain Tenant) requests. This request uses "${request.deploymentModel ?? "unknown"}" — a Cloud Architect action is not required. The Enterprise Architect will proceed to Cost Management activation.`
                   : isEA && !isThirdParty && !isCloudTenant
                     ? `Deployment model "${request.deploymentModel ?? "unknown"}" is not mapped to a workflow action. Please contact an admin to update the request or proceed manually.`
                     : "The request is approved. The next action will be available to the appropriate team."}

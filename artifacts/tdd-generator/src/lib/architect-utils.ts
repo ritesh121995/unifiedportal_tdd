@@ -37,13 +37,19 @@ export interface RiskInsight {
   bestPractice: string;
 }
 
-const THIRD_PARTY_MODELS = ["SaaS Solution", "Vendor Tenant", "Other 3rd Party Solution"];
+const THIRD_PARTY_MODELS = [
+  "SaaS Solution",
+  "Vendor Cloud Tenant (Azure/AWS/GCP/Others)",
+  "On-Premises (McCain Data Center)",
+  "Hybrid Solution (McCain Data Center & McCain Cloud)",
+  "Any other 3rd party Solution",
+];
 
 export function computeArchitectRecommendations(f: FormSnapshot): ArchitectRec[] {
-  const isCloud      = f.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloud      = f.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty = THIRD_PARTY_MODELS.includes(f.deploymentModel);
   const isOnPrem     = f.deploymentModel === "On-Premises (McCain Data Center)";
-  const isHybrid     = f.deploymentModel === "Hybrid";
+  const isHybrid     = f.deploymentModel === "Hybrid Solution (McCain Data Center & McCain Cloud)";
   const internetFacing  = f.networkPosture === "Internet-Facing" || f.networkPosture === "Hybrid";
   const highSecurity    = ["High", "Medium"].includes(f.securityImpact);
   const highData        = ["High", "Medium"].includes(f.dataImpact);
@@ -159,9 +165,9 @@ export function computeArchitectRecommendations(f: FormSnapshot): ArchitectRec[]
 }
 
 export function computeRisksAndInsights(f: FormSnapshot): RiskInsight[] {
-  const isCloud      = f.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloud      = f.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty = THIRD_PARTY_MODELS.includes(f.deploymentModel);
-  const isHybrid     = f.deploymentModel === "Hybrid";
+  const isHybrid     = f.deploymentModel === "Hybrid Solution (McCain Data Center & McCain Cloud)";
   const internetFacing = f.networkPosture === "Internet-Facing" || f.networkPosture === "Hybrid";
   const bigCost        = ["Large (500K–1M CAD)", "XLarge (>1M CAD)"].includes(f.costTShirtSize);
 
@@ -342,10 +348,10 @@ export interface ArchitecturePattern {
 }
 
 export function computeArchitecturePattern(f: FormSnapshot): ArchitecturePattern {
-  const isCloud      = f.deploymentModel === "Cloud (McCain Tenant)";
+  const isCloud      = f.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty = THIRD_PARTY_MODELS.includes(f.deploymentModel);
   const isOnPrem     = f.deploymentModel === "On-Premises (McCain Data Center)";
-  const isHybrid     = f.deploymentModel === "Hybrid";
+  const isHybrid     = f.deploymentModel === "Hybrid Solution (McCain Data Center & McCain Cloud)";
   const internetFacing  = f.networkPosture === "Internet-Facing" || f.networkPosture === "Hybrid";
   const highIntegration = ["High", "Medium"].includes(f.integrationImpact);
   const highSecurity    = ["High", "Medium"].includes(f.securityImpact);

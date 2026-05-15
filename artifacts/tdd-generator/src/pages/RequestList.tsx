@@ -95,12 +95,12 @@ const BULK_ELIGIBLE_STATUSES = ["submitted", "ea_triage"];
 
 const DEPLOYMENT_MODEL_OPTIONS = [
   { value: "all", label: "All deployment models" },
-  { value: "Cloud (McCain Tenant)", label: "Cloud (McCain Tenant)" },
+  { value: "Azure Cloud (McCain Tenant)", label: "Azure Cloud (McCain Tenant)" },
   { value: "SaaS Solution", label: "SaaS Solution" },
-  { value: "Vendor Tenant", label: "Vendor Tenant" },
-  { value: "Other 3rd Party Solution", label: "Other 3rd Party Solution" },
+  { value: "Vendor Cloud Tenant (Azure/AWS/GCP/Others)", label: "Vendor Cloud Tenant (Azure/AWS/GCP/Others)" },
   { value: "On-Premises (McCain Data Center)", label: "On-Premises (McCain Data Center)" },
-  { value: "Hybrid", label: "Hybrid" },
+  { value: "Hybrid Solution (McCain Data Center & McCain Cloud)", label: "Hybrid Solution (McCain Data Center & McCain Cloud)" },
+  { value: "Any other 3rd party Solution", label: "Any other 3rd party Solution" },
 ];
 
 const DATE_FILTER_OPTIONS = [
