@@ -109,11 +109,61 @@ const LINE_OF_BUSINESS_OPTIONS = [
   "Digital Technology",
   "Digital Agriculture",
   "Digital Manufacturing",
-  "Global Data and Analytics",
   "Digital Growth",
   "Security",
 ];
-const SLT_LEADERS = ["Vipul Soni", "Prashant Jain", "Jay Agarwal"];
+const SLT_LEADERS = ["Vipul Soni", "Prashant Jain", "Jay Agarwal", "Jenna Milano", "Angela Li"];
+
+type OrgLobFill = {
+  sltLeader: string;
+  businessOwner?: string;
+  businessOwnerEmail?: string;
+  itOwner?: string;
+  technologyOwnerEmail?: string;
+  applicationSupportManagerIsRequestor?: boolean;
+  applicationSupportManager?: string;
+  infrastructureSupportManager?: string;
+  glAccountOwnerEmail?: string;
+};
+
+// Auto-fill map keyed by "Organization|LineOfBusiness"
+const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
+  "McCain Foods Limited|Digital Technology": {
+    sltLeader: "Prashant Jain",
+    businessOwner: "Prashant Jain",
+    businessOwnerEmail: "Prashant.JAIN@mccain.ca",
+    itOwner: "Saurabh Jain",
+    technologyOwnerEmail: "Saurabh.Jain@mccain.ca",
+    applicationSupportManagerIsRequestor: true,
+    infrastructureSupportManager: "Saurabh Jain",
+  },
+  "McCain Foods Limited|Digital Agriculture": {
+    sltLeader: "Jay Agarwal",
+    businessOwner: "Jenna Milano",
+    businessOwnerEmail: "jenna.milano@mccain.ca",
+    applicationSupportManagerIsRequestor: true,
+    glAccountOwnerEmail: "jay.agarwal@mccain.com",
+  },
+  "McCain Foods Limited|Digital Manufacturing": {
+    sltLeader: "Jay Agarwal",
+    businessOwner: "Jay Agarwal",
+    businessOwnerEmail: "Jay.AGARWAL@mccain.com",
+    itOwner: "Frank Hillman",
+    technologyOwnerEmail: "Frank.HILLMAN@mccain.ca",
+    applicationSupportManager: "Frank Hillman",
+    infrastructureSupportManager: "Steve Moore",
+    glAccountOwnerEmail: "jay.agarwal@mccain.com",
+  },
+  "McCain Foods Limited|Digital Growth": {
+    sltLeader: "Angela Li",
+    businessOwner: "Angela Li",
+    businessOwnerEmail: "Angela.Li@mccain.ca",
+    itOwner: "Deepak Sharma",
+    technologyOwnerEmail: "Deepak.Sharma@mccain.com",
+    applicationSupportManager: "Manoj Kumar",
+    glAccountOwnerEmail: "Priya.Ratihalli@mccain.ca",
+  },
+};
 const ENVIRONMENTS = ["QA/UAT", "Prod"];
 const REGIONS = [
   { id: "canadacentral", label: "Canada Central (Toronto)" },
@@ -334,6 +384,7 @@ export default function SubmitRequest() {
   const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState("");
   const [regionInput, setRegionInput] = useState("");
+  const [appSupportMgrCustom, setAppSupportMgrCustom] = useState(false);
   const [architectureDiagramFile, setArchitectureDiagramFile] = useState<File | null>(null);
   const [showPrepChecklist, setShowPrepChecklist] = useState(true);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
@@ -375,6 +426,29 @@ export default function SubmitRequest() {
       }
     } catch { /* ignore malformed data */ }
   }, []);
+
+  // ── Auto-fill Section 1 + Section 4 from Org + Line of Business ───────────
+  useEffect(() => {
+    if (!form.organization || !form.lineOfBusiness) return;
+    const key = `${form.organization}|${form.lineOfBusiness}`;
+    const fill = ORG_LOB_AUTOFILL[key];
+    if (!fill) return;
+    setForm((prev) => ({
+      ...prev,
+      sltLeader: fill.sltLeader,
+      // Reset all Section 4 fields, then re-apply whatever the fill map provides
+      businessOwner: fill.businessOwner ?? "",
+      businessOwnerEmail: fill.businessOwnerEmail ?? "",
+      itOwner: fill.itOwner ?? "",
+      technologyOwnerEmail: fill.technologyOwnerEmail ?? "",
+      applicationSupportManager: fill.applicationSupportManagerIsRequestor
+        ? (user?.name ?? "")
+        : (fill.applicationSupportManager ?? ""),
+      infrastructureSupportManager: fill.infrastructureSupportManager ?? "",
+      glAccountOwnerEmail: fill.glAccountOwnerEmail ?? "",
+    }));
+    setAppSupportMgrCustom(false);
+  }, [form.organization, form.lineOfBusiness]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 7. Draft auto-save ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -868,6 +942,11 @@ export default function SubmitRequest() {
   const sec6Done = isCloudTenant ? !!(form.billingCompanyCode && form.billingCostObject && form.billingGlAccount) : true;
   const sec7Done = isCloudTenant && !skipTDD ? !!(form.applicationArchitecture && form.applicationFlow) : true;
 
+  const autoFillKey = `${form.organization}|${form.lineOfBusiness}`;
+  const autoFillActive = !!(form.organization && form.lineOfBusiness && ORG_LOB_AUTOFILL[autoFillKey]);
+  const autoFillKeyData: OrgLobFill | undefined = autoFillActive ? ORG_LOB_AUTOFILL[autoFillKey] : undefined;
+  const showAppSupportMgrToggle = !!(autoFillKeyData?.applicationSupportManagerIsRequestor);
+
   const SectionTitle = ({ step, title, desc, complete }: { step: number; title: string; desc?: string; complete?: boolean }) => (
     <div className="flex items-start gap-3">
       <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-[#1a1a2e] transition-colors ${complete ? "bg-green-400" : ""}`} style={complete ? {} : { background: "#FFCD00" }}>
@@ -1188,7 +1267,9 @@ export default function SubmitRequest() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>SLT Leader <span className="text-red-500">*</span></Label>
+                <Label className="flex items-center gap-1.5">SLT Leader <span className="text-red-500">*</span>
+                  {autoFillActive && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-selected</span>}
+                </Label>
                 <Select value={form.sltLeader} onValueChange={(v) => update("sltLeader", v)}>
                   <SelectTrigger><SelectValue placeholder="Select SLT Leader" /></SelectTrigger>
                   <SelectContent>{SLT_LEADERS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
@@ -1736,34 +1817,75 @@ export default function SubmitRequest() {
             <SectionTitle step={4} title="Key Personnel & Stakeholders" desc="Contacts who will own and support this workload." complete={sec5Done} />
           </CardHeader>
           <CardContent className="space-y-4">
+            {autoFillActive && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <Zap className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                <span>Fields below have been auto-populated based on <strong>{form.organization} / {form.lineOfBusiness}</strong>. You can still edit any field.</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="businessOwner">Business Owner <span className="text-red-500">*</span></Label>
-                <Input id="businessOwner" placeholder="Full name" value={form.businessOwner} onChange={(e) => update("businessOwner", e.target.value)} required />
+                <Label htmlFor="businessOwner" className="flex items-center gap-1.5">Business Owner <span className="text-red-500">*</span>
+                  {autoFillKeyData?.businessOwner && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="businessOwner" placeholder="Full name" value={form.businessOwner} onChange={(e) => update("businessOwner", e.target.value)} className={autoFillKeyData?.businessOwner ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="businessOwnerEmail">Business Owner Email <span className="text-red-500">*</span></Label>
-                <Input id="businessOwnerEmail" type="email" placeholder="owner@mccain.com" value={form.businessOwnerEmail} onChange={(e) => update("businessOwnerEmail", e.target.value)} required />
+                <Label htmlFor="businessOwnerEmail" className="flex items-center gap-1.5">Business Owner Email <span className="text-red-500">*</span>
+                  {autoFillKeyData?.businessOwnerEmail && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="businessOwnerEmail" type="email" placeholder="owner@mccain.com" value={form.businessOwnerEmail} onChange={(e) => update("businessOwnerEmail", e.target.value)} className={autoFillKeyData?.businessOwnerEmail ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="itOwner">IT Owner Name <span className="text-red-500">*</span></Label>
-                <Input id="itOwner" placeholder="Full name" value={form.itOwner} onChange={(e) => update("itOwner", e.target.value)} required />
+                <Label htmlFor="itOwner" className="flex items-center gap-1.5">IT Owner Name <span className="text-red-500">*</span>
+                  {autoFillKeyData?.itOwner && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="itOwner" placeholder="Full name" value={form.itOwner} onChange={(e) => update("itOwner", e.target.value)} className={autoFillKeyData?.itOwner ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="technologyOwnerEmail">IT Owner Email <span className="text-red-500">*</span></Label>
-                <Input id="technologyOwnerEmail" type="email" placeholder="itowner@mccain.com" value={form.technologyOwnerEmail} onChange={(e) => update("technologyOwnerEmail", e.target.value)} required />
+                <Label htmlFor="technologyOwnerEmail" className="flex items-center gap-1.5">IT Owner Email <span className="text-red-500">*</span>
+                  {autoFillKeyData?.technologyOwnerEmail && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="technologyOwnerEmail" type="email" placeholder="itowner@mccain.com" value={form.technologyOwnerEmail} onChange={(e) => update("technologyOwnerEmail", e.target.value)} className={autoFillKeyData?.technologyOwnerEmail ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="appSupportMgr">Application Support Manager <span className="text-red-500">*</span></Label>
-                <Input id="appSupportMgr" placeholder="Full name" value={form.applicationSupportManager} onChange={(e) => update("applicationSupportManager", e.target.value)} required />
+                <Label htmlFor="appSupportMgr" className="flex items-center gap-1.5">Application Support Manager <span className="text-red-500">*</span>
+                  {(autoFillKeyData?.applicationSupportManager || autoFillKeyData?.applicationSupportManagerIsRequestor) && !appSupportMgrCustom && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>
+                  )}
+                </Label>
+                {showAppSupportMgrToggle && (
+                  <div className="flex gap-2 mb-1">
+                    <button type="button"
+                      className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${!appSupportMgrCustom ? "bg-amber-100 border-amber-300 text-amber-800 font-medium" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                      onClick={() => { setAppSupportMgrCustom(false); update("applicationSupportManager", user?.name ?? ""); }}>
+                      Use my name{user?.name ? ` (${user.name})` : ""}
+                    </button>
+                    <button type="button"
+                      className={`text-[11px] px-2 py-0.5 rounded border transition-colors ${appSupportMgrCustom ? "bg-amber-100 border-amber-300 text-amber-800 font-medium" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                      onClick={() => { setAppSupportMgrCustom(true); update("applicationSupportManager", ""); }}>
+                      Use a custom name
+                    </button>
+                  </div>
+                )}
+                <Input
+                  id="appSupportMgr"
+                  placeholder={showAppSupportMgrToggle && appSupportMgrCustom ? "Enter name" : "Full name"}
+                  value={form.applicationSupportManager}
+                  onChange={(e) => update("applicationSupportManager", e.target.value)}
+                  className={(autoFillKeyData?.applicationSupportManager || (autoFillKeyData?.applicationSupportManagerIsRequestor && !appSupportMgrCustom)) ? "bg-amber-50 border-amber-200" : ""}
+                  required
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="infraSupportMgr">Infrastructure Support Manager <span className="text-red-500">*</span></Label>
-                <Input id="infraSupportMgr" placeholder="Full name" value={form.infrastructureSupportManager} onChange={(e) => update("infrastructureSupportManager", e.target.value)} required />
+                <Label htmlFor="infraSupportMgr" className="flex items-center gap-1.5">Infrastructure Support Manager <span className="text-red-500">*</span>
+                  {autoFillKeyData?.infrastructureSupportManager && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="infraSupportMgr" placeholder="Full name" value={form.infrastructureSupportManager} onChange={(e) => update("infrastructureSupportManager", e.target.value)} className={autoFillKeyData?.infrastructureSupportManager ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1772,8 +1894,10 @@ export default function SubmitRequest() {
                 <Input id="requestorEmail" type="email" placeholder="you@mccain.com" value={form.requestorEmail} onChange={(e) => update("requestorEmail", e.target.value)} required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="glAccountOwnerEmail">GL Account Owner Email <span className="text-red-500">*</span></Label>
-                <Input id="glAccountOwnerEmail" type="email" placeholder="finance@mccain.com" value={form.glAccountOwnerEmail} onChange={(e) => update("glAccountOwnerEmail", e.target.value)} required />
+                <Label htmlFor="glAccountOwnerEmail" className="flex items-center gap-1.5">GL Account Owner Email <span className="text-red-500">*</span>
+                  {autoFillKeyData?.glAccountOwnerEmail && <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Auto-filled</span>}
+                </Label>
+                <Input id="glAccountOwnerEmail" type="email" placeholder="finance@mccain.com" value={form.glAccountOwnerEmail} onChange={(e) => update("glAccountOwnerEmail", e.target.value)} className={autoFillKeyData?.glAccountOwnerEmail ? "bg-amber-50 border-amber-200" : ""} required />
               </div>
             </div>
           </CardContent>
