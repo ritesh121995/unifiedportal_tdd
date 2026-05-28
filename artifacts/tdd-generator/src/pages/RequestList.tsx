@@ -31,6 +31,7 @@ function statusToPhase(status: string): { activeStep: number; rejected: boolean 
     case "vendor_active":          return { activeStep: 4, rejected: false };
     case "observability_approved": return { activeStep: 5, rejected: false };
     case "finops_active":          return { activeStep: 6, rejected: false };
+    case "cancelled":              return { activeStep: 1, rejected: true };
     default:                       return { activeStep: 1, rejected: false };
   }
 }
@@ -79,7 +80,10 @@ interface ArchitectureRequest {
   requestorName: string;
   applicationType: string;
   deploymentModel?: string;
+  targetEnvironments: string[];
+  tddFormData?: { workflowType?: string } | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -114,14 +118,18 @@ function daysSince(dateStr: string) {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function SlaTag({ createdAt, status }: { createdAt: string; status: string }) {
+function SlaTag({ updatedAt, status }: { updatedAt: string; status: string }) {
   if (!ACTIVE_STATUSES.includes(status)) return null;
-  const days = daysSince(createdAt);
+  const days = daysSince(updatedAt);
   if (days < SLA_THRESHOLD_DAYS) return null;
+  const isAlert = days >= 5;
   return (
-    <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium text-orange-700 bg-orange-50 border-orange-200 shrink-0" title="Waiting for review for more than 3 days">
+    <span
+      className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${isAlert ? "text-red-700 bg-red-50 border-red-200" : "text-orange-700 bg-orange-50 border-orange-200"}`}
+      title={`No activity for ${days} days`}
+    >
       <AlertCircle className="w-3 h-3" />
-      Waiting {days}d
+      {days}d idle
     </span>
   );
 }
@@ -143,6 +151,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
   const [deploymentFilter, setDeploymentFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("any");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "priority">("newest");
+  const [envTypeFilter, setEnvTypeFilter] = useState("all");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -193,7 +202,15 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
         const days = parseInt(dateFilter, 10);
         matchesDate = daysSince(r.createdAt) <= days;
       }
-      return matchesStatus && matchesPriority && matchesDeployment && matchesQuery && matchesDate;
+      let matchesEnvType = true;
+      if (envTypeFilter !== "all") {
+        const wf = r.tddFormData?.workflowType ?? "standard";
+        if (envTypeFilter === "sandbox") matchesEnvType = wf === "sandbox";
+        else if (envTypeFilter === "development") matchesEnvType = wf === "development";
+        else if (envTypeFilter === "qa_uat") matchesEnvType = wf === "standard" && (r.targetEnvironments ?? []).some((e) => e === "QA/UAT" || e === "QA" || e === "UAT");
+        else if (envTypeFilter === "production") matchesEnvType = wf === "standard" && (r.targetEnvironments ?? []).some((e) => e === "Prod" || e === "Production");
+      }
+      return matchesStatus && matchesPriority && matchesDeployment && matchesQuery && matchesDate && matchesEnvType;
     })
     .sort((a, b) => {
       if (sortOrder === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -324,6 +341,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
               <SelectItem value="devsecops_rejected">Infrastructure rejected</SelectItem>
               <SelectItem value="observability_approved">Observability approved</SelectItem>
               <SelectItem value="finops_active">Complete</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -367,6 +385,18 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
             <SelectItem value="newest">Newest first</SelectItem>
             <SelectItem value="oldest">Oldest first</SelectItem>
             <SelectItem value="priority">By priority</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={envTypeFilter} onValueChange={setEnvTypeFilter}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Environment" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All environments</SelectItem>
+            <SelectItem value="sandbox">🧪 Sandbox</SelectItem>
+            <SelectItem value="development">💻 Development</SelectItem>
+            <SelectItem value="qa_uat">🔍 QA / UAT</SelectItem>
+            <SelectItem value="production">🚀 Production</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -486,7 +516,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
                       <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${PRIORITY_COLORS[req.priority] ?? "text-slate-600"}`}>
                         {req.priority}
                       </span>
-                      <SlaTag createdAt={req.createdAt} status={req.status} />
+                      <SlaTag updatedAt={req.updatedAt} status={req.status} />
                     </div>
                     <p className="text-xs text-slate-500">
                       {req.applicationName} · {req.applicationType} · {req.businessUnit}

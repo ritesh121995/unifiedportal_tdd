@@ -117,4 +117,5 @@ export type RequestStatus =
   | "devsecops_approved"
   | "devsecops_rejected"
   | "observability_approved"
-  | "finops_active";
+  | "finops_active"
+  | "cancelled";

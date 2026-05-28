@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { architectureRequestsTable, requestEventsTable, portalSettingsTable } from "@workspace/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { eq, desc, inArray, and, ne } from "drizzle-orm";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
 import { createOpenAiClientContext, resolveOpenAiModel } from "./tdd/openai-client.js";
 
@@ -105,6 +105,7 @@ async function sendWebhookNotification(requestTitle: string, actor: string, stat
       devsecops_approved: "DevSecOps deployment approved",
       devsecops_rejected: "DevSecOps deployment rejected",
       finops_active: "FinOps monitoring activated",
+      cancelled: "Request cancelled",
     };
 
     const label = statusLabels[status] ?? status;
@@ -268,6 +269,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     rpo?: string;
     // Workflow type — determines which phases are required
     workflowType?: string; // 'sandbox' | 'development' | 'standard'
+    force?: boolean; // skip duplicate check
     // 3rd party fields
     vendorName?: string;
     appTechStack?: string;
@@ -301,6 +303,30 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     aiImpactDetails?: string;
   };
 
+  // Duplicate detection — warn if an active request for the same app already exists (skip if force=true)
+  if (!body.force) { const existingDuplicate = await db
+    .select({ id: architectureRequestsTable.id, title: architectureRequestsTable.title, status: architectureRequestsTable.status })
+    .from(architectureRequestsTable)
+    .where(
+      and(
+        eq(architectureRequestsTable.applicationName, body.applicationName),
+        ne(architectureRequestsTable.status, "finops_active"),
+        ne(architectureRequestsTable.status, "cancelled"),
+        ne(architectureRequestsTable.status, "ea_rejected"),
+        ne(architectureRequestsTable.status, "devsecops_rejected")
+      )
+    )
+    .limit(1);
+
+  if (existingDuplicate.length > 0) {
+    res.status(409).json({
+      error: "duplicate",
+      message: `An active request for "${body.applicationName}" already exists.`,
+      existingRequest: existingDuplicate[0],
+    });
+    return;
+  } }
+
   const [row] = await db
     .insert(architectureRequestsTable)
     .values({
@@ -311,7 +337,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
       lineOfBusiness: body.lineOfBusiness,
       priority: body.priority ?? "Medium",
       description: body.description,
-      businessJustification: body.businessJustification,
+      businessJustification: body.businessJustification || (body.workflowType === "sandbox" ? "N/A — Sandbox request" : body.workflowType === "development" ? "N/A — Development request" : ""),
       targetEnvironments: body.targetEnvironments,
       azureRegions: body.azureRegions,
       dtsltLeader: body.sltLeader ?? body.dtsltLeader ?? null,
@@ -761,6 +787,33 @@ router.patch("/:id/request-modification", requireRole("enterprise_architect"), a
   await logEvent(id, user.name, user.role, "modification_requested",
     `Changes requested by ${user.name}${notes?.trim() ? ` — "${notes.trim()}"` : ""}`);
   sendWebhookNotification(row.title, user.name, "modification_requested", id);
+  res.json({ request: row });
+});
+
+// PATCH /api/requests/:id/cancel  (requestor / owner only, early statuses only)
+router.patch("/:id/cancel", async (req, res) => {
+  const user = req.user!;
+  const id = parseRequestId(req.params.id);
+  if (Number.isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const existing = await db.query.architectureRequestsTable.findFirst({ where: eq(architectureRequestsTable.id, id) });
+  if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
+  if (existing.requestorId !== user.id && user.role !== "admin") {
+    res.status(403).json({ error: "Only the requestor or an admin can cancel this request" }); return;
+  }
+  const cancellable = ["submitted", "modification_requested", "ea_triage"];
+  if (!cancellable.includes(existing.status)) {
+    res.status(400).json({ error: `Cannot cancel a request in status: ${existing.status}. Only requests awaiting review can be cancelled.` }); return;
+  }
+
+  const [row] = await db
+    .update(architectureRequestsTable)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(architectureRequestsTable.id, id))
+    .returning();
+
+  await logEvent(id, user.name, user.role, "cancelled", `Request cancelled by ${user.name}`);
+  sendWebhookNotification(existing.title, user.name, "cancelled", id);
   res.json({ request: row });
 });
 

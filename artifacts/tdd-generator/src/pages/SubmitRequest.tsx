@@ -392,6 +392,7 @@ export default function SubmitRequest() {
   const [submitted, setSubmitted] = useState(false);
   const [submittedRequestId, setSubmittedRequestId] = useState<number | null>(null);
   const [fastTracked, setFastTracked] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<{ id: number; title: string } | null>(null);
   const [aiClassification, setAiClassification] = useState<"simple" | "complex" | null>(null);
   const [aiReason, setAiReason] = useState<string>("");
   const [aiConfidence, setAiConfidence] = useState<"high" | "medium" | "low">("medium");
@@ -546,7 +547,7 @@ export default function SubmitRequest() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const confirmAndSubmit = async () => {
+  const confirmAndSubmit = async (force = false) => {
     setError("");
     setSubmitting(true);
     try {
@@ -554,8 +555,15 @@ export default function SubmitRequest() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, workflowType: workflowType ?? "standard" }),
+        body: JSON.stringify({ ...form, workflowType: workflowType ?? "standard", force }),
       });
+      if (res.status === 409) {
+        const d = await res.json().catch(() => ({}));
+        setDuplicateWarning({ id: d.existingRequest?.id, title: d.existingRequest?.title ?? form.applicationName });
+        setReviewing(false);
+        setSubmitting(false);
+        return;
+      }
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "Failed to submit request");
@@ -1629,6 +1637,31 @@ export default function SubmitRequest() {
           </p>
           <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100 shrink-0" onClick={restoreDraft}>Restore</Button>
           <button type="button" onClick={discardDraft} className="text-blue-400 hover:text-blue-600"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {/* ── Duplicate warning banner ── */}
+      {duplicateWarning && (
+        <div className="flex items-start gap-3 rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-900">Possible duplicate detected</p>
+            <p className="text-xs text-amber-800 mt-0.5">
+              An active request for <strong>{duplicateWarning.title}</strong> already exists (#{duplicateWarning.id}).
+            </p>
+            <div className="flex gap-2 mt-2">
+              <button type="button" className="text-xs font-medium underline text-amber-800" onClick={() => setLocation(`/requests/${duplicateWarning.id}`)}>
+                View existing request
+              </button>
+              <span className="text-amber-400">·</span>
+              <button type="button" className="text-xs font-medium underline text-amber-800" onClick={() => { setDuplicateWarning(null); confirmAndSubmit(true); }}>
+                Submit anyway
+              </button>
+            </div>
+          </div>
+          <button type="button" onClick={() => setDuplicateWarning(null)} className="text-amber-400 hover:text-amber-600 shrink-0">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
