@@ -578,6 +578,144 @@ export default function SubmitRequest() {
   };
 
   if (submitted) {
+    // ── Sandbox success screen ─────────────────────────────────────────────
+    if (workflowType === "sandbox") {
+      const steps = [
+        { done: true,  label: "Request submitted" },
+        { done: true,  label: "EA review & TDD — skipped for Sandbox" },
+        { done: false, label: "Infrastructure Deployment — awaiting Cloud Architect" },
+      ];
+      return (
+        <div className="max-w-2xl mx-auto space-y-6 pb-12">
+          <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-6 flex items-start gap-4">
+            <div className="bg-orange-100 p-3 rounded-full flex-shrink-0">
+              <CheckCircle className="w-8 h-8 text-orange-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-orange-900 mb-1">Sandbox Request Submitted</h2>
+              <p className="text-orange-800 text-sm">
+                <span className="font-semibold">{form.applicationName || form.title}</span> is queued for direct deployment.
+                No EA review or Technical Design is required — a Cloud Architect will provision the environment.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-800 rounded-full px-3 py-0.5 font-medium">
+                  🧪 Sandbox
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-800 rounded-full px-3 py-0.5 font-medium">
+                  {form.azureRegions.join(", ")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Card className="border-slate-200">
+            <CardContent className="p-5 space-y-3">
+              <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <ChevronRight className="w-4 h-4" /> What Happens Next
+              </p>
+              <div className="space-y-2">
+                {steps.map(({ done, label }) => (
+                  <div key={label} className="flex items-center gap-3 text-sm">
+                    {done
+                      ? <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      : <div className="w-5 h-5 rounded-full border-2 border-orange-300 flex-shrink-0" />}
+                    <span className={done ? "text-green-800 font-medium" : "text-slate-600"}>{label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 pt-1">
+                Track progress under <strong>My Requests</strong>. The Cloud Architect team will reach out if they need any clarification.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-wrap gap-3 justify-end pt-2">
+            <Button variant="outline" onClick={() => setLocation("/requests")}>View My Requests</Button>
+            {submittedRequestId && (
+              <Button variant="outline" onClick={() => setLocation(`/requests/${submittedRequestId}`)}>View This Request</Button>
+            )}
+            <Button
+              className="text-[#1a1a2e] font-semibold"
+              style={{ background: "#FFCD00" }}
+              onClick={() => { setSubmitted(false); setSubmittedRequestId(null); setForm({ ...EMPTY_FORM }); setWorkflowType(null); localStorage.removeItem(DRAFT_KEY); }}
+            >
+              Submit Another Request
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Development success screen ─────────────────────────────────────────
+    if (workflowType === "development") {
+      const steps = [
+        { done: true,  label: "Request submitted" },
+        { done: true,  label: "EA review — skipped for Development" },
+        { done: false, label: "Technical Design — awaiting Cloud Architect" },
+        { done: false, label: "Infrastructure Deployment" },
+      ];
+      return (
+        <div className="max-w-2xl mx-auto space-y-6 pb-12">
+          <div className="rounded-xl border-2 border-sky-300 bg-sky-50 p-6 flex items-start gap-4">
+            <div className="bg-sky-100 p-3 rounded-full flex-shrink-0">
+              <CheckCircle className="w-8 h-8 text-sky-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-sky-900 mb-1">Development Request Submitted</h2>
+              <p className="text-sky-800 text-sm">
+                <span className="font-semibold">{form.applicationName || form.title}</span> has been fast-tracked past EA review.
+                A Cloud Architect will generate the Technical Design and then proceed to deployment.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <span className="inline-flex items-center gap-1 text-xs bg-white border border-sky-200 text-sky-800 rounded-full px-3 py-0.5 font-medium">
+                  💻 Development
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs bg-white border border-sky-200 text-sky-800 rounded-full px-3 py-0.5 font-medium">
+                  {form.azureRegions.join(", ")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Card className="border-slate-200">
+            <CardContent className="p-5 space-y-3">
+              <p className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <ChevronRight className="w-4 h-4" /> What Happens Next
+              </p>
+              <div className="space-y-2">
+                {steps.map(({ done, label }) => (
+                  <div key={label} className="flex items-center gap-3 text-sm">
+                    {done
+                      ? <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      : <div className="w-5 h-5 rounded-full border-2 border-sky-300 flex-shrink-0" />}
+                    <span className={done ? "text-green-800 font-medium" : "text-slate-600"}>{label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 pt-1">
+                Track progress under <strong>My Requests</strong>. The Cloud Architect will notify you once the Technical Design is generated.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-wrap gap-3 justify-end pt-2">
+            <Button variant="outline" onClick={() => setLocation("/requests")}>View My Requests</Button>
+            {submittedRequestId && (
+              <Button variant="outline" onClick={() => setLocation(`/requests/${submittedRequestId}`)}>View This Request</Button>
+            )}
+            <Button
+              className="text-[#1a1a2e] font-semibold"
+              style={{ background: "#FFCD00" }}
+              onClick={() => { setSubmitted(false); setSubmittedRequestId(null); setForm({ ...EMPTY_FORM }); setWorkflowType(null); localStorage.removeItem(DRAFT_KEY); }}
+            >
+              Submit Another Request
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // ── Standard success screen (QA/UAT / Production) ─────────────────────
     const architects = computeArchitectRecommendations(form);
     const risks = computeRisksAndInsights(form);
     const requiredArchitects = architects.filter((a) => a.required);
@@ -930,7 +1068,7 @@ export default function SubmitRequest() {
           <Button
             className="text-[#1a1a2e] font-semibold"
             style={{ background: "#FFCD00" }}
-            onClick={() => { setSubmitted(false); setFastTracked(false); setSubmittedRequestId(null); setAiClassification(null); setAiReason(""); setAiConfidence("medium"); setForm({ ...EMPTY_FORM }); setArchitectureDiagramFile(null); localStorage.removeItem(DRAFT_KEY); setDraftSavedAt(null); }}
+            onClick={() => { setSubmitted(false); setFastTracked(false); setSubmittedRequestId(null); setAiClassification(null); setAiReason(""); setAiConfidence("medium"); setForm({ ...EMPTY_FORM }); setWorkflowType(null); setArchitectureDiagramFile(null); localStorage.removeItem(DRAFT_KEY); setDraftSavedAt(null); }}
           >
             Submit Another Request
           </Button>
