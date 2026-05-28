@@ -21,6 +21,7 @@ import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge
 import { computeArchitectRecommendations, computeRisksAndInsights, computeArchitecturePattern, type FormSnapshot } from "@/lib/architect-utils";
 
 interface StoredTddFormData {
+  workflowType?: string;         // 'sandbox' | 'development' | 'standard'
   businessCriticality?: string;
   solutionArchitecture?: string;
   workloadTier?: string;
@@ -131,7 +132,6 @@ interface ArchitectureRequest {
   tddFormData: StoredTddFormData | null;
   aiClassification: string | null;
   aiClassificationReason: string | null;
-  workflowType: string | null;
   createdAt: string;
 }
 
@@ -749,8 +749,8 @@ export default function RequestDetail() {
   ];
   const isCloudTenant  = request.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty   = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
-  const isSandbox      = request.workflowType === "sandbox";
-  const isDevelopment  = request.workflowType === "development";
+  const isSandbox      = request.tddFormData?.workflowType === "sandbox";
+  const isDevelopment  = request.tddFormData?.workflowType === "development";
 
   // Simple app fast-track detection — AI classification takes precedence; fall back to legacy tddFormData field
   const isSimpleFastTrack = isCloudTenant && !isSandbox && !isDevelopment && (

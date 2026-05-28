@@ -317,9 +317,9 @@ router.post("/", requireRole("requestor"), async (req, res) => {
       dtsltLeader: body.sltLeader ?? body.dtsltLeader ?? null,
       expectedUserBase: body.expectedUserBase || null,
       targetGoLiveDate: body.targetGoLiveDate || null,
-      workflowType: (body.workflowType === "sandbox" || body.workflowType === "development") ? body.workflowType : "standard",
       deploymentModel: body.deploymentModel || "To be defined",
       tddFormData: {
+        workflowType: (body.workflowType === "sandbox" || body.workflowType === "development") ? body.workflowType : "standard",
         businessCriticality: body.businessCriticality ?? "",
         solutionArchitecture: body.solutionArchitecture ?? "",
         workloadTier: body.workloadTier ?? "Tier 2",
