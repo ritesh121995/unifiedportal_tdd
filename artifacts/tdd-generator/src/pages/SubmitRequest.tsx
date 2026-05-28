@@ -407,6 +407,7 @@ export default function SubmitRequest() {
   const isPrivileged = ["admin", "enterprise_architect", "cloud_architect"].includes(user?.role ?? "");
 
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [workflowType, setWorkflowType] = useState<"sandbox" | "development" | "standard" | null>(null);
   const [leanixInitiativeName, setLeanixInitiativeName] = useState<string | null>(null);
 
   // ── 1. Auto-fill requestor email from session ──────────────────────────────
@@ -553,7 +554,7 @@ export default function SubmitRequest() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, workflowType: workflowType ?? "standard" }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -1097,12 +1098,359 @@ export default function SubmitRequest() {
     );
   }
 
+  // ── Step 0: Environment type selector ──────────────────────────────────────
+  if (workflowType === null) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard")} className="text-slate-500">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Dashboard
+          </Button>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900" style={{ fontFamily: "Outfit, sans-serif" }}>New Application Request</h1>
+          <p className="text-slate-500 text-sm">Select the target environment to get the right workflow and form for your request.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            {
+              type: "sandbox" as const,
+              label: "Sandbox",
+              icon: "🧪",
+              color: "border-orange-300 hover:border-orange-400 hover:bg-orange-50",
+              badge: "bg-orange-100 text-orange-700",
+              badgeText: "No Review Required",
+              desc: "Quick environment for experimentation and testing. No EA review, no TDD — submit basic details and deploy directly.",
+              steps: ["Submit basic details", "Cloud Architect deploys infrastructure"],
+            },
+            {
+              type: "development" as const,
+              label: "Development",
+              icon: "💻",
+              color: "border-sky-300 hover:border-sky-400 hover:bg-sky-50",
+              badge: "bg-sky-100 text-sky-700",
+              badgeText: "EA Review Skipped",
+              desc: "Development environment. No EA review — submit basic details and move straight to Technical Design generation.",
+              steps: ["Submit basic details", "Generate Technical Design", "Deploy infrastructure"],
+            },
+            {
+              type: "standard" as const,
+              label: "QA / UAT",
+              icon: "🔍",
+              color: "border-amber-300 hover:border-amber-400 hover:bg-amber-50",
+              badge: "bg-amber-100 text-amber-700",
+              badgeText: "Full Review",
+              desc: "Quality and User Acceptance Testing. Full governance: EA review, Technical Design, DevSecOps, Observability, and FinOps.",
+              steps: ["Submit full details", "EA review", "TDD → DevSecOps → FinOps"],
+              envDefault: ["QA/UAT"] as string[],
+            },
+            {
+              type: "standard" as const,
+              label: "Production",
+              icon: "🚀",
+              color: "border-slate-300 hover:border-slate-400 hover:bg-slate-50",
+              badge: "bg-slate-100 text-slate-700",
+              badgeText: "Full Review",
+              desc: "Production environment. Complete governance lifecycle with all approval stages required.",
+              steps: ["Submit full details", "EA review", "TDD → DevSecOps → FinOps"],
+              envDefault: ["Prod"] as string[],
+            },
+          ].map((opt) => (
+            <button
+              key={`${opt.type}-${opt.label}`}
+              type="button"
+              onClick={() => {
+                if (opt.type === "sandbox") {
+                  setForm((prev) => ({ ...prev, targetEnvironments: ["Sandbox"], deploymentModel: CLOUD_TENANT_VALUE }));
+                } else if (opt.type === "development") {
+                  setForm((prev) => ({ ...prev, targetEnvironments: ["Dev"], deploymentModel: CLOUD_TENANT_VALUE }));
+                } else if (opt.envDefault) {
+                  setForm((prev) => ({ ...prev, targetEnvironments: opt.envDefault!, deploymentModel: CLOUD_TENANT_VALUE }));
+                }
+                setWorkflowType(opt.type);
+              }}
+              className={`text-left rounded-xl border-2 bg-white p-5 space-y-3 transition-all ${opt.color}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{opt.icon}</span>
+                <span className="text-base font-bold text-slate-900">{opt.label}</span>
+                <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border ${opt.badge}`}>{opt.badgeText}</span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">{opt.desc}</p>
+              <ol className="space-y-1">
+                {opt.steps.map((step, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-slate-500">
+                    <span className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-[#1a1a2e] shrink-0" style={{ background: "#FFCD00" }}>{i + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Simplified form for Sandbox and Development ──────────────────────────
+  if (workflowType === "sandbox" || workflowType === "development") {
+    const envLabel = workflowType === "sandbox" ? "Sandbox" : "Development";
+    const envColor = workflowType === "sandbox" ? "orange" : "sky";
+    const borderCls = workflowType === "sandbox" ? "border-orange-300 bg-orange-50" : "border-sky-300 bg-sky-50";
+    const badgeCls  = workflowType === "sandbox" ? "bg-orange-100 text-orange-700 border-orange-300" : "bg-sky-100 text-sky-700 border-sky-300";
+
+    const handleSimpleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
+      if (!form.title.trim()) { setError("Please enter a Request Title."); return; }
+      if (!form.applicationName.trim()) { setError("Please enter an Application Name."); return; }
+      if (!form.organization) { setError("Please select an Organization."); return; }
+      if (!form.lineOfBusiness) { setError("Please select a Line of Business."); return; }
+      if (!form.description.trim()) { setError("Please describe the project."); return; }
+      if (form.azureRegions.length === 0) { setError("Select at least one Azure region."); return; }
+      setReviewing(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => { setWorkflowType(null); setError(""); }} className="text-slate-500">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Back
+          </Button>
+        </div>
+
+        <div className={`rounded-xl border-2 p-4 flex items-center gap-3 ${borderCls}`}>
+          <span className="text-2xl">{workflowType === "sandbox" ? "🧪" : "💻"}</span>
+          <div>
+            <p className="font-bold text-slate-900">{envLabel} Request</p>
+            <p className="text-xs text-slate-600">
+              {workflowType === "sandbox"
+                ? "No EA review or TDD required — fill in basic details and a Cloud Architect will deploy your environment."
+                : "EA review is skipped — fill in basic details and a Cloud Architect will generate the Technical Design."}
+            </p>
+          </div>
+          <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeCls}`}>
+            {workflowType === "sandbox" ? "Sandbox" : "Development"}
+          </span>
+        </div>
+
+        {reviewing ? (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => { setReviewing(false); setError(""); }} className="text-slate-500">
+                <ArrowLeft className="w-4 h-4 mr-1" /> Back to Form
+              </Button>
+            </div>
+            <div className="rounded-xl border border-[#FFCD00] bg-yellow-50 p-5 flex items-start gap-4">
+              <Eye className="w-6 h-6 text-[#1a1a2e] flex-shrink-0 mt-0.5" />
+              <div>
+                <h2 className="text-lg font-bold text-[#1a1a2e]">Review Your Request</h2>
+                <p className="text-sm text-slate-600 mt-0.5">Please confirm all details before submitting.</p>
+              </div>
+            </div>
+            <Card>
+              <CardContent className="pt-4 space-y-2">
+                {[
+                  ["Request Title", form.title],
+                  ["Application Name", form.applicationName],
+                  ["Request Type", form.applicationType],
+                  ["Organization", form.organization],
+                  ["Line of Business", form.lineOfBusiness],
+                  ["Environment", envLabel],
+                  ["Azure Regions", form.azureRegions.join(", ")],
+                  ["Description", form.description],
+                  ["Business Justification", form.businessJustification],
+                  ["Business Owner", form.businessOwner ? `${form.businessOwner} (${form.businessOwnerEmail})` : ""],
+                  ["IT Owner", form.itOwner ? `${form.itOwner} (${form.technologyOwnerEmail})` : ""],
+                ].filter(([, v]) => v).map(([label, value]) => (
+                  <div key={label} className="flex items-start gap-2 py-1.5 border-b border-slate-100 last:border-0">
+                    <span className="text-xs text-slate-500 w-40 flex-shrink-0 pt-0.5">{label}</span>
+                    <span className="text-sm text-slate-800 font-medium flex-1">{value}</span>
+                  </div>
+                ))}
+                {workflowType === "development" && form.applicationArchitecture && (
+                  <div className="flex items-start gap-2 py-1.5 border-b border-slate-100 last:border-0">
+                    <span className="text-xs text-slate-500 w-40 flex-shrink-0 pt-0.5">Architecture</span>
+                    <span className="text-sm text-slate-800 font-medium flex-1">{form.applicationArchitecture}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</div>}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button variant="outline" onClick={() => { setReviewing(false); setError(""); }}>
+                <ArrowLeft className="w-4 h-4 mr-1" /> Edit
+              </Button>
+              <Button onClick={confirmAndSubmit} className="bg-[#0078d4] hover:bg-[#106ebe]" disabled={submitting}>
+                {submitting
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting…</>
+                  : <>Confirm & Submit <ArrowRight className="w-4 h-4 ml-2" /></>}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSimpleSubmit} className="space-y-4">
+            {/* Section 1 — Identity */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-slate-700">1. Project Identity</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="s-title">Request Title <span className="text-red-500">*</span></Label>
+                  <Input id="s-title" placeholder="e.g. Dev environment for Payment Service" value={form.title} onChange={(e) => update("title", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="s-appName">Application Name <span className="text-red-500">*</span></Label>
+                  <Input id="s-appName" placeholder="e.g. payment-service" value={form.applicationName} onChange={(e) => update("applicationName", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Request Type</Label>
+                  <Select value={form.applicationType} onValueChange={(v) => update("applicationType", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {APP_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.icon} {t.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Organization <span className="text-red-500">*</span></Label>
+                    <Select value={form.organization} onValueChange={(v) => update("organization", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{ORGANIZATIONS.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Line of Business <span className="text-red-500">*</span></Label>
+                    <Select value={form.lineOfBusiness} onValueChange={(v) => update("lineOfBusiness", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{LINE_OF_BUSINESS_OPTIONS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="rounded-md border px-3 py-2 flex items-center gap-2 text-xs text-slate-600 bg-slate-50">
+                  <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Environment: <strong>{envLabel}</strong> · Deployment: <strong>Azure Cloud (McCain Tenant)</strong></span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 2 — Description */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-slate-700">2. Project Description</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="s-desc">Description <span className="text-red-500">*</span></Label>
+                  <Textarea id="s-desc" placeholder="What is this environment for? What problem does it solve?" rows={3} value={form.description} onChange={(e) => update("description", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="s-bj">Business Justification <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
+                  <Textarea id="s-bj" placeholder="Why is this environment needed?" rows={2} value={form.businessJustification} onChange={(e) => update("businessJustification", e.target.value)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 3 — Infrastructure */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-slate-700">3. Azure Region</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {REGIONS.map((r) => {
+                    const selected = form.azureRegions.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => update("azureRegions", toggle(form.azureRegions, r.id))}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${selected ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+                      >
+                        {r.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 4 — Contacts */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-slate-700">4. Ownership &amp; Contact</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Business Owner</Label>
+                    <Input placeholder="Full name" value={form.businessOwner} onChange={(e) => update("businessOwner", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Business Owner Email</Label>
+                    <Input type="email" placeholder="name@mccain.com" value={form.businessOwnerEmail} onChange={(e) => update("businessOwnerEmail", e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>IT Owner <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
+                    <Input placeholder="Full name" value={form.itOwner} onChange={(e) => update("itOwner", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>IT Owner Email <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
+                    <Input type="email" placeholder="name@mccain.com" value={form.technologyOwnerEmail} onChange={(e) => update("technologyOwnerEmail", e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Requestor Email</Label>
+                  <Input type="email" value={form.requestorEmail} onChange={(e) => update("requestorEmail", e.target.value)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 5 — Architecture hints (Development only) */}
+            {workflowType === "development" && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-slate-700">
+                    5. Technical Hints <span className="text-slate-400 text-xs font-normal">(optional — helps generate the TDD)</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Application Architecture</Label>
+                    <Textarea placeholder="e.g. React frontend, Node.js API, PostgreSQL database on Azure" rows={2} value={form.applicationArchitecture} onChange={(e) => update("applicationArchitecture", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Application Flow</Label>
+                    <Textarea placeholder="e.g. User authenticates via Azure AD, submits form data, API writes to DB" rows={2} value={form.applicationFlow} onChange={(e) => update("applicationFlow", e.target.value)} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</div>}
+
+            <div className="flex justify-end pt-2">
+              <Button type="submit" className="bg-[#0078d4] hover:bg-[#106ebe]">
+                Review & Submit <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => setLocation("/dashboard")} className="text-slate-500">
+        <Button variant="ghost" size="sm" onClick={() => { setWorkflowType(null); setError(""); }} className="text-slate-500">
           <ArrowLeft className="w-4 h-4 mr-1" />
-          Dashboard
+          Back
         </Button>
         {draftSavedAt && !showDraftBanner && (
           <span className="ml-auto flex items-center gap-1 text-[11px] text-slate-400">

@@ -28,6 +28,12 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   requestorName: text("requestor_name").notNull(),
   requestorEmail: text("requestor_email").notNull(),
 
+  // Workflow type — determines which phases are required
+  // standard: full EA → TDD → DevSecOps → Observability → FinOps (QA/UAT, Prod)
+  // development: skip EA → TDD → DevSecOps (Dev environment)
+  // sandbox: skip EA + TDD → DevSecOps only (Sandbox environment)
+  workflowType: text("workflow_type").notNull().default("standard"),
+
   // Status lifecycle:
   // submitted → ea_triage → ea_approved | ea_rejected
   //   → tdd_in_progress → tdd_completed

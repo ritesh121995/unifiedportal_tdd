@@ -131,6 +131,7 @@ interface ArchitectureRequest {
   tddFormData: StoredTddFormData | null;
   aiClassification: string | null;
   aiClassificationReason: string | null;
+  workflowType: string | null;
   createdAt: string;
 }
 
@@ -738,8 +739,7 @@ export default function RequestDetail() {
   const isCA = user?.role === "cloud_architect" || isAdmin;
   const isRequestor = !isEA && !isCA;
 
-  // Derive workflow type from deployment model
-  // Third-party and non-cloud models all skip TDD and go directly EA → FinOps
+  // Derive workflow type
   const THIRD_PARTY_MODELS = [
     "SaaS Solution",
     "Vendor Cloud Tenant (Azure/AWS/GCP/Others)",
@@ -747,28 +747,31 @@ export default function RequestDetail() {
     "Hybrid Solution (McCain Data Center & McCain Cloud)",
     "Any other 3rd party Solution",
   ];
-  const isCloudTenant = request.deploymentModel === "Azure Cloud (McCain Tenant)";
-  const isThirdParty  = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
+  const isCloudTenant  = request.deploymentModel === "Azure Cloud (McCain Tenant)";
+  const isThirdParty   = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
+  const isSandbox      = request.workflowType === "sandbox";
+  const isDevelopment  = request.workflowType === "development";
 
   // Simple app fast-track detection — AI classification takes precedence; fall back to legacy tddFormData field
-  const isSimpleFastTrack = isCloudTenant && (
+  const isSimpleFastTrack = isCloudTenant && !isSandbox && !isDevelopment && (
     request.aiClassification === "simple" ||
     (request.tddFormData as Record<string, unknown> | null)?.appComplexity === "Simple"
   );
 
-  const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack;
-  const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack;
-  // TDD generation triggers from ea_approved or tdd_in_progress (re-generation after going back)
-  const canGenerateTDD = isCA && ["ea_approved", "tdd_in_progress"].includes(request.status) && isCloudTenant;
-  const canViewTDD     = request.status === "tdd_completed" && isCA;
+  const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack && !isSandbox && !isDevelopment;
+  const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack && !isSandbox && !isDevelopment;
+  // TDD generation: sandbox skips TDD entirely
+  const canGenerateTDD = isCA && ["ea_approved", "tdd_in_progress"].includes(request.status) && isCloudTenant && !isSandbox;
+  // Only show View TDD when an actual TDD document exists
+  const canViewTDD     = request.status === "tdd_completed" && isCA && !!request.tddSubmissionId;
   const canDevSecOps   = isCA && request.status === "tdd_completed";
-  // FinOps: from devsecops_approved (Cloud) OR ea_approved (non-Cloud)
-  const canObservability = isCA && isCloudTenant && request.status === "devsecops_approved";
-  const canFinOps      = isEA && (
+  // Sandbox and Development skip Observability and FinOps
+  const canObservability = isCA && isCloudTenant && request.status === "devsecops_approved" && !isSandbox && !isDevelopment;
+  const canFinOps      = isEA && !isSandbox && !isDevelopment && (
     (isCloudTenant && request.status === "observability_approved") ||
     (isThirdParty  && request.status === "ea_approved")
   );
-  // True when ea_approved but no action is available for the current user (unknown/future model)
+  // True when ea_approved but no next action available for the current user/model
   const noActionAfterApproval = request.status === "ea_approved" && !canGenerateTDD && !canFinOps;
   // Requestor can view their completed TDD in read-only mode
   const canRequestorViewTDD = isRequestor &&
@@ -787,7 +790,17 @@ export default function RequestDetail() {
     { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "finops_active"] },
     { label: "Cost Management",     statuses: ["ea_approved"], doneStatuses: ["finops_active"] },
   ];
-  const PHASE_STEPS = isThirdParty ? PHASE_STEPS_3P : PHASE_STEPS_CLOUD;
+  const PHASE_STEPS_DEV: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
+    { label: "Technical Design", statuses: ["ea_approved", "tdd_in_progress"], doneStatuses: ["tdd_completed", "devsecops_approved", "devsecops_rejected"] },
+    { label: "Infrastructure",   statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
+  ];
+  const PHASE_STEPS_SANDBOX: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
+    { label: "Deployment", statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
+  ];
+  const PHASE_STEPS = isSandbox ? PHASE_STEPS_SANDBOX
+    : isDevelopment ? PHASE_STEPS_DEV
+    : isThirdParty ? PHASE_STEPS_3P
+    : PHASE_STEPS_CLOUD;
 
   const isRejected = ["ea_rejected", "devsecops_rejected"].includes(request.status);
 
@@ -874,6 +887,42 @@ export default function RequestDetail() {
           )}
         </div>
       </div>
+
+      {/* ── Sandbox Banner ── */}
+      {isSandbox && (
+        <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-4 flex items-start gap-3">
+          <div className="rounded-full p-2 flex-shrink-0 bg-orange-100">
+            <Rocket className="w-4 h-4 text-orange-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-bold text-orange-900">Sandbox Environment — Accelerated Path</p>
+              <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-300 rounded-full px-2 py-0.5">No EA Review · No TDD Required</span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              This is a Sandbox request. EA review, Technical Design, Observability, and FinOps phases are skipped. A Cloud Architect can proceed directly to Infrastructure Deployment below.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Development Banner ── */}
+      {isDevelopment && (
+        <div className="rounded-xl border-2 border-sky-300 bg-sky-50 p-4 flex items-start gap-3">
+          <div className="rounded-full p-2 flex-shrink-0 bg-sky-100">
+            <Code2 className="w-4 h-4 text-sky-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-bold text-sky-900">Development Environment — Fast-Track Path</p>
+              <span className="text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-300 rounded-full px-2 py-0.5">EA Review Skipped</span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              This is a Development request. EA review is skipped — a Cloud Architect can generate the Technical Design immediately, then proceed to Infrastructure Deployment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Simple App Fast-Track Banner ── */}
       {isSimpleFastTrack && (
@@ -1037,15 +1086,16 @@ export default function RequestDetail() {
 
         type PhaseStatus = "pending" | "active" | "done" | "rejected" | "revision" | "skipped";
 
-        const p1Status: PhaseStatus =
-          ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
+        // For sandbox/development: skip EA review phase card
+        const p1Status: PhaseStatus = isSandbox || isDevelopment ? "skipped"
+          : ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "ea_rejected" ? "rejected"
           : s === "modification_requested" ? "revision"
           : "active";
 
-        const p2Status: PhaseStatus = !isCloudTenant ? "skipped"
+        const p2Status: PhaseStatus = (!isCloudTenant || isSandbox) ? "skipped"
           : ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
-          : s === "tdd_in_progress" ? "active"
+          : ["ea_approved", "tdd_in_progress"].includes(s) ? "active"
           : "pending";
 
         const p3Status: PhaseStatus = !isCloudTenant ? "skipped"
@@ -1054,13 +1104,15 @@ export default function RequestDetail() {
           : s === "tdd_completed" ? "active"
           : "pending";
 
-        const p4ObsStatus: PhaseStatus = !isCloudTenant ? "skipped"
+        // Observability is skipped for sandbox and development
+        const p4ObsStatus: PhaseStatus = (!isCloudTenant || isSandbox || isDevelopment) ? "skipped"
           : s === "observability_approved" || s === "finops_active" ? "done"
           : s === "devsecops_approved" ? "active"
           : "pending";
 
-        const p4Status: PhaseStatus =
-          s === "finops_active" ? "done"
+        // FinOps is skipped for sandbox and development
+        const p4Status: PhaseStatus = (isSandbox || isDevelopment) ? "skipped"
+          : s === "finops_active" ? "done"
           : (isCloudTenant && s === "observability_approved") || (isThirdParty && s === "ea_approved") ? "active"
           : "pending";
 
@@ -1137,21 +1189,30 @@ export default function RequestDetail() {
 
             {/* Horizontal phase stepper — shown for all users */}
             {(() => {
-              const phases = isCloudTenant
+              const phases = isSandbox
+                ? ["Submitted", "Deployment"]
+                : isDevelopment
+                ? ["Submitted", "Technical Design", "Deployment"]
+                : isCloudTenant
                 ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Observability", "Cost Management"]
                 : ["Submitted", "Architecture Review", "Cost Management"];
-              const phaseForStatus: Record<string, number> = isCloudTenant
+              const phaseForStatus: Record<string, number> = isSandbox
+                ? { submitted: 0, tdd_completed: 1, devsecops_approved: 1, devsecops_rejected: 1 }
+                : isDevelopment
+                ? { submitted: 0, ea_approved: 1, tdd_in_progress: 1, tdd_completed: 2, devsecops_approved: 2, devsecops_rejected: 2 }
+                : isCloudTenant
                 ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, tdd_in_progress: 2, tdd_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, observability_approved: 5, finops_active: 5 }
                 : { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, finops_active: 2 };
               const phaseIdx = phaseForStatus[s] ?? 0;
               const daysSince = Math.floor((Date.now() - new Date(request.createdAt).getTime()) / 86400000);
-              const responsibleNow =
-                s === "modification_requested" ? "You — Action Required" :
-                ["submitted", "ea_triage"].includes(s) ? "Enterprise Architecture" :
-                ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(s) ? "Cloud Architecture" :
-                s === "observability_approved" ? "Enterprise Architecture" :
-                s === "finops_active" ? "Completed" :
-                s === "ea_rejected" ? "Rejected" : "—";
+              const responsibleNow = isSandbox || isDevelopment
+                ? (["devsecops_approved", "devsecops_rejected"].includes(s) ? "Completed" : "Cloud Architecture")
+                : s === "modification_requested" ? "You — Action Required"
+                : ["submitted", "ea_triage"].includes(s) ? "Enterprise Architecture"
+                : ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(s) ? "Cloud Architecture"
+                : s === "observability_approved" ? "Enterprise Architecture"
+                : s === "finops_active" ? "Completed"
+                : s === "ea_rejected" ? "Rejected" : "—";
               return (
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <div className="flex items-center justify-between text-xs text-slate-500">
@@ -1854,7 +1915,9 @@ export default function RequestDetail() {
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="text-sm text-slate-700">
-              Technical Design is complete and reviewed. Select the Azure services detected from the Technical Design, generate the Terraform IaC, then approve the Infrastructure pipeline.
+              {isSandbox
+                ? "Sandbox request — no Technical Design required. Select the Azure services to provision, generate the Terraform IaC, then approve the Infrastructure pipeline."
+                : "Technical Design is complete and reviewed. Select the Azure services detected from the Technical Design, generate the Terraform IaC, then approve the Infrastructure pipeline."}
             </p>
 
             {/* IaC Service Selection */}

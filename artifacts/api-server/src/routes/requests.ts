@@ -266,6 +266,8 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     availabilityTarget?: string;
     rto?: string;
     rpo?: string;
+    // Workflow type — determines which phases are required
+    workflowType?: string; // 'sandbox' | 'development' | 'standard'
     // 3rd party fields
     vendorName?: string;
     appTechStack?: string;
@@ -315,6 +317,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
       dtsltLeader: body.sltLeader ?? body.dtsltLeader ?? null,
       expectedUserBase: body.expectedUserBase || null,
       targetGoLiveDate: body.targetGoLiveDate || null,
+      workflowType: (body.workflowType === "sandbox" || body.workflowType === "development") ? body.workflowType : "standard",
       deploymentModel: body.deploymentModel || "To be defined",
       tddFormData: {
         businessCriticality: body.businessCriticality ?? "",
@@ -399,7 +402,53 @@ router.post("/", requireRole("requestor"), async (req, res) => {
   await logEvent(row.id, user.name, user.role, "submitted", `Request submitted by ${user.name}`);
   sendWebhookNotification(row.title, user.name, "submitted", row.id);
 
-  // ── AI-driven routing: classify request complexity and route accordingly ──
+  const wfType = body.workflowType;
+
+  // ── Sandbox: skip EA + TDD, go directly to Infrastructure Deployment ──
+  if (wfType === "sandbox") {
+    const [sandboxRow] = await db
+      .update(architectureRequestsTable)
+      .set({
+        status: "tdd_completed",
+        eaReviewerName: "Auto-approved (Sandbox)",
+        eaReviewedAt: new Date(),
+        eaComments: "Sandbox environment — EA review, TDD, Observability, and FinOps phases skipped. Ready for direct Infrastructure Deployment.",
+        updatedAt: new Date(),
+      })
+      .where(eq(architectureRequestsTable.id, row.id))
+      .returning();
+
+    await logEvent(row.id, "System", "system", "ea_approved",
+      "Sandbox request — bypassed EA review and TDD. Ready for Infrastructure Deployment."
+    );
+    sendWebhookNotification(row.title, "System (Sandbox)", "tdd_completed", row.id);
+    res.status(201).json({ request: sandboxRow, workflowType: "sandbox" });
+    return;
+  }
+
+  // ── Development: skip EA, go directly to TDD generation ──
+  if (wfType === "development") {
+    const [devRow] = await db
+      .update(architectureRequestsTable)
+      .set({
+        status: "ea_approved",
+        eaReviewerName: "Auto-approved (Development)",
+        eaReviewedAt: new Date(),
+        eaComments: "Development environment — EA review skipped. Ready for Technical Design generation.",
+        updatedAt: new Date(),
+      })
+      .where(eq(architectureRequestsTable.id, row.id))
+      .returning();
+
+    await logEvent(row.id, "System", "system", "ea_approved",
+      "Development request — bypassed EA review. Ready for Technical Design generation."
+    );
+    sendWebhookNotification(row.title, "System (Development)", "ea_approved", row.id);
+    res.status(201).json({ request: devRow, workflowType: "development" });
+    return;
+  }
+
+  // ── Standard workflow: AI-driven routing ──
   const aiResult = await classifyRequestWithAI({
     applicationType: body.applicationType,
     expectedUserBase: body.expectedUserBase,
