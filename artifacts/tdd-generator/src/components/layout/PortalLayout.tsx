@@ -39,7 +39,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
-    label: "Work Queue",
+    label: "Admin Panel",
     items: [
       { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "My Requests", path: "/requests", icon: FileText, roles: ["requestor"] },
