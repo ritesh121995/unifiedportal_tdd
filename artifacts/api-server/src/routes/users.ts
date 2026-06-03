@@ -53,19 +53,28 @@ router.post("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const { role, name, password } = req.body as { role?: string; name?: string; password?: string };
+  const { role, name, email, password } = req.body as { role?: string; name?: string; email?: string; password?: string };
   const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "admin"];
   if (role && !validRoles.includes(role)) {
     res.status(400).json({ error: "Invalid role" });
     return;
   }
+  if (email !== undefined) {
+    if (!email.trim()) { res.status(400).json({ error: "Email address is required" }); return; }
+    const conflict = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, email.toLowerCase())).limit(1);
+    if (conflict.length > 0 && conflict[0].id !== id) {
+      res.status(409).json({ error: "A user with that email already exists" });
+      return;
+    }
+  }
   if (password !== undefined && password.length < 8) {
     res.status(400).json({ error: "Password must be at least 8 characters" });
     return;
   }
-  const updates: Partial<{ role: string; name: string; passwordHash: string }> = {};
+  const updates: Partial<{ role: string; name: string; email: string; passwordHash: string }> = {};
   if (role) updates.role = role;
   if (name) updates.name = name;
+  if (email) updates.email = email.toLowerCase();
   if (password) updates.passwordHash = await bcrypt.hash(password, 12);
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: "Nothing to update" });
@@ -81,6 +90,7 @@ router.patch("/:id", async (req, res) => {
   const changeDesc = [
     role ? `role → ${role}` : null,
     name ? `name → "${name}"` : null,
+    email ? `email → ${email.toLowerCase()}` : null,
     password ? `password changed` : null,
   ].filter(Boolean).join(", ");
   await logAdminEvent(actor.name, actor.role, "admin_user_updated",
