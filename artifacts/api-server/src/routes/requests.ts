@@ -426,7 +426,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     .returning();
 
   await logEvent(row.id, user.name, user.role, "submitted", `Request submitted by ${user.name}`);
-  sendWebhookNotification(row.title, user.name, "submitted", row.id);
+  sendWebhookNotification(row.title, user.name, "submitted", row.id).catch(() => {});
 
   const wfType = body.workflowType;
 
@@ -447,7 +447,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     await logEvent(row.id, "System", "system", "ea_approved",
       "Sandbox request — bypassed EA review and CAB. Ready for Infrastructure Deployment."
     );
-    sendWebhookNotification(row.title, "System (Sandbox)", "cab_completed", row.id);
+    sendWebhookNotification(row.title, "System (Sandbox)", "cab_completed", row.id).catch(() => {});
     res.status(201).json({ request: sandboxRow, workflowType: "sandbox" });
     return;
   }
@@ -469,7 +469,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     await logEvent(row.id, "System", "system", "ea_approved",
       "Development request — bypassed EA review. Ready for Cloud Architecture Blueprint generation."
     );
-    sendWebhookNotification(row.title, "System (Development)", "ea_approved", row.id);
+    sendWebhookNotification(row.title, "System (Development)", "ea_approved", row.id).catch(() => {});
     res.status(201).json({ request: devRow, workflowType: "development" });
     return;
   }
@@ -505,7 +505,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     await logEvent(row.id, "AI System", "system", "ea_approved",
       `AI classified as Simple (${aiResult.confidence} confidence) — fast-tracked to CAB. ${aiResult.reason}`
     );
-    sendWebhookNotification(row.title, "AI Auto-Classification", "ea_approved", row.id);
+    sendWebhookNotification(row.title, "AI Auto-Classification", "ea_approved", row.id).catch(() => {});
 
     res.status(201).json({ request: approvedRow, fastTrack: true, aiClassification: "simple", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
     return;
@@ -699,7 +699,7 @@ router.post("/:id/clone", requireRole("requestor"), async (req, res) => {
     .returning();
 
   await logEvent(clone.id, user.name, user.role, "submitted", `Cloned from ARR #${id} by ${user.name}`);
-  sendWebhookNotification(clone.title, user.name, "submitted", clone.id);
+  sendWebhookNotification(clone.title, user.name, "submitted", clone.id).catch(() => {});
 
   res.status(201).json({ request: clone });
 });
@@ -736,7 +736,7 @@ router.patch("/:id/review", requireRole("enterprise_architect"), async (req, res
     ? `Approved by ${user.name}${comments ? ` — "${comments}"` : ""}`
     : `Rejected by ${user.name}${comments ? ` — "${comments}"` : ""}`;
   await logEvent(id, user.name, user.role, action === "approve" ? "ea_approved" : "ea_rejected", desc);
-  sendWebhookNotification(row.title, user.name, newStatus, id);
+  sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
   res.json({ request: row });
 });
@@ -760,7 +760,7 @@ router.patch("/:id/triage", requireRole("enterprise_architect"), async (req, res
   if (!row) { res.status(404).json({ error: "Request not found" }); return; }
 
   await logEvent(id, user.name, user.role, "ea_triage", `Moved to EA Triage by ${user.name}`);
-  sendWebhookNotification(row.title, user.name, "ea_triage", id);
+  sendWebhookNotification(row.title, user.name, "ea_triage", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -786,7 +786,7 @@ router.patch("/:id/request-modification", requireRole("enterprise_architect"), a
 
   await logEvent(id, user.name, user.role, "modification_requested",
     `Changes requested by ${user.name}${notes?.trim() ? ` — "${notes.trim()}"` : ""}`);
-  sendWebhookNotification(row.title, user.name, "modification_requested", id);
+  sendWebhookNotification(row.title, user.name, "modification_requested", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -813,7 +813,7 @@ router.patch("/:id/cancel", async (req, res) => {
     .returning();
 
   await logEvent(id, user.name, user.role, "cancelled", `Request cancelled by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "cancelled", id);
+  sendWebhookNotification(existing.title, user.name, "cancelled", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -842,7 +842,7 @@ router.patch("/:id/resubmit", async (req, res) => {
 
   await logEvent(id, user.name, user.role, "submitted",
     `Resubmitted by ${user.name}${note?.trim() ? ` — "${note.trim()}"` : ""}`);
-  sendWebhookNotification(row.title, user.name, "submitted", id);
+  sendWebhookNotification(row.title, user.name, "submitted", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -878,7 +878,7 @@ router.patch("/:id/risk-review", requireRole("cloud_architect"), async (req, res
     ? `Risk Analysis approved by ${user.name}${comments ? ` — "${comments}"` : ""}`
     : `Risk Analysis rejected by ${user.name}${comments ? ` — "${comments}"` : ""}`;
   await logEvent(id, user.name, user.role, action === "approve" ? "risk_approved" : "risk_rejected", logDesc);
-  sendWebhookNotification(row.title, user.name, newStatus, id);
+  sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
   res.json({ request: row });
 });
@@ -915,7 +915,7 @@ router.patch("/:id/devsecops-review", requireRole("cloud_architect"), async (req
     ? `DevSecOps deployment approved by ${user.name}${comments ? ` — "${comments}"` : ""}`
     : `DevSecOps deployment rejected by ${user.name}${comments ? ` — "${comments}"` : ""}`;
   await logEvent(id, user.name, user.role, action === "approve" ? "devsecops_approved" : "devsecops_rejected", logDesc);
-  sendWebhookNotification(row.title, user.name, newStatus, id);
+  sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
   res.json({ request: row });
 });
@@ -949,7 +949,7 @@ router.patch("/:id/observability-complete", requireRole("cloud_architect"), asyn
 
   await logEvent(id, user.name, user.role, "observability_approved",
     `Observability setup confirmed by ${user.name}${comments ? ` — "${comments}"` : ""}`);
-  sendWebhookNotification(existing.title, user.name, "observability_approved", id);
+  sendWebhookNotification(existing.title, user.name, "observability_approved", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -983,7 +983,7 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
     .returning();
 
   await logEvent(id, user.name, user.role, "finops_active", `FinOps monitoring activated by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "finops_active", id);
+  sendWebhookNotification(existing.title, user.name, "finops_active", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -1019,7 +1019,7 @@ router.patch("/:id/start-cab", requireRole("cloud_architect"), async (req, res) 
     .returning();
 
   await logEvent(id, user.name, user.role, "cab_started", `CAB generation started by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "cab_in_progress", id);
+  sendWebhookNotification(existing.title, user.name, "cab_in_progress", id).catch(() => {});
   res.json({ request: row });
 });
 
@@ -1058,7 +1058,7 @@ router.patch("/:id/complete-cab", requireRole("cloud_architect"), async (req, re
   if (!row) { res.status(404).json({ error: "Request not found" }); return; }
 
   await logEvent(id, user.name, user.role, "cab_completed", `CAB reviewed and completed by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "cab_completed", id);
+  sendWebhookNotification(existing.title, user.name, "cab_completed", id).catch(() => {});
   res.json({ request: row });
 });
 
