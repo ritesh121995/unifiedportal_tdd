@@ -782,7 +782,7 @@ export default function RequestDetail() {
   // Phase progress steps — dynamic based on workflow type
   const PHASE_STEPS_CLOUD: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
     { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "cab_in_progress", "cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
-    { label: "Technical Design",    statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Cloud Architecture Blueprint",    statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
     { label: "Infrastructure",      statuses: ["cab_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
     { label: "Observability",       statuses: ["devsecops_approved"], doneStatuses: ["observability_approved", "finops_active"] },
     { label: "Cost Management",     statuses: ["observability_approved"], doneStatuses: ["finops_active"] },
@@ -792,7 +792,7 @@ export default function RequestDetail() {
     { label: "Cost Management",     statuses: ["ea_approved"], doneStatuses: ["finops_active"] },
   ];
   const PHASE_STEPS_DEV: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
-    { label: "Technical Design", statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected"] },
+    { label: "Cloud Architecture Blueprint", statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected"] },
     { label: "Infrastructure",   statuses: ["cab_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
   ];
   const PHASE_STEPS_SANDBOX: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
@@ -929,7 +929,7 @@ export default function RequestDetail() {
               <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-300 rounded-full px-2 py-0.5">No EA Review · No CAB Required</span>
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              This is a Sandbox request. EA review, Technical Design, Observability, and FinOps phases are skipped. A Cloud Architect can proceed directly to Infrastructure Deployment below.
+              This is a Sandbox request. EA review, Cloud Architecture Blueprint, Observability, and FinOps phases are skipped. A Cloud Architect can proceed directly to Infrastructure Deployment below.
             </p>
           </div>
         </div>
@@ -947,7 +947,7 @@ export default function RequestDetail() {
               <span className="text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-300 rounded-full px-2 py-0.5">EA Review Skipped</span>
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              This is a Development request. EA review is skipped — a Cloud Architect can generate the Technical Design immediately, then proceed to Infrastructure Deployment.
+              This is a Development request. EA review is skipped — a Cloud Architect can generate the Cloud Architecture Blueprint immediately, then proceed to Infrastructure Deployment.
             </p>
           </div>
         </div>
@@ -966,13 +966,13 @@ export default function RequestDetail() {
                 <span className="text-[10px] font-semibold bg-green-100 text-green-700 border border-green-200 rounded-full px-2 py-0.5">EA Auto-Approved</span>
               )}
               {request.status === "cab_in_progress" && (
-                <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">Technical Design In Progress</span>
+                <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">Cloud Architecture Blueprint In Progress</span>
               )}
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               {request.status === "ea_approved"
-                ? "This simple application was automatically approved by the system. Network CIDRs have been pre-filled — a Cloud Architect can click Generate Technical Design below immediately, no triage or manual Architecture Review required."
-                : "This simple application bypassed the standard review queue and was fast-tracked straight to Technical Design generation."}
+                ? "This simple application was automatically approved by the system. Network CIDRs have been pre-filled — a Cloud Architect can click Generate Cloud Architecture Blueprint below immediately, no triage or manual Architecture Review required."
+                : "This simple application bypassed the standard review queue and was fast-tracked straight to Cloud Architecture Blueprint generation."}
             </p>
           </div>
         </div>
@@ -1037,22 +1037,22 @@ export default function RequestDetail() {
           } : ["ea_approved"].includes(s) ? {
             color: "border-blue-400 bg-blue-50",
             icon: <FileText className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />,
-            heading: "Technical Design Required — Awaiting Cloud Architect",
-            detail: "Architecture Review is approved. A Cloud Architect must generate the Cloud Architecture Blueprint. As admin you can trigger Technical Design generation directly.",
+            heading: "Cloud Architecture Blueprint Required — Awaiting Cloud Architect",
+            detail: "Architecture Review is approved. A Cloud Architect must generate the Cloud Architecture Blueprint. As admin you can trigger Cloud Architecture Blueprint generation directly.",
             anchor: "#cab-action-section",
-            label: "Go to Technical Design ↓",
+            label: "Go to Cloud Architecture Blueprint ↓",
           } : s === "cab_in_progress" ? {
             color: "border-blue-300 bg-blue-50",
             icon: <Loader2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />,
-            heading: "Technical Design In Progress — Cloud Architect is Generating the Document",
-            detail: "A Cloud Architect has started the Technical Design. You can re-generate it if needed.",
+            heading: "Cloud Architecture Blueprint In Progress — Cloud Architect is Generating the Document",
+            detail: "A Cloud Architect has started the Cloud Architecture Blueprint. You can re-generate it if needed.",
             anchor: "#cab-action-section",
-            label: "View Technical Design Section ↓",
+            label: "View Cloud Architecture Blueprint Section ↓",
           } : s === "cab_completed" ? {
             color: "border-indigo-400 bg-indigo-50",
             icon: <Code2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />,
             heading: "Infrastructure Deployment Approval Required — Awaiting Cloud Architect Sign-off",
-            detail: "The Technical Design is complete. A Cloud Architect must review the Terraform IaC, complete the sign-off checklist, and approve the Infrastructure pipeline gates before Observability setup.",
+            detail: "The Cloud Architecture Blueprint is complete. A Cloud Architect must review the Terraform IaC, complete the sign-off checklist, and approve the Infrastructure pipeline gates before Observability setup.",
             anchor: "#devsecops-section",
             label: "Go to Infrastructure Sign-off ↓",
           } : s === "devsecops_approved" ? {
@@ -1221,9 +1221,9 @@ export default function RequestDetail() {
               const phases = isSandbox
                 ? ["Submitted", "Deployment"]
                 : isDevelopment
-                ? ["Submitted", "Technical Design", "Deployment"]
+                ? ["Submitted", "Cloud Architecture Blueprint", "Deployment"]
                 : isCloudTenant
-                ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Observability", "Cost Management"]
+                ? ["Submitted", "Architecture Review", "Cloud Architecture Blueprint", "Infrastructure", "Observability", "Cost Management"]
                 : ["Submitted", "Architecture Review", "Cost Management"];
               const phaseForStatus: Record<string, number> = isSandbox
                 ? { submitted: 0, cab_completed: 1, devsecops_approved: 1, devsecops_rejected: 1 }
@@ -1320,22 +1320,22 @@ export default function RequestDetail() {
               ) : isCloudTenant && p2Status !== "done" ? (
                 <PhaseCard
                   phase={2}
-                  title="Technical Design"
+                  title="Cloud Architecture Blueprint"
                   desc={p2Status === "active"
                     ? (isAdmin ? "Architecture Review is approved. Generate the Cloud Architecture Blueprint to proceed." : "The Cloud Architect is currently preparing the Cloud Architecture Blueprint.")
-                    : (isAdmin ? "Architecture Review complete — Technical Design can now be started." : "Architecture Review is complete. The Cloud Architect team will begin the Technical Design.")}
+                    : (isAdmin ? "Architecture Review complete — Cloud Architecture Blueprint can now be started." : "Architecture Review is complete. The Cloud Architect team will begin the Cloud Architecture Blueprint.")}
                   status={p2Status}
                   adminContinuePath="#cab-action-section"
-                  adminContinueLabel="Generate / Continue Technical Design"
+                  adminContinueLabel="Generate / Continue Cloud Architecture Blueprint"
                 />
               ) : isCloudTenant && p3Status !== "done" && p3Status !== "skipped" ? (
                 <PhaseCard
                   phase={3}
                   title="Infrastructure Deployment"
                   desc={p3Status === "active"
-                    ? (isAdmin ? "Technical Design is complete. Review and approve for deployment." : "The completed Technical Design is under Infrastructure review for pipeline and security gate approval.")
+                    ? (isAdmin ? "Cloud Architecture Blueprint is complete. Review and approve for deployment." : "The completed Cloud Architecture Blueprint is under Infrastructure review for pipeline and security gate approval.")
                     : p3Status === "rejected" ? "Infrastructure Deployment review was not approved. The Cloud Architect team will be in contact."
-                    : "Awaiting Technical Design completion before Infrastructure Deployment can begin."}
+                    : "Awaiting Cloud Architecture Blueprint completion before Infrastructure Deployment can begin."}
                   status={p3Status}
                   adminContinuePath="#devsecops-section"
                   adminContinueLabel="Review & Approve"
@@ -1638,14 +1638,14 @@ export default function RequestDetail() {
               <ShieldCheck className="w-4 h-4" style={{ color: "#b49000" }} />
               Phase 1 — Architecture Review
               <span className="ml-auto text-[10px] font-mono text-yellow-700 border border-yellow-300 bg-yellow-50 px-2 py-0.5 rounded">
-                {isCloudTenant ? "Architecture Review → Technical Design → Infrastructure → Cost Management" : "Architecture Review → Cost Management"}
+                {isCloudTenant ? "Architecture Review → Cloud Architecture Blueprint → Infrastructure → Cost Management" : "Architecture Review → Cost Management"}
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {!isCloudTenant && (
               <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-                <strong>{isThirdParty ? "Non-Cloud workflow:" : "Non-Cloud workflow:"}</strong> Approving this request ({request.deploymentModel ?? "unknown model"}) will route directly to Cost Management — no Technical Design or Infrastructure phases required.
+                <strong>{isThirdParty ? "Non-Cloud workflow:" : "Non-Cloud workflow:"}</strong> Approving this request ({request.deploymentModel ?? "unknown model"}) will route directly to Cost Management — no Cloud Architecture Blueprint or Infrastructure phases required.
               </div>
             )}
             {/* Recommended Architect Team + Risk Insights */}
@@ -1903,7 +1903,7 @@ export default function RequestDetail() {
               <p className="text-sm font-medium text-slate-700">Request Approved — Next Steps</p>
               <p className="text-xs text-slate-500">
                 {isCA && !isCloudTenant
-                  ? `Technical Design generation is only available for Azure Cloud (McCain Tenant) requests. This request uses "${request.deploymentModel ?? "unknown"}" — a Cloud Architect action is not required. The Enterprise Architect will proceed to Cost Management activation.`
+                  ? `Cloud Architecture Blueprint generation is only available for Azure Cloud (McCain Tenant) requests. This request uses "${request.deploymentModel ?? "unknown"}" — a Cloud Architect action is not required. The Enterprise Architect will proceed to Cost Management activation.`
                   : isEA && !isThirdParty && !isCloudTenant
                     ? `Deployment model "${request.deploymentModel ?? "unknown"}" is not mapped to a workflow action. Please contact an admin to update the request or proceed manually.`
                     : "The request is approved. The next action will be available to the appropriate team."}
@@ -1952,7 +1952,7 @@ export default function RequestDetail() {
             <p className="text-sm text-slate-700">
               {isSandbox
                 ? "Sandbox request — no CAB required. Select the Azure services to provision, generate the Terraform IaC, then approve the Infrastructure pipeline."
-                : "Technical Design is complete and reviewed. Select the Azure services detected from the Cloud Architecture Blueprint, generate the Terraform IaC, then approve the Infrastructure pipeline."}
+                : "Cloud Architecture Blueprint is complete and reviewed. Select the Azure services detected from the Cloud Architecture Blueprint, generate the Terraform IaC, then approve the Infrastructure pipeline."}
             </p>
 
             {/* IaC Service Selection */}
@@ -1965,7 +1965,7 @@ export default function RequestDetail() {
               {iacCabLoading && (
                 <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Detecting Azure services from Technical Design…
+                  Detecting Azure services from Cloud Architecture Blueprint…
                 </div>
               )}
               {iacCabError && (

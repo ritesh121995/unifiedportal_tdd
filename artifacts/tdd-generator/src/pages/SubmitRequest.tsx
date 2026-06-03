@@ -59,7 +59,7 @@ const APP_TYPES: { value: string; label: string; desc: string; workflow: string;
     value: "New Application",
     label: "New Application",
     desc: "Building something brand new — no existing system to replace or enhance.",
-    workflow: "AI-assessed complexity: fast-tracked to Technical Design if simple, or routed through full Architecture Review",
+    workflow: "AI-assessed complexity: fast-tracked to Cloud Architecture Blueprint if simple, or routed through full Architecture Review",
     icon: "🆕",
   },
   {
@@ -73,21 +73,21 @@ const APP_TYPES: { value: string; label: string; desc: string; workflow: string;
     value: "Cloud Migration",
     label: "Cloud Migration",
     desc: "Moving an existing on-premises or hosted application to Microsoft Azure.",
-    workflow: "Fast-tracked to Technical Design — Architecture Review not required for migrations",
+    workflow: "Fast-tracked to Cloud Architecture Blueprint — Architecture Review not required for migrations",
     icon: "☁️",
   },
   {
     value: "Application Replacement",
     label: "Application Replacement",
     desc: "Replacing one system with another (new vendor, platform, or architecture).",
-    workflow: "Full review: Architecture Review → Technical Design → Infrastructure Deployment → Cost Management",
+    workflow: "Full review: Architecture Review → Cloud Architecture Blueprint → Infrastructure Deployment → Cost Management",
     icon: "🔄",
   },
   {
     value: "Application Decommissioning",
     label: "Application Decommissioning",
     desc: "Retiring and shutting down an existing application and its infrastructure.",
-    workflow: "Lightweight review — dependency check, data disposal, cost sign-off. No Technical Design required.",
+    workflow: "Lightweight review — dependency check, data disposal, cost sign-off. No Cloud Architecture Blueprint required.",
     icon: "🗄️",
   },
   {
@@ -603,7 +603,7 @@ export default function SubmitRequest() {
               <h2 className="text-xl font-bold text-orange-900 mb-1">Sandbox Request Submitted</h2>
               <p className="text-orange-800 text-sm">
                 <span className="font-semibold">{form.applicationName || form.title}</span> is queued for direct deployment.
-                No EA review or Technical Design is required — a Cloud Architect will provision the environment.
+                No EA review or Cloud Architecture Blueprint is required — a Cloud Architect will provision the environment.
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className="inline-flex items-center gap-1 text-xs bg-white border border-orange-200 text-orange-800 rounded-full px-3 py-0.5 font-medium">
@@ -659,7 +659,7 @@ export default function SubmitRequest() {
       const steps = [
         { done: true,  label: "Request submitted" },
         { done: true,  label: "EA review — skipped for Development" },
-        { done: false, label: "Technical Design — awaiting Cloud Architect" },
+        { done: false, label: "Cloud Architecture Blueprint — awaiting Cloud Architect" },
         { done: false, label: "Infrastructure Deployment" },
       ];
       return (
@@ -672,7 +672,7 @@ export default function SubmitRequest() {
               <h2 className="text-xl font-bold text-sky-900 mb-1">Development Request Submitted</h2>
               <p className="text-sky-800 text-sm">
                 <span className="font-semibold">{form.applicationName || form.title}</span> has been fast-tracked past EA review.
-                A Cloud Architect will generate the Technical Design and then proceed to deployment.
+                A Cloud Architect will generate the Cloud Architecture Blueprint and then proceed to deployment.
               </p>
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className="inline-flex items-center gap-1 text-xs bg-white border border-sky-200 text-sky-800 rounded-full px-3 py-0.5 font-medium">
@@ -701,7 +701,7 @@ export default function SubmitRequest() {
                 ))}
               </div>
               <p className="text-xs text-slate-500 pt-1">
-                Track progress under <strong>My Requests</strong>. The Cloud Architect will notify you once the Technical Design is generated.
+                Track progress under <strong>My Requests</strong>. The Cloud Architect will notify you once the Cloud Architecture Blueprint is generated.
               </p>
             </CardContent>
           </Card>
@@ -797,7 +797,7 @@ export default function SubmitRequest() {
               <p className={`text-xs ${aiClassification === "simple" ? "text-blue-800" : "text-amber-800"}`}>{aiReason}</p>
               <p className={`text-xs mt-1.5 font-medium ${aiClassification === "simple" ? "text-blue-700" : "text-amber-700"}`}>
                 {aiClassification === "simple"
-                  ? "Your request has been automatically approved and is ready for Technical Design generation."
+                  ? "Your request has been automatically approved and is ready for Cloud Architecture Blueprint generation."
                   : "Your request has been queued for Enterprise Architecture review. You will be notified once reviewed."}
               </p>
             </div>
@@ -951,7 +951,7 @@ export default function SubmitRequest() {
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">1</span>The Enterprise Architect reviews the submission and assigns the relevant domain architects identified above.</li>
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">2</span>Domain architects perform their respective reviews. Address all high-risk items before the review meeting.</li>
                 <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">3</span>Architecture review meeting is scheduled. All stakeholders receive a calendar invitation with the agenda and required documentation.</li>
-                <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">4</span>Technical Design is produced and approved. Infrastructure Deployment and Cost Management gates are cleared for provisioning.</li>
+                <li className="flex items-start gap-2"><span className="w-5 h-5 rounded-full bg-[#FFCD00] text-[#1a1a2e] flex items-center justify-center font-bold flex-shrink-0 text-[10px]">4</span>Cloud Architecture Blueprint is produced and approved. Infrastructure Deployment and Cost Management gates are cleared for provisioning.</li>
               </ol>
             </CardContent>
           </Card>
@@ -996,13 +996,13 @@ export default function SubmitRequest() {
               <div className="flex-1">
                 <h3 className="font-bold text-[#1a1a2e] text-base">Simple App Fast-Track Active</h3>
                 <p className="text-sm text-slate-700 mt-1 leading-relaxed">
-                  Because this is a <strong>Simple application</strong>, Architecture Review has been automatically approved. Your request has skipped the review queue and is ready for Technical Design generation immediately.
+                  Because this is a <strong>Simple application</strong>, Architecture Review has been automatically approved. Your request has skipped the review queue and is ready for Cloud Architecture Blueprint generation immediately.
                 </p>
                 <div className="mt-3 space-y-1.5">
                   {[
                     { done: true,  label: "Request Submitted" },
                     { done: true,  label: "Architecture Review — Auto-Approved" },
-                    { done: false, label: "Generate Technical Design" },
+                    { done: false, label: "Generate Cloud Architecture Blueprint" },
                     { done: false, label: "Infrastructure Deployment" },
                     { done: false, label: "Cost Management" },
                   ].map(({ done, label }) => (
@@ -1020,7 +1020,7 @@ export default function SubmitRequest() {
                   style={{ background: "#FFCD00" }}
                   onClick={() => setLocation(`/requests/${submittedRequestId}`)}
                 >
-                  <Rocket className="w-4 h-4 mr-2" /> Open Request & Start Technical Design
+                  <Rocket className="w-4 h-4 mr-2" /> Open Request & Start Cloud Architecture Blueprint
                 </Button>
               </div>
             </div>
@@ -1094,8 +1094,8 @@ export default function SubmitRequest() {
   const isDecommission   = form.applicationType === "Application Decommissioning";
   const isPoC            = form.applicationType === "Proof of Concept / Technology Evaluation";
   const needsExistingApp = isEnhancement || isCloudMigration || form.applicationType === "Application Replacement" || isDecommission;
-  const skipTDD          = isDecommission;
-  const fastTrackTDD     = isCloudMigration;
+  const skipCAB          = isDecommission;
+  const fastTrackCAB     = isCloudMigration;
 
   // ── 4. Section completion ──────────────────────────────────────────────────
   const sec1Done = !!(form.title && form.applicationName && form.applicationType && form.businessCriticality && form.organization && form.lineOfBusiness && form.sltLeader && form.targetGoLiveDate && form.deploymentModel);
@@ -1105,7 +1105,7 @@ export default function SubmitRequest() {
   const sec4bDone = !isCloudTenant && form.deploymentModel ? !!(form.vendorName && form.commercialModel && form.hostingPlatform && form.dataResidency && form.supportModel) : true;
   const sec5Done = isCloudTenant ? !!(form.businessOwner && form.businessOwnerEmail && form.itOwner && form.technologyOwnerEmail) : true;
   const sec6Done = isCloudTenant ? !!(form.billingCompanyCode && form.billingCostObject && form.billingGlAccount) : true;
-  const sec7Done = isCloudTenant && !skipTDD ? !!(form.applicationArchitecture && form.applicationFlow) : true;
+  const sec7Done = isCloudTenant && !skipCAB ? !!(form.applicationArchitecture && form.applicationFlow) : true;
 
   const autoFillKey = `${form.organization}|${form.lineOfBusiness}`;
   const autoFillActive = !!(form.organization && form.lineOfBusiness && ORG_LOB_AUTOFILL[autoFillKey]);
@@ -1216,7 +1216,7 @@ export default function SubmitRequest() {
                 <ReviewRow label="Requestor Email" value={form.requestorEmail} />
               </ReviewSection>
             )}
-            {isCloudTenant && !skipTDD && (
+            {isCloudTenant && !skipCAB && (
               <ReviewSection title="Technical Architecture">
                 <ReviewRow label="Network Posture" value={form.networkPosture} />
                 <ReviewRow label="Frontend Stack" value={form.frontendStack} />
@@ -1276,8 +1276,8 @@ export default function SubmitRequest() {
               color: "border-sky-300 hover:border-sky-400 hover:bg-sky-50",
               badge: "bg-sky-100 text-sky-700",
               badgeText: "EA Review Skipped",
-              desc: "Development environment. No EA review — submit basic details and move straight to Technical Design generation.",
-              steps: ["Submit basic details", "Generate Technical Design", "Deploy infrastructure"],
+              desc: "Development environment. No EA review — submit basic details and move straight to Cloud Architecture Blueprint generation.",
+              steps: ["Submit basic details", "Generate Cloud Architecture Blueprint", "Deploy infrastructure"],
             },
             {
               type: "standard" as const,
@@ -1286,8 +1286,8 @@ export default function SubmitRequest() {
               color: "border-amber-300 hover:border-amber-400 hover:bg-amber-50",
               badge: "bg-amber-100 text-amber-700",
               badgeText: "Full Review",
-              desc: "Quality and User Acceptance Testing. Full governance: EA review, Technical Design, DevSecOps, Observability, and FinOps.",
-              steps: ["Submit full details", "EA review", "TDD → DevSecOps → FinOps"],
+              desc: "Quality and User Acceptance Testing. Full governance: EA review, Cloud Architecture Blueprint, DevSecOps, Observability, and FinOps.",
+              steps: ["Submit full details", "EA review", "CAB → DevSecOps → FinOps"],
               envDefault: ["QA/UAT"] as string[],
             },
             {
@@ -1298,7 +1298,7 @@ export default function SubmitRequest() {
               badge: "bg-slate-100 text-slate-700",
               badgeText: "Full Review",
               desc: "Production environment. Complete governance lifecycle with all approval stages required.",
-              steps: ["Submit full details", "EA review", "TDD → DevSecOps → FinOps"],
+              steps: ["Submit full details", "EA review", "CAB → DevSecOps → FinOps"],
               envDefault: ["Prod"] as string[],
             },
           ].map((opt) => (
@@ -1373,7 +1373,7 @@ export default function SubmitRequest() {
             <p className="text-xs text-slate-600">
               {workflowType === "sandbox"
                 ? "No EA review or CAB required — fill in basic details and a Cloud Architect will deploy your environment."
-                : "EA review is skipped — fill in basic details and a Cloud Architect will generate the Technical Design."}
+                : "EA review is skipped — fill in basic details and a Cloud Architect will generate the Cloud Architecture Blueprint."}
             </p>
           </div>
           <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeCls}`}>
@@ -1896,7 +1896,7 @@ export default function SubmitRequest() {
             {isCloudMigration && (
               <div className="flex items-start gap-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2.5 text-[12px] text-blue-900">
                 <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-blue-600" />
-                <span><strong>Fast-track enabled:</strong> Cloud Migrations are routed directly to Technical Design — full Architecture Review is not required. Please provide existing application details in the next step.</span>
+                <span><strong>Fast-track enabled:</strong> Cloud Migrations are routed directly to Cloud Architecture Blueprint — full Architecture Review is not required. Please provide existing application details in the next step.</span>
               </div>
             )}
 
@@ -1904,7 +1904,7 @@ export default function SubmitRequest() {
             {isDecommission && (
               <div className="flex items-start gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2.5 text-[12px] text-amber-900">
                 <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
-                <span><strong>Lightweight review path:</strong> Application Decommissioning does not require a Technical Design. A dependency check, data disposal plan, and Cost Management sign-off will be completed instead.</span>
+                <span><strong>Lightweight review path:</strong> Application Decommissioning does not require a Cloud Architecture Blueprint. A dependency check, data disposal plan, and Cost Management sign-off will be completed instead.</span>
               </div>
             )}
 
@@ -2494,7 +2494,7 @@ export default function SubmitRequest() {
         </>)}
 
         {/* ─── Section 6: Technical Architecture (Cloud Tenant + non-Decommission only) ─── */}
-        {isCloudTenant && !skipTDD && (
+        {isCloudTenant && !skipCAB && (
         <Card>
           <CardHeader className="pb-3">
             <SectionTitle step={6} title="Technical Architecture" desc="Describe the solution design. Network CIDRs will be added by the Cloud Architect after Architecture Review." complete={sec7Done} />
@@ -2554,7 +2554,7 @@ export default function SubmitRequest() {
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <Label>Architecture Diagram <span className="text-slate-400 text-xs font-normal">(optional)</span></Label>
-                <span className="text-[11px] text-slate-400 font-normal">PNG, JPG, PDF or Visio — will be embedded in the Technical Design</span>
+                <span className="text-[11px] text-slate-400 font-normal">PNG, JPG, PDF or Visio — will be embedded in the Cloud Architecture Blueprint</span>
               </div>
               <input
                 ref={diagramInputRef}

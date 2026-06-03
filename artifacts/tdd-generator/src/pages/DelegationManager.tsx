@@ -25,7 +25,7 @@ interface Delegation {
 
 const SCOPE_LABELS: Record<string, string> = {
   ea_review: "Architecture Review (triage, approve, reject requests)",
-  ca_review: "CA Review (generate Technical Design, Infrastructure approval)",
+  ca_review: "CA Review (generate Cloud Architecture Blueprint, Infrastructure approval)",
   all: "Full Delegation (all approval actions)",
 };
 

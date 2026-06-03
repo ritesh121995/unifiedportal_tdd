@@ -460,14 +460,14 @@ router.post("/", requireRole("requestor"), async (req, res) => {
         status: "ea_approved",
         eaReviewerName: "Auto-approved (Development)",
         eaReviewedAt: new Date(),
-        eaComments: "Development environment — EA review skipped. Ready for Technical Design generation.",
+        eaComments: "Development environment — EA review skipped. Ready for Cloud Architecture Blueprint generation.",
         updatedAt: new Date(),
       })
       .where(eq(architectureRequestsTable.id, row.id))
       .returning();
 
     await logEvent(row.id, "System", "system", "ea_approved",
-      "Development request — bypassed EA review. Ready for Technical Design generation."
+      "Development request — bypassed EA review. Ready for Cloud Architecture Blueprint generation."
     );
     sendWebhookNotification(row.title, "System (Development)", "ea_approved", row.id);
     res.status(201).json({ request: devRow, workflowType: "development" });
