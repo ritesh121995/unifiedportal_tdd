@@ -155,6 +155,13 @@ function parseRequestId(value: string | string[] | undefined): number {
 const viewThrottle = new Map<string, number>();
 const VIEW_THROTTLE_MS = 60 * 60 * 1000;
 
+// Normalize legacy tdd_* status values to cab_* equivalents
+function normalizeStatus<T extends { status: string }>(row: T): T {
+  if (row.status === "tdd_in_progress") return { ...row, status: "cab_in_progress" };
+  if (row.status === "tdd_completed")   return { ...row, status: "cab_completed" };
+  return row;
+}
+
 // GET /api/requests
 router.get("/", async (req, res) => {
   const user = req.user!;
@@ -171,7 +178,7 @@ router.get("/", async (req, res) => {
       .from(architectureRequestsTable)
       .orderBy(desc(architectureRequestsTable.createdAt));
   }
-  res.json({ requests: rows });
+  res.json({ requests: rows.map(normalizeStatus) });
 });
 
 // GET /api/requests/export — CSV download (admin / architect only)
@@ -586,7 +593,7 @@ router.get("/:id", async (req, res) => {
     }
   }
 
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // DELETE /api/requests/:id — admin only
@@ -750,7 +757,7 @@ router.patch("/:id/review", requireRole("enterprise_architect"), async (req, res
   await logEvent(id, user.name, user.role, action === "approve" ? "ea_approved" : "ea_rejected", desc);
   sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/triage
@@ -773,7 +780,7 @@ router.patch("/:id/triage", requireRole("enterprise_architect"), async (req, res
 
   await logEvent(id, user.name, user.role, "ea_triage", `Moved to EA Triage by ${user.name}`);
   sendWebhookNotification(row.title, user.name, "ea_triage", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/request-modification  (EA only)
@@ -799,7 +806,7 @@ router.patch("/:id/request-modification", requireRole("enterprise_architect"), a
   await logEvent(id, user.name, user.role, "modification_requested",
     `Changes requested by ${user.name}${notes?.trim() ? ` — "${notes.trim()}"` : ""}`);
   sendWebhookNotification(row.title, user.name, "modification_requested", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/cancel  (requestor / owner only, early statuses only)
@@ -826,7 +833,7 @@ router.patch("/:id/cancel", async (req, res) => {
 
   await logEvent(id, user.name, user.role, "cancelled", `Request cancelled by ${user.name}`);
   sendWebhookNotification(existing.title, user.name, "cancelled", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/resubmit  (requestor / owner only)
@@ -855,7 +862,7 @@ router.patch("/:id/resubmit", async (req, res) => {
   await logEvent(id, user.name, user.role, "submitted",
     `Resubmitted by ${user.name}${note?.trim() ? ` — "${note.trim()}"` : ""}`);
   sendWebhookNotification(row.title, user.name, "submitted", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/risk-review
@@ -892,7 +899,7 @@ router.patch("/:id/risk-review", requireRole("cloud_architect"), async (req, res
   await logEvent(id, user.name, user.role, action === "approve" ? "risk_approved" : "risk_rejected", logDesc);
   sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/devsecops-review
@@ -929,7 +936,7 @@ router.patch("/:id/devsecops-review", requireRole("cloud_architect"), async (req
   await logEvent(id, user.name, user.role, action === "approve" ? "devsecops_approved" : "devsecops_rejected", logDesc);
   sendWebhookNotification(row.title, user.name, newStatus, id).catch(() => {});
 
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/observability-complete
@@ -962,7 +969,7 @@ router.patch("/:id/observability-complete", requireRole("cloud_architect"), asyn
   await logEvent(id, user.name, user.role, "observability_approved",
     `Observability setup confirmed by ${user.name}${comments ? ` — "${comments}"` : ""}`);
   sendWebhookNotification(existing.title, user.name, "observability_approved", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/finops-activate
@@ -996,7 +1003,7 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
 
   await logEvent(id, user.name, user.role, "finops_active", `FinOps monitoring activated by ${user.name}`);
   sendWebhookNotification(existing.title, user.name, "finops_active", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/start-cab
@@ -1032,7 +1039,7 @@ router.patch("/:id/start-cab", requireRole("cloud_architect"), async (req, res) 
 
   await logEvent(id, user.name, user.role, "cab_started", `CAB generation started by ${user.name}`);
   sendWebhookNotification(existing.title, user.name, "cab_in_progress", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // PATCH /api/requests/:id/complete-cab
@@ -1071,7 +1078,7 @@ router.patch("/:id/complete-cab", requireRole("cloud_architect"), async (req, re
 
   await logEvent(id, user.name, user.role, "cab_completed", `CAB reviewed and completed by ${user.name}`);
   sendWebhookNotification(existing.title, user.name, "cab_completed", id).catch(() => {});
-  res.json({ request: row });
+  res.json({ request: normalizeStatus(row) });
 });
 
 // POST /api/requests/:id/audit-report — generate and download server-side audit report
