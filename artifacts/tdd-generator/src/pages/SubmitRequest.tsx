@@ -1233,7 +1233,7 @@ export default function SubmitRequest() {
           <Button variant="outline" onClick={() => { setReviewing(false); setError(""); }}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Edit
           </Button>
-          <Button onClick={confirmAndSubmit} className="bg-[#0078d4] hover:bg-[#106ebe]" disabled={submitting}>
+          <Button onClick={() => confirmAndSubmit()} className="bg-[#0078d4] hover:bg-[#106ebe]" disabled={submitting}>
             {submitting
               ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting…</>
               : <>Confirm & Submit <ArrowRight className="w-4 h-4 ml-2" /></>
@@ -1428,7 +1428,7 @@ export default function SubmitRequest() {
               <Button variant="outline" onClick={() => { setReviewing(false); setError(""); }}>
                 <ArrowLeft className="w-4 h-4 mr-1" /> Edit
               </Button>
-              <Button onClick={confirmAndSubmit} className="bg-[#0078d4] hover:bg-[#106ebe]" disabled={submitting}>
+              <Button onClick={() => confirmAndSubmit()} className="bg-[#0078d4] hover:bg-[#106ebe]" disabled={submitting}>
                 {submitting
                   ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting…</>
                   : <>Confirm & Submit <ArrowRight className="w-4 h-4 ml-2" /></>}
