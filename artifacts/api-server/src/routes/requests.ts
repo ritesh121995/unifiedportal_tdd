@@ -518,9 +518,11 @@ router.post("/", requireRole("requestor"), async (req, res) => {
 
   res.status(201).json({ request: row, fastTrack: false, aiClassification: "complex", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
   } catch (err: unknown) {
-    console.error("[POST /api/requests] Unhandled error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    if (!res.headersSent) res.status(500).json({ error: message });
+    const cause = (err as Record<string, unknown>)?.cause as Record<string, unknown> | undefined;
+    const detail = cause?.detail ?? cause?.message ?? "";
+    const message = err instanceof Error ? err.message.split("\n")[0] : "Internal server error";
+    console.error("[POST /api/requests]", message, detail);
+    if (!res.headersSent) res.status(500).json({ error: message, detail });
   }
 });
 

@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const cabSubmissionsTable = pgTable("cab_submissions", {
+export const cabSubmissionsTable = pgTable("tdd_submissions", {
   id: serial("id").primaryKey(),
   applicationName: text("application_name").notNull(),
   organization: text("organization").notNull(),

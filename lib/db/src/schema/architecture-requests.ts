@@ -51,7 +51,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   // Phase 3 — Cloud Architect / CAB
   caAssigneeId: integer("ca_assignee_id"),
   caAssigneeName: text("ca_assignee_name"),
-  cabSubmissionId: integer("cab_submission_id"),
+  cabSubmissionId: integer("tdd_submission_id"),
 
   // Phase 4 — DevSecOps / IaC
   devsecopsApproverId: integer("devsecops_approver_id"),
@@ -69,7 +69,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   finopsActivatedBy: text("finops_activated_by"),
 
   // Partial form data pre-fill for CAB wizard (populated from request on approval)
-  cabFormData: jsonb("cab_form_data"),
+  cabFormData: jsonb("tdd_form_data"),
 
   // AI-driven routing classification set at submission time
   aiClassification: text("ai_classification"),       // 'simple' | 'complex'
