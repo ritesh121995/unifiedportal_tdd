@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const PHASE_COLOR = "#FFCD00";
 
-const TDD_SECTIONS = [
+const CAB_SECTIONS = [
   { num: "01", title: "Executive Summary", icon: FileText, status: "auto", desc: "Project overview, objectives, stakeholders, and strategic alignment with McCain enterprise goals." },
   { num: "02", title: "Architecture Design", icon: GitBranch, status: "auto", desc: "High-level and detailed Azure architecture diagrams, component inventory, and design decisions." },
   { num: "03", title: "Security Controls", icon: CheckCircle2, status: "auto", desc: "Security baseline, identity architecture, network segmentation, and CISO-approved controls." },
@@ -15,11 +15,11 @@ const TDD_SECTIONS = [
 ];
 
 
-export default function Phase4TDDGeneration() {
+export default function Phase4CABGeneration() {
   const [, setLocation] = useLocation();
 
-  const autoSections = TDD_SECTIONS.filter((s) => s.status === "auto").length;
-  const pendingSections = TDD_SECTIONS.filter((s) => s.status === "pending").length;
+  const autoSections = CAB_SECTIONS.filter((s) => s.status === "auto").length;
+  const pendingSections = CAB_SECTIONS.filter((s) => s.status === "pending").length;
 
   return (
     <div className="space-y-6">
@@ -28,10 +28,10 @@ export default function Phase4TDDGeneration() {
         <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full opacity-20 bg-white" />
         <div className="relative z-10 flex items-start justify-between">
           <div>
-            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 2 · Technical Design</p>
-            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Technical Design Document</h1>
+            <p className="text-xs font-mono tracking-widest uppercase opacity-80 mb-1">Phase 2 · Cloud Architecture Blueprint</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Cloud Architecture Blueprint</h1>
             <p className="text-sm opacity-80 max-w-xl">
-              Auto-generate a comprehensive technical design document covering architecture decisions, security controls, data flows, and operational requirements.
+              Auto-generate a comprehensive cloud architecture blueprint covering architecture decisions, security controls, data flows, and operational requirements.
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
               {["AI-Assisted", "Version Control", "Architecture Sign-off"].map((tag) => (
@@ -58,7 +58,7 @@ export default function Phase4TDDGeneration() {
               <p className="text-xs text-slate-500">Each section is generated from your submitted request details. Review before final submission.</p>
             </CardHeader>
             <CardContent className="space-y-3">
-              {TDD_SECTIONS.map((section) => {
+              {CAB_SECTIONS.map((section) => {
                 const Icon = section.icon;
                 return (
                   <div key={section.num} className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:shadow-sm transition-all">
@@ -112,7 +112,7 @@ export default function Phase4TDDGeneration() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-1.5">
-                {["Technical Design Document (.docx)", "Architecture Diagrams", "Component Spec Sheets", "Data Flow Documentation", "Architecture Approval Record"].map((d) => (
+                {["Cloud Architecture Blueprint (.docx)", "Architecture Diagrams", "Component Spec Sheets", "Data Flow Documentation", "Architecture Approval Record"].map((d) => (
                   <li key={d} className="flex items-center gap-2 text-xs text-slate-600">
                     <span style={{ color: PHASE_COLOR }}>→</span>
                     {d}
@@ -132,10 +132,10 @@ export default function Phase4TDDGeneration() {
             <p className="text-xs font-mono uppercase tracking-widest text-yellow-700 mb-0.5">Phase 2 SPOC</p>
             <p className="text-sm font-bold text-slate-900">Cloud Architect</p>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Responsible for producing and signing off the Technical Design Document. Translates the approved architecture into an AI-assisted, version-controlled TDD covering infrastructure design, security controls, data flows, and cost estimates.
+              Responsible for producing and signing off the Cloud Architecture Blueprint. Translates the approved architecture into an AI-assisted, version-controlled CAB covering infrastructure design, security controls, data flows, and cost estimates.
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
-              {["TDD Generation", "Architecture Diagrams", "Security Baseline", "Cost Estimation", "CA Sign-off"].map((r) => (
+              {["CAB Generation", "Architecture Diagrams", "Security Baseline", "Cost Estimation", "CA Sign-off"].map((r) => (
                 <span key={r} className="text-[10px] px-2 py-0.5 rounded border font-medium" style={{ borderColor: "#FFCD0060", color: "#92400e", background: "#FFCD0018" }}>{r}</span>
               ))}
             </div>
@@ -150,19 +150,19 @@ export default function Phase4TDDGeneration() {
             <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#FFCD0020" }}>
               <span className="text-xs">🤖</span>
             </div>
-            <CardTitle className="text-sm">AI-Recommended Best Practices — Technical Design</CardTitle>
+            <CardTitle className="text-sm">AI-Recommended Best Practices — Cloud Architecture Blueprint</CardTitle>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Patterns that improve TDD quality and reduce rework in subsequent phases.</p>
+          <p className="text-xs text-slate-500 mt-1">Patterns that improve CAB quality and reduce rework in subsequent phases.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               { title: "Design for Failure from the Start", body: "Define failure modes for every component before selecting SKUs. Use Azure Chaos Studio to validate resilience assumptions. A design that hasn't considered failure paths will fail in production.", tag: "Reliability" },
-              { title: "Apply Zero-Trust Network Segmentation", body: "Default all network communication to denied. Explicitly allow only required flows using Private Endpoints, NSGs, and Azure Firewall. Document each allowed flow in the TDD with its business justification.", tag: "Security" },
-              { title: "Right-size with Reserved Instance Analysis", body: "Run Infracost or Azure Pricing Calculator estimates during TDD generation. Flag workloads that would benefit from Reserved Instances or Savings Plans — Cost Management is significantly easier when pre-planned at design time.", tag: "FinOps" },
-              { title: "Define SLAs Before Selecting SKUs", body: "SLA targets drive SKU choices, not the other way around. A 99.99% SLA requirement eliminates single-instance VMs entirely. Capture the target SLA in the TDD so every infrastructure decision can be traced back to it.", tag: "Reliability" },
-              { title: "Use Managed Identities, Never Secrets", body: "Every Azure-to-Azure authentication must use Managed Identity. No connection strings, API keys, or passwords in application config. Document the identity assignment in the TDD — it's audited during DevSecOps review.", tag: "Security" },
-              { title: "Version-control the TDD from Day One", body: "Tag every TDD version with the approval date and approver. When infrastructure drifts from the approved design, you need a versioned TDD to prove what was approved. Use the portal's version history, not email.", tag: "Governance" },
+              { title: "Apply Zero-Trust Network Segmentation", body: "Default all network communication to denied. Explicitly allow only required flows using Private Endpoints, NSGs, and Azure Firewall. Document each allowed flow in the CAB with its business justification.", tag: "Security" },
+              { title: "Right-size with Reserved Instance Analysis", body: "Run Infracost or Azure Pricing Calculator estimates during CAB generation. Flag workloads that would benefit from Reserved Instances or Savings Plans — Cost Management is significantly easier when pre-planned at design time.", tag: "FinOps" },
+              { title: "Define SLAs Before Selecting SKUs", body: "SLA targets drive SKU choices, not the other way around. A 99.99% SLA requirement eliminates single-instance VMs entirely. Capture the target SLA in the CAB so every infrastructure decision can be traced back to it.", tag: "Reliability" },
+              { title: "Use Managed Identities, Never Secrets", body: "Every Azure-to-Azure authentication must use Managed Identity. No connection strings, API keys, or passwords in application config. Document the identity assignment in the CAB — it's audited during DevSecOps review.", tag: "Security" },
+              { title: "Version-control the CAB from Day One", body: "Tag every CAB version with the approval date and approver. When infrastructure drifts from the approved design, you need a versioned CAB to prove what was approved. Use the portal's version history, not email.", tag: "Governance" },
             ].map((bp) => (
               <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
                 <div className="flex items-start gap-2 mb-1.5">
@@ -178,4 +178,3 @@ export default function Phase4TDDGeneration() {
     </div>
   );
 }
-

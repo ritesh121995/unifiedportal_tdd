@@ -32,7 +32,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
     label: "Process Phases",
     items: [
       { label: "Phase 1 — Architecture Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
-      { label: "Phase 2 — Technical Design", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
+      { label: "Phase 2 — Cloud Architecture Blueprint", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
       { label: "Phase 3 — Infrastructure Deployment", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
       { label: "Phase 4 — Observability", path: "/phase/observability", icon: Activity, roles: ["requestor", "cloud_architect", "admin"], phase: 4 },
       { label: "Phase 5 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 5 },
@@ -44,7 +44,7 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "My Requests", path: "/requests", icon: FileText, roles: ["requestor"] },
       { label: "Architecture Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
-      { label: "Design Document Queue", path: "/tdd-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
+      { label: "Design Document Queue", path: "/cab-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
       { label: "Design Document History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
     ],
   },
@@ -84,8 +84,8 @@ const STATUS_CHANGE_LABELS: Record<string, string> = {
   ea_triage: "is being reviewed by the architecture team",
   ea_approved: "was approved — technical design will begin soon",
   ea_rejected: "was not approved — check the request for details",
-  tdd_in_progress: "technical design document is being created",
-  tdd_completed: "technical design is complete and signed off",
+  cab_in_progress: "cloud architecture blueprint is being created",
+  cab_completed: "cloud architecture blueprint is complete and signed off",
   devsecops_approved: "infrastructure setup has been approved",
   observability_approved: "observability setup has been confirmed",
   finops_active: "is now live in cost management",
@@ -552,3 +552,4 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     </div>
   );
 }
+

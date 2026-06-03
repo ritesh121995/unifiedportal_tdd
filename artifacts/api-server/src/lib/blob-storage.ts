@@ -1,6 +1,6 @@
 import { logger } from "./logger";
 
-const DEFAULT_CONTAINER_NAME = "tdddocuments";
+const DEFAULT_CONTAINER_NAME = "cabdocuments";
 const RAW_STORAGE_CONNECTION_STRING =
   process.env.AZURE_STORAGE_CONNECTION_STRING ??
   process.env.AZURE_STORAGE_CONNECTIONSTRING ??

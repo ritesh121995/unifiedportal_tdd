@@ -196,7 +196,7 @@ router.post("/regenerate-section", async (req, res) => {
 
   const { sectionTitle, currentSectionContent, fullDocument, applicationName } = parsedBody;
 
-  const systemPrompt = `You are an expert Azure cloud architect improving one section in a Technical Design Document.
+  const systemPrompt = `You are an expert Azure cloud architect improving one section in a Cloud Architecture Blueprint.
 Rules:
 - Return markdown only (no code fences).
 - Improve specificity and implementation detail for Azure services.
@@ -229,7 +229,7 @@ Return only the improved section body content (without the heading line).`;
     const modelName = resolveOpenAiModel(openAiContext.usesAzure);
     req.log.info(
       { usesAzure: openAiContext.usesAzure, modelName, sectionTitle },
-      "Regenerating single TDD section",
+      "Regenerating single CAB section",
     );
 
     const completionParams = {
@@ -271,7 +271,7 @@ router.post("/follow-up", async (req, res) => {
   }
 
   const { prompt, fullDocument, applicationName } = parsedBody;
-  const systemPrompt = `You are an expert Azure cloud architect answering a follow-up request for a Technical Design Document.
+  const systemPrompt = `You are an expert Azure cloud architect answering a follow-up request for a Cloud Architecture Blueprint.
 Rules:
 - Return markdown only.
 - Respect enterprise constraints: shared Cloudflare WAF/L7 edge service is already in place.

@@ -31,8 +31,8 @@ const STATUS_LABELS: Record<string, string> = {
   ea_triage: "Under Review",
   ea_approved: "Approved",
   ea_rejected: "Not Approved",
-  tdd_in_progress: "Design In Progress",
-  tdd_completed: "Design Complete",
+  cab_in_progress: "Design In Progress",
+  cab_completed: "Design Complete",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -40,8 +40,8 @@ const STATUS_COLORS: Record<string, string> = {
   ea_triage: "#fb923c",
   ea_approved: "#22c55e",
   ea_rejected: "#ef4444",
-  tdd_in_progress: "#3b82f6",
-  tdd_completed: "#8b5cf6",
+  cab_in_progress: "#3b82f6",
+  cab_completed: "#8b5cf6",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -53,7 +53,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const PHASES = [
   { num: 1, label: "Architecture Review", sub: "Enterprise architects assess your request for risk, compliance, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
-  { num: 2, label: "Technical Design", sub: "Cloud architects produce an AI-assisted Technical Design Document for your solution.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours", gate: "CA sign-off" },
+  { num: 2, label: "Technical Design", sub: "Cloud architects produce an AI-assisted Cloud Architecture Blueprint for your solution.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours", gate: "CA sign-off" },
   { num: 3, label: "Infrastructure Deployment", sub: "Approved design is deployed to Azure via automated, policy-enforced pipelines.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
   { num: 4, label: "Observability", sub: "Monitoring, alerting, dashboards, and on-call runbooks confirmed before cost tracking begins.", color: "#FFCD00", icon: Activity, path: "/phase/observability", duration: "~2 days", gate: "CA sign-off" },
   { num: 5, label: "Cost Management", sub: "Ongoing budget alerts, cost allocation, tagging, and monthly chargeback reporting.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
@@ -95,8 +95,8 @@ export default function Dashboard() {
   const modificationRequested = requests.filter((r) => r.status === "modification_requested").length;
   const approved = requests.filter((r) => r.status === "ea_approved").length;
   const rejected = requests.filter((r) => r.status === "ea_rejected").length;
-  const inProgress = requests.filter((r) => r.status === "tdd_in_progress").length;
-  const completed = requests.filter((r) => r.status === "tdd_completed").length;
+  const inProgress = requests.filter((r) => r.status === "cab_in_progress").length;
+  const completed = requests.filter((r) => r.status === "cab_completed").length;
   const devsecopsApproved = requests.filter((r) => r.status === "devsecops_approved").length;
   const devsecopsRejected = requests.filter((r) => r.status === "devsecops_rejected").length;
   const observabilityApproved = requests.filter((r) => r.status === "observability_approved").length;
@@ -108,7 +108,7 @@ export default function Dashboard() {
   const hasRejected = requests.some((r) => r.status === "ea_rejected" || r.status === "devsecops_rejected");
   const allComplete = requests.length > 0 && requests.every((r) => r.status === "finops_active");
   const hasActive = requests.some((r) =>
-    ["submitted", "ea_triage", "ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "observability_approved"].includes(r.status)
+    ["submitted", "ea_triage", "ea_approved", "cab_in_progress", "cab_completed", "devsecops_approved", "observability_approved"].includes(r.status)
   );
   const requestorBanner: { icon: string; color: string; title: string; body: string } | null =
     user.role !== "requestor" || requests.length === 0 ? null
@@ -142,8 +142,8 @@ export default function Dashboard() {
     { name: "Awaiting Review", value: submitted + eaTriage + modificationRequested, fill: STATUS_COLORS.submitted },
     { name: "Arch Approved", value: approved, fill: STATUS_COLORS.ea_approved },
     { name: "Not Approved", value: rejected + devsecopsRejected, fill: STATUS_COLORS.ea_rejected },
-    { name: "Design Active", value: inProgress, fill: STATUS_COLORS.tdd_in_progress },
-    { name: "Design Complete", value: completed, fill: STATUS_COLORS.tdd_completed },
+    { name: "Design Active", value: inProgress, fill: STATUS_COLORS.cab_in_progress },
+    { name: "Design Complete", value: completed, fill: STATUS_COLORS.cab_completed },
     { name: "Infra Approved", value: devsecopsApproved, fill: "#8b5cf6" },
     { name: "Observability", value: observabilityApproved, fill: "#06b6d4" },
     { name: "Complete", value: finopsActive, fill: "#16a34a" },
@@ -157,7 +157,7 @@ export default function Dashboard() {
   requests.forEach((r) => { buCounts[r.businessUnit] = (buCounts[r.businessUnit] ?? 0) + 1; });
   const buData = Object.entries(buCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }));
 
-  const reviewed = requests.filter((r) => r.eaReviewedAt && ["ea_approved", "ea_rejected", "tdd_in_progress", "tdd_completed"].includes(r.status));
+  const reviewed = requests.filter((r) => r.eaReviewedAt && ["ea_approved", "ea_rejected", "cab_in_progress", "cab_completed"].includes(r.status));
   const avgDays = reviewed.length > 0
     ? (reviewed.reduce((sum, r) => {
         const c = new Date(r.createdAt).getTime();
@@ -169,7 +169,7 @@ export default function Dashboard() {
   const roleDesc: Record<string, string> = {
     requestor: "Use this portal to request review for a new application, migration, or technology project. The architecture team will guide you through each step.",
     enterprise_architect: "Review incoming architecture requests, assess risk and domain impact, and approve or route workloads for technical design.",
-    cloud_architect: "Pick up approved requests, generate Technical Design Documents, and drive infrastructure deployment.",
+    cloud_architect: "Pick up approved requests, generate Cloud Architecture Blueprints, and drive infrastructure deployment.",
     admin: "Full portal access — manage all phases, queues, users, and onboarding governance.",
   };
 

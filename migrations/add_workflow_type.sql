@@ -1,10 +1,10 @@
--- NOTE: workflow_type is currently stored inside the tdd_form_data JSONB column
--- (tdd_form_data->>'workflowType') to avoid requiring a schema migration.
+-- NOTE: workflow_type is currently stored inside the cab_form_data JSONB column
+-- (cab_form_data->>'workflowType') to avoid requiring a schema migration.
 -- Run this migration once you are ready to promote it to a proper column:
 --
 -- ALTER TABLE architecture_requests
 --   ADD COLUMN IF NOT EXISTS workflow_type TEXT NOT NULL DEFAULT 'standard';
 --
 -- UPDATE architecture_requests
---   SET workflow_type = COALESCE(tdd_form_data->>'workflowType', 'standard')
---   WHERE tdd_form_data IS NOT NULL;
+--   SET workflow_type = COALESCE(cab_form_data->>'workflowType', 'standard')
+--   WHERE cab_form_data IS NOT NULL;

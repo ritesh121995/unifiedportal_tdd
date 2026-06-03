@@ -11,15 +11,15 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
 }
 
 const generateWindowMs = parsePositiveInt(
-  process.env.TDD_GENERATE_RATE_LIMIT_WINDOW_MS,
+  process.env.CAB_GENERATE_RATE_LIMIT_WINDOW_MS,
   15 * 60 * 1000,
 );
 const generateMax = parsePositiveInt(
-  process.env.TDD_GENERATE_RATE_LIMIT_MAX,
+  process.env.CAB_GENERATE_RATE_LIMIT_MAX,
   isProduction ? 20 : 100,
 );
 
-export const tddGenerateRateLimiter = rateLimit({
+export const cabGenerateRateLimiter = rateLimit({
   windowMs: generateWindowMs,
   limit: generateMax,
   standardHeaders: "draft-7",

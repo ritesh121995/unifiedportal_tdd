@@ -91,7 +91,7 @@ export function resolveOpenAiModel(usesAzure: boolean): string {
 
 export function toUserFacingGenerationError(error: unknown): string {
   if (!(error instanceof Error)) {
-    return "Failed to generate TDD document";
+    return "Failed to generate CAB document";
   }
 
   const message = error.message;

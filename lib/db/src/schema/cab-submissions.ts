@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const tddSubmissionsTable = pgTable("tdd_submissions", {
+export const cabSubmissionsTable = pgTable("cab_submissions", {
   id: serial("id").primaryKey(),
   applicationName: text("application_name").notNull(),
   organization: text("organization").notNull(),
@@ -20,6 +20,6 @@ export const tddSubmissionsTable = pgTable("tdd_submissions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertTddSubmissionSchema = createInsertSchema(tddSubmissionsTable).omit({ id: true, createdAt: true, updatedAt: true });
-export type InsertTddSubmission = z.infer<typeof insertTddSubmissionSchema>;
-export type TddSubmission = typeof tddSubmissionsTable.$inferSelect;
+export const insertCabSubmissionSchema = createInsertSchema(cabSubmissionsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertCabSubmission = z.infer<typeof insertCabSubmissionSchema>;
+export type CabSubmission = typeof cabSubmissionsTable.$inferSelect;

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { GenerateTddBody } from "@workspace/api-zod";
+import { GenerateCabBody } from "@workspace/api-zod";
 import { eq } from "drizzle-orm";
 import { getBlobStorageStatus, uploadTextBlob } from "../../lib/blob-storage";
 import {
@@ -15,7 +15,7 @@ import {
   sanitizeNamePart,
   resolveOrgShortForm,
 } from "./naming-conventions";
-import { tddGenerateRateLimiter } from "../../middleware/rate-limit";
+import { cabGenerateRateLimiter } from "../../middleware/rate-limit";
 import type OpenAI from "openai";
 
 const router: IRouter = Router();
@@ -33,7 +33,7 @@ function resolveTokenLimitParameter(options: {
   model: string;
   usesAzure: boolean;
 }): TokenLimitParameter {
-  const configured = process.env.TDD_GENERATE_TOKEN_PARAM;
+  const configured = process.env.CAB_GENERATE_TOKEN_PARAM;
   if (configured === "max_tokens" || configured === "max_completion_tokens") {
     return configured;
   }
@@ -67,21 +67,21 @@ function buildCompletionParams(options: {
 }
 
 /**
- * Resolve the maximum output tokens for TDD generation based on the
+ * Resolve the maximum output tokens for CAB Generation based on the
  * configured model / deployment. Users can override via the
- * TDD_GENERATE_MAX_TOKENS environment variable.
+ * CAB_GENERATE_MAX_TOKENS environment variable.
  *
  * Token budget guidance by model:
  * - gpt-4o / gpt-4o-mini: 16,384 output tokens (hard limit — Azure returns 400 if exceeded)
  * - gpt-4.1 / gpt-4.1-mini: up to 32,768 output tokens
  * - o1 / o3 / o4-mini:    up to 100,000 output tokens
  *
- * The complete TDD document typically requires 8,000–16,000 output tokens
+ * The complete CAB document typically requires 8,000–16,000 output tokens
  * across all 8 sections. Default to 16,384 (gpt-4o hard limit) and only
  * request more for models that genuinely support higher limits.
  */
 function resolveMaxOutputTokens(usesAzure: boolean): number {
-  const envOverride = process.env.TDD_GENERATE_MAX_TOKENS;
+  const envOverride = process.env.CAB_GENERATE_MAX_TOKENS;
   if (envOverride) {
     const parsed = Number.parseInt(envOverride, 10);
     if (!Number.isNaN(parsed) && parsed > 0) {
@@ -105,11 +105,11 @@ function resolveMaxOutputTokens(usesAzure: boolean): number {
   return 16_384;
 }
 
-interface TddPersistenceContext {
+interface CabPersistenceContext {
   db: typeof import("@workspace/db").db;
-  tddSubmissionsTable: typeof import("@workspace/db").tddSubmissionsTable;
+  cabSubmissionsTable: typeof import("@workspace/db").cabSubmissionsTable;
 }
-const REQUIRED_TDD_HEADINGS = [
+const REQUIRED_CAB_HEADINGS = [
   "1. Executive Summary",
   "2. Ownership, Stakeholders & Billing Context",
   "3. Workload Context & Classification",
@@ -207,7 +207,7 @@ const AUTHORING_GUARDRAILS = `
 - Use your token budget on prose, tables, and technical detail instead.
 
 ## Azure Well-Architected Framework (WAF) — Mandatory Design Lens
-Every TDD section must be evaluated against the five WAF pillars. Embed WAF rationale explicitly where relevant:
+Every CAB section must be evaluated against the five WAF pillars. Embed WAF rationale explicitly where relevant:
 
 **Reliability** — Design for failure. Specify SLA, availability zones, autoscale rules, health probes, circuit breakers, and tested failover procedures. For Tier 0/1 workloads use active-active multi-region (Canada Central + Canada East). Always state RTO and RPO and confirm they are achievable with the proposed design.
 
@@ -220,7 +220,7 @@ Every TDD section must be evaluated against the five WAF pillars. Embed WAF rati
 **Performance Efficiency** — Specify performance targets (latency p95, throughput). Use CDN for static assets. Choose appropriate storage tiers. Document autoscale thresholds. Avoid single points of bottleneck.
 
 ## Azure Cloud Adoption Framework (CAF) — Mandatory Governance Lens
-Align every TDD to the relevant CAF phase and guidance:
+Align every CAB to the relevant CAF phase and guidance:
 
 **Strategy** — Confirm the business motivation (modernisation, migration, innovation) and expected outcomes align with McCain's digital strategy.
 
@@ -254,7 +254,7 @@ function toSectionSlug(sectionHeading: string): string {
     .replaceAll(/\s+/g, "-");
 }
 
-async function loadTddPersistenceContext(): Promise<TddPersistenceContext | null> {
+async function loadCabPersistenceContext(): Promise<TddPersistenceContext | null> {
   if (!process.env.DATABASE_URL) {
     return null;
   }
@@ -263,7 +263,7 @@ async function loadTddPersistenceContext(): Promise<TddPersistenceContext | null
     const dbModule = await import("@workspace/db");
     return {
       db: dbModule.db,
-      tddSubmissionsTable: dbModule.tddSubmissionsTable,
+      cabSubmissionsTable: dbModule.cabSubmissionsTable,
     };
   } catch {
     return null;
@@ -836,7 +836,7 @@ function buildNetworkingTable(data: {
 }
 
 /**
- * Build default NSG inbound/outbound rule tables for TDD output.
+ * Build default NSG inbound/outbound rule tables for CAB output.
  */
 function buildNsgRulesTables(data: {
   networkPosture: string;
@@ -869,7 +869,7 @@ function buildNsgRulesTables(data: {
 }
 
 /**
- * Build an Azure services design components table for TDD Section 7.
+ * Build an Azure services design components table for CAB Section 7.
  */
 function buildAzureServicesTable(data: {
   frontendStack?: string;
@@ -1649,7 +1649,7 @@ function applyOutputGuardrails(
     "6. Proposed Target State Architecture (To-Be)": prebuiltTables.section6Fallback,
   };
 
-  for (const heading of REQUIRED_TDD_HEADINGS) {
+  for (const heading of REQUIRED_CAB_HEADINGS) {
     const headingRegex = new RegExp(
       `^#{1,6}\\s+${escapeForRegex(heading)}\\s*$`,
       "mi",
@@ -2020,7 +2020,7 @@ function estimateMonthlyCost(data: {
 }
 
 /**
- * Build a per-service cost breakdown table in the style of the Digital Passport TDD.
+ * Build a per-service cost breakdown table in the style of the Digital Passport CAB.
  */
 function buildCostBreakdownTable(data: {
   frontendStack?: string;
@@ -2082,9 +2082,9 @@ function buildCostBreakdownTable(data: {
   return rows;
 }
 
-router.post("/generate", tddGenerateRateLimiter, async (req, res) => {
+router.post("/generate", cabGenerateRateLimiter, async (req, res) => {
   try {
-    const parseResult = GenerateTddBody.safeParse(req.body);
+    const parseResult = GenerateCabBody.safeParse(req.body);
     if (!parseResult.success) {
       res.status(400).json({ error: "Invalid request body", details: parseResult.error.issues });
       return;
@@ -2102,7 +2102,7 @@ router.post("/generate", tddGenerateRateLimiter, async (req, res) => {
       createOpenAiClientContext();
     } catch (configError) {
       const userFacingConfigError = toUserFacingGenerationError(configError);
-      req.log.error({ configError, userFacingConfigError }, "OpenAI client is not configured — cannot generate TDD");
+      req.log.error({ configError, userFacingConfigError }, "OpenAI client is not configured — cannot generate CAB");
       res.status(503).json({ error: `AI service is not configured: ${userFacingConfigError}` });
       return;
     }
@@ -2291,10 +2291,10 @@ router.post("/generate", tddGenerateRateLimiter, async (req, res) => {
   const regionNames = data.azureRegions
     .map((r: string) => (r === "canadacentral" ? "Canada Central" : "Canada East"))
     .join(", ");
-  const persistence = await loadTddPersistenceContext();
+  const persistence = await loadCabPersistenceContext();
   let submissionId: number | null = null;
 
-  const systemPrompt = `You are a senior Azure Cloud Solution Architect and Enterprise Architect specializing in creating comprehensive Technical Design Documents (TDD) for organizations migrating to or building on Microsoft Azure. You have deep expertise in:
+  const systemPrompt = `You are a senior Azure Cloud Solution Architect and Enterprise Architect specializing in creating comprehensive Cloud Architecture Blueprints (CAB) for organizations migrating to or building on Microsoft Azure. You have deep expertise in:
 - Azure Landing Zones and Hub-Spoke network topology
 - Azure security best practices (Zero Trust, Defense in Depth)
 - Azure networking (VNets, NSGs, Private Endpoints, hub-spoke connectivity)
@@ -2307,7 +2307,7 @@ router.post("/generate", tddGenerateRateLimiter, async (req, res) => {
 - Azure cost management and FinOps
 - Canadian data residency requirements (Canada Central, Canada East)
 
-Generate thorough, professional TDD documents following the provided template structure exactly. Fill every section with intelligent, Azure-specific content based on the application details provided. Be specific with service recommendations, SKU choices, and Azure-native tooling.
+Generate thorough, professional CAB documents following the provided template structure exactly. Fill every section with intelligent, Azure-specific content based on the application details provided. Be specific with service recommendations, SKU choices, and Azure-native tooling.
 
 ## CRITICAL — Output Rules (Mandatory)
 
@@ -2368,7 +2368,7 @@ Always use LOB short code values (DA, MD, DT, DG) in generated resource names.`;
       ? `\n\n> **Architect-Uploaded Diagram:** An architecture/flow diagram image has been attached to this request. Carefully analyze the image and incorporate its components, flows, and relationships into your description of section 6.1 (Architecture Overview). The image itself will be embedded in section 6.2 by the system — do not attempt to reproduce it as text or Mermaid.`
       : "";
 
-    const userPrompt = `Generate a complete Azure Technical Design Document (TDD) for the following application. Follow the template structure exactly as provided. Be comprehensive, professional, and specific to Azure services.
+    const userPrompt = `Generate a complete Azure Cloud Architecture Blueprint (CAB) for the following application. Follow the template structure exactly as provided. Be comprehensive, professional, and specific to Azure services.
 
 ## Application Details
 
@@ -2436,16 +2436,16 @@ ${namingConventions}
 
 ---
 
-Now generate the complete TDD document in Markdown format following this exact structure:
+Now generate the complete CAB document in Markdown format following this exact structure:
 
-# Azure Cloud Technical Design Document (TDD)
+# Azure Cloud Architecture Blueprint (CAB)
 # ${data.applicationName} - ${data.applicationType}
 
 ## Document Control
 
 | Version | Date | Comment |
 |---------|------|---------|
-| 1.0 | ${new Date().toLocaleDateString("en-CA")} | Initial TDD |
+| 1.0 | ${new Date().toLocaleDateString("en-CA")} | Initial CAB |
 
 | Document Owner | Title | Email |
 |----------------|-------|-------|
@@ -2837,13 +2837,13 @@ ${IAC_INPUTS_PLACEHOLDER}
 
 ---
 
-*Document generated by Azure Agentic TDD Model on ${new Date().toLocaleDateString("en-CA")}*
+*Document generated by Azure Agentic CAB Model on ${new Date().toLocaleDateString("en-CA")}*
 *Version 1.0 - Requires review and approval before deployment*`;
 
     if (persistence) {
       try {
         const insertedRows = await persistence.db
-          .insert(persistence.tddSubmissionsTable)
+          .insert(persistence.cabSubmissionsTable)
           .values({
             applicationName: data.applicationName,
             organization: data.organization,
@@ -2853,22 +2853,22 @@ ${IAC_INPUTS_PLACEHOLDER}
             formData: data,
             status: "in_progress",
           })
-          .returning({ id: persistence.tddSubmissionsTable.id });
+          .returning({ id: persistence.cabSubmissionsTable.id });
 
         const insertedSubmission = insertedRows.at(0);
         if (insertedSubmission) {
           submissionId = insertedSubmission.id;
-          req.log.info({ submissionId }, "Saved TDD submission in PostgreSQL");
+          req.log.info({ submissionId }, "Saved CAB submission in PostgreSQL");
         }
       } catch (error) {
         req.log.error(
           { error },
-          "Failed to persist initial TDD submission; continuing generation",
+          "Failed to persist initial CAB submission; continuing generation",
         );
       }
     } else {
       req.log.warn(
-        "PostgreSQL persistence is not enabled. Set DATABASE_URL to store TDD submissions.",
+        "PostgreSQL persistence is not enabled. Set DATABASE_URL to store CAB submissions.",
       );
     }
 
@@ -2895,7 +2895,7 @@ ${IAC_INPUTS_PLACEHOLDER}
     const modelName = resolveOpenAiModel(openAiContext.usesAzure);
     req.log.info(
       { usesAzure: openAiContext.usesAzure, modelName },
-      "Starting TDD generation request (single-pass)",
+      "Starting CAB generation request (single-pass)",
     );
     const uploadedDiagramBase64 = data.architectureDiagramBase64 as string | undefined;
     const userMessageContent = uploadedDiagramBase64
@@ -2942,7 +2942,7 @@ ${IAC_INPUTS_PLACEHOLDER}
 
     req.log.info(
       { generatedChars: fullContent.length, finishReason },
-      "TDD generation stream complete",
+      "CAB generation stream complete",
     );
 
     // Diagnostic: log the raw 80-char context around each placeholder name so
@@ -3070,7 +3070,7 @@ ${IAC_INPUTS_PLACEHOLDER}
           ? String(submissionId)
           : `untracked-${Date.now()}-${toSectionSlug(data.applicationName)}`;
       const uploadResult = await uploadTextBlob(
-        `tdd/${trackingKey}/tdd.md`,
+        `cab/${trackingKey}/cab.md`,
         fullContent,
         "text/markdown; charset=utf-8",
       );
@@ -3119,13 +3119,13 @@ ${IAC_INPUTS_PLACEHOLDER}
         }
 
         await persistence.db
-          .update(persistence.tddSubmissionsTable)
+          .update(persistence.cabSubmissionsTable)
           .set(updateValues)
-          .where(eq(persistence.tddSubmissionsTable.id, submissionId));
+          .where(eq(persistence.cabSubmissionsTable.id, submissionId));
       } catch (error) {
         req.log.error(
           { error, submissionId },
-          "Failed to update completed TDD submission in PostgreSQL",
+          "Failed to update completed CAB submission in PostgreSQL",
         );
       }
     }
@@ -3147,23 +3147,23 @@ ${IAC_INPUTS_PLACEHOLDER}
       if (persistence && submissionId !== null) {
         try {
           await persistence.db
-            .update(persistence.tddSubmissionsTable)
+            .update(persistence.cabSubmissionsTable)
             .set({
               generatedContent: fullContent.length > 0 ? fullContent : null,
               status: "failed",
               updatedAt: new Date(),
             })
-            .where(eq(persistence.tddSubmissionsTable.id, submissionId));
+            .where(eq(persistence.cabSubmissionsTable.id, submissionId));
         } catch (updateError) {
           req.log.error(
             { updateError, submissionId },
-            "Failed to update failed TDD submission in PostgreSQL",
+            "Failed to update failed CAB submission in PostgreSQL",
           );
         }
       }
 
       const userFacingError = toUserFacingGenerationError(error);
-      req.log.error({ error, userFacingError }, "Error generating TDD");
+      req.log.error({ error, userFacingError }, "Error generating CAB");
       res.write(`data: ${JSON.stringify({ error: userFacingError })}\n\n`);
       res.end();
     }

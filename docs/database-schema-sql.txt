@@ -31,10 +31,10 @@ CREATE INDEX IF NOT EXISTS idx_users_role  ON users (role);
 
 
 -- ----------------------------------------------------------------------------
--- 2. tdd_submissions
---    Generated Technical Design Documents (output of the TDD wizard).
+-- 2. cab_submissions
+--    Generated Cloud Architecture Blueprints (output of the CAB wizard).
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS tdd_submissions (
+CREATE TABLE IF NOT EXISTS cab_submissions (
     id                  SERIAL       PRIMARY KEY,
     application_name    TEXT         NOT NULL,
     organization        TEXT         NOT NULL,
@@ -52,15 +52,15 @@ CREATE TABLE IF NOT EXISTS tdd_submissions (
     updated_at          TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_tdd_submissions_email  ON tdd_submissions (requestor_email);
-CREATE INDEX IF NOT EXISTS idx_tdd_submissions_status ON tdd_submissions (status);
+CREATE INDEX IF NOT EXISTS idx_cab_submissions_email  ON cab_submissions (requestor_email);
+CREATE INDEX IF NOT EXISTS idx_cab_submissions_status ON cab_submissions (status);
 
 
 -- ----------------------------------------------------------------------------
 -- 3. architecture_requests
 --    Central onboarding request — moves through the 5-phase workflow:
 --    submitted → ea_triage → ea_approved → risk_approved
---    → tdd_in_progress → tdd_completed → devsecops_approved → finops_active
+--    → cab_in_progress → cab_completed → devsecops_approved → finops_active
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS architecture_requests (
     id                          SERIAL       PRIMARY KEY,
@@ -103,10 +103,10 @@ CREATE TABLE IF NOT EXISTS architecture_requests (
     risk_reviewed_at            TIMESTAMP,
     risk_comments               TEXT,
 
-    -- Phase 3 — Cloud Architect / TDD authoring
+    -- Phase 3 — Cloud Architect / CAB authoring
     ca_assignee_id              INTEGER      REFERENCES users(id),
     ca_assignee_name            TEXT,
-    tdd_submission_id           INTEGER      REFERENCES tdd_submissions(id),
+    cab_submission_id           INTEGER      REFERENCES cab_submissions(id),
 
     -- Phase 4 — DevSecOps / IaC approval
     devsecops_approver_id       INTEGER      REFERENCES users(id),
@@ -118,8 +118,8 @@ CREATE TABLE IF NOT EXISTS architecture_requests (
     finops_activated_at         TIMESTAMP,
     finops_activated_by         TEXT,
 
-    -- TDD wizard pre-fill payload (large JSON blob captured at ARR submission)
-    tdd_form_data               JSONB,
+    -- CAB wizard pre-fill payload (large JSON blob captured at ARR submission)
+    cab_form_data               JSONB,
 
     created_at                  TIMESTAMP    NOT NULL DEFAULT NOW(),
     updated_at                  TIMESTAMP    NOT NULL DEFAULT NOW()

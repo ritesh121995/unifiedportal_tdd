@@ -35,7 +35,7 @@ async function runStartupMigrations() {
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_users_role ON users (role)`);
 
     await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS tdd_submissions (
+      CREATE TABLE IF NOT EXISTS cab_submissions (
         id SERIAL PRIMARY KEY,
         application_name TEXT NOT NULL,
         organization TEXT NOT NULL,
@@ -53,8 +53,8 @@ async function runStartupMigrations() {
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       )
     `);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_tdd_submissions_email ON tdd_submissions (requestor_email)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_tdd_submissions_status ON tdd_submissions (status)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_cab_submissions_email ON cab_submissions (requestor_email)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_cab_submissions_status ON cab_submissions (status)`);
 
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS architecture_requests (
@@ -87,14 +87,14 @@ async function runStartupMigrations() {
         risk_comments TEXT,
         ca_assignee_id INTEGER,
         ca_assignee_name TEXT,
-        tdd_submission_id INTEGER,
+        cab_submission_id INTEGER,
         devsecops_approver_id INTEGER,
         devsecops_approver_name TEXT,
         devsecops_approved_at TIMESTAMP,
         devsecops_comments TEXT,
         finops_activated_at TIMESTAMP,
         finops_activated_by TEXT,
-        tdd_form_data JSONB,
+        cab_form_data JSONB,
         created_at TIMESTAMP DEFAULT NOW() NOT NULL,
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       )

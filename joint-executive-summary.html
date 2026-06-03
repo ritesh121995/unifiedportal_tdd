@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McCain CCoE Platform Suite — Joint Executive Summary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    :root {
+      --yellow:     #FFCD00;
+      --yellow-dim: #b49000;
+      --navy:       #1a1a2e;
+      --navy-mid:   #16213e;
+      --text:       #1e293b;
+      --muted:      #64748b;
+      --border:     #e2e8f0;
+      --bg:         #f8fafc;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: #dde3ed; color: var(--text); padding: 36px 16px; }
+
+    .page { max-width: 960px; margin: 0 auto; background: white; border-radius: 6px; box-shadow: 0 12px 70px rgba(0,0,0,0.16); overflow: hidden; }
+
+    /* ── Header ── */
+    .header { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%); padding: 36px 48px 30px; position: relative; overflow: hidden; }
+    .hc1 { position: absolute; top: -56px; right: -56px; width: 260px; height: 260px; border-radius: 50%; background: var(--yellow); opacity: 0.07; }
+    .hc2 { position: absolute; bottom: -80px; right: 180px; width: 180px; height: 180px; border-radius: 50%; background: var(--yellow); opacity: 0.04; }
+    .header-inner { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
+    .header-eyebrow { font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--yellow); margin-bottom: 10px; opacity: 0.9; }
+    .header-title { font-family: 'Outfit', sans-serif; font-size: 29px; font-weight: 900; color: white; line-height: 1.1; margin-bottom: 12px; }
+    .header-title em { color: var(--yellow); font-style: normal; }
+    .header-tagline { font-size: 12px; color: rgba(255,255,255,0.55); max-width: 470px; line-height: 1.7; }
+    .header-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+    .htag { font-size: 10px; font-weight: 600; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.16); color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.07); }
+
+    /* stat column */
+    .stat-col { display: flex; flex-direction: column; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; overflow: hidden; min-width: 160px; flex-shrink: 0; }
+    .stat-item { padding: 15px 22px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .stat-item:last-child { border-bottom: none; }
+    .stat-val { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 900; color: var(--yellow); line-height: 1; }
+    .stat-lbl { font-size: 9.5px; color: rgba(255,255,255,0.45); margin-top: 4px; line-height: 1.45; }
+
+    /* ── Status bar ── */
+    .status-bar { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; padding: 9px 48px; display: flex; align-items: center; justify-content: space-between; }
+    .status-live { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; color: #15803d; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+    .status-right { font-size: 10.5px; color: var(--muted); }
+
+    /* ── Section label ── */
+    .slabel { font-size: 9.5px; font-weight: 700; letter-spacing: 2.8px; text-transform: uppercase; color: var(--yellow-dim); margin-bottom: 12px; }
+
+    /* ── Vision strip ── */
+    .vision { padding: 24px 48px; background: var(--bg); border-bottom: 1px solid var(--border); text-align: center; }
+    .vision-text { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; color: var(--text); max-width: 720px; margin: 0 auto; line-height: 1.65; }
+    .vision-text span { color: var(--yellow-dim); font-weight: 700; }
+
+    /* ── Two-platform split ── */
+    .platforms { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+    .platform { padding: 28px 36px; }
+    .platform:first-child { border-right: 1px solid var(--border); }
+    .platform-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--navy); color: var(--yellow); font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 13px; border-radius: 20px; margin-bottom: 14px; }
+    .platform-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; line-height: 1.25; }
+    .platform-sub { font-size: 11px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+    .feat-list { display: flex; flex-direction: column; gap: 8px; }
+    .feat { display: flex; align-items: flex-start; gap: 9px; font-size: 11px; color: var(--text); line-height: 1.55; }
+    .fdot { width: 6px; height: 6px; border-radius: 50%; background: var(--yellow-dim); margin-top: 5px; flex-shrink: 0; }
+
+    /* ── Journey ── */
+    .journey { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%); padding: 28px 48px 32px; }
+    .journey .slabel { color: rgba(255,205,0,0.65); }
+    .journey-h { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: white; margin-bottom: 4px; }
+    .journey-sub { font-size: 11px; color: rgba(255,255,255,0.42); margin-bottom: 20px; }
+    .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; align-items: start; }
+    .step { background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.11); border-radius: 12px; padding: 13px 11px; position: relative; }
+    .step.devops { border-color: rgba(255,205,0,0.25); background: rgba(255,205,0,0.06); }
+    .step-num { font-family: 'Outfit', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,205,0,0.65); margin-bottom: 6px; display: block; }
+    .step-name { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700; color: white; line-height: 1.3; margin-bottom: 4px; }
+    .step-owner { font-size: 8.5px; color: rgba(255,255,255,0.38); }
+    .spoc-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-top: 14px; }
+    .spoc-card { display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; padding: 9px 11px; }
+    .spoc-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--yellow); color: var(--navy); font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; letter-spacing: 0.5px; }
+    .spoc-info { display: flex; flex-direction: column; gap: 2px; }
+    .spoc-role { font-size: 7.5px; font-weight: 700; color: rgba(255,205,0,0.7); text-transform: uppercase; letter-spacing: 1px; }
+    .spoc-name { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.75); line-height: 1.3; }
+    .sarrow { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: rgba(255,205,0,0.3); z-index: 2; pointer-events: none; }
+    .step-tag { display: inline-block; font-size: 7.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 2px 6px; border-radius: 8px; margin-top: 5px; }
+    .tag-portal { background: rgba(99,102,241,0.25); color: rgba(199,210,254,0.9); }
+    .tag-devops { background: rgba(255,205,0,0.2); color: rgba(255,205,0,0.9); }
+
+    /* ── Capabilities ── */
+    .caps { padding: 28px 48px; border-bottom: 1px solid var(--border); }
+    .caps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .capcard { background: var(--bg); border: 1px solid var(--border); border-radius: 13px; padding: 17px 18px; }
+    .cap-icon { font-size: 20px; margin-bottom: 9px; display: block; }
+    .cap-title { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .cap-desc { font-size: 10.5px; color: var(--muted); line-height: 1.58; }
+
+    /* ── Bottom row ── */
+    .bottom-row { display: grid; grid-template-columns: 1.1fr 1fr; border-bottom: 1px solid var(--border); }
+    .bcol { padding: 24px 36px; }
+    .bcol + .bcol { border-left: 1px solid var(--border); padding-left: 30px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { display: flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: white; font-size: 10.5px; font-weight: 600; color: var(--text); }
+    .chipdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .roles { display: flex; flex-direction: column; gap: 10px; }
+    .role-row { display: flex; align-items: flex-start; gap: 9px; }
+    .rbadge { font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: 1px; }
+    .rtxt { font-size: 10.5px; color: var(--muted); line-height: 1.55; }
+
+    /* ── Footer ── */
+    .footer { background: var(--navy); padding: 15px 48px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-left { font-size: 11px; color: rgba(255,255,255,0.45); }
+    .footer-left strong { color: rgba(255,255,255,0.82); }
+    .footer-right { display: flex; align-items: center; gap: 14px; }
+    .fpill { font-size: 9px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; padding: 4px 11px; border-radius: 20px; border: 1px solid rgba(255,205,0,0.28); color: rgba(255,205,0,0.65); }
+    .fcopy { font-size: 10px; color: rgba(255,255,255,0.28); }
+
+    /* ── Print ── */
+    @media print {
+      *, *::before, *::after { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: white !important; padding: 0; margin: 0; font-size: 10px; }
+      .page { box-shadow: none; border-radius: 0; max-width: 100%; width: 100%; }
+      @page { margin: 0; size: A4 portrait; }
+
+      /* Page 1: header → journey */
+      .header        { padding: 16px 32px 14px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important; }
+      .header-title  { font-size: 20px; }
+      .header-tagline{ font-size: 10px; }
+      .header-tags   { margin-top: 10px; gap: 5px; }
+      .htag          { font-size: 8.5px; padding: 3px 9px; }
+      .stat-col      { min-width: 130px; }
+      .stat-item     { padding: 10px 16px; }
+      .stat-val      { font-size: 16px; }
+      .stat-lbl      { font-size: 8px; }
+      .vision        { padding: 14px 32px; }
+      .vision-text   { font-size: 11px; line-height: 1.65; }
+      .platforms     { break-inside: avoid; page-break-inside: avoid; }
+      .platform      { padding: 18px 24px; }
+      .journey       { break-inside: avoid; page-break-inside: avoid; padding: 18px 32px 20px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important; }
+      .platform-title{ font-size: 13px; }
+      .platform-sub  { font-size: 9.5px; margin-bottom: 10px; }
+      .feat          { font-size: 9.5px; gap: 7px; line-height: 1.55; }
+      .feat-list     { gap: 9px; }
+      .platform-sub  { font-size: 9.5px; margin-bottom: 10px; }
+      .journey-h     { font-size: 13px; margin-bottom: 4px; }
+      .journey-sub   { font-size: 9.5px; margin-bottom: 14px; }
+      .spoc-strip    { gap: 5px; margin-top: 12px; }
+      .spoc-card     { padding: 8px 10px; }
+      .step          { padding: 10px 9px; border-radius: 10px; }
+      .step-name     { font-size: 9px; }
+      .step-owner    { font-size: 7.5px; }
+      .step-tag      { font-size: 7px; padding: 2px 5px; }
+      .spoc-strip    { gap: 5px; margin-top: 10px; }
+      .spoc-card     { padding: 7px 9px; gap: 7px; border-radius: 8px; }
+      .spoc-avatar   { width: 22px; height: 22px; font-size: 7.5px; }
+      .spoc-role     { font-size: 6.5px; }
+      .spoc-name     { font-size: 8px; }
+
+      /* Page 2: capabilities + bottom + footer */
+      .caps          { padding: 32px 32px; page-break-before: always; break-before: always; }
+      .caps-grid     { gap: 20px; }
+      .capcard       { padding: 26px 22px; background: #f8fafc !important; border-radius: 10px; break-inside: avoid; }
+      .cap-icon      { font-size: 26px; margin-bottom: 12px; }
+      .cap-title     { font-size: 13px; margin-bottom: 8px; }
+      .cap-desc      { font-size: 11px; line-height: 1.7; }
+      .bottom-row    { break-inside: avoid; }
+      .bcol          { padding: 28px 32px; }
+      .bcol + .bcol  { padding-left: 24px; }
+      .chip          { font-size: 10.5px; padding: 6px 13px; }
+      .chips         { gap: 9px; }
+      .rbadge        { font-size: 9.5px; padding: 4px 10px; }
+      .rtxt          { font-size: 10.5px; line-height: 1.65; }
+      .roles         { gap: 16px; }
+      .footer        { padding: 16px 32px; background: #1a1a2e !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="hc1"></div>
+    <div class="hc2"></div>
+    <div class="header-inner">
+      <div>
+        <div class="header-eyebrow">McCain Foods &nbsp;·&nbsp; Infrastructure &amp; Operations</div>
+        <div class="header-title">CCoE Platform Suite<br/><em>Joint Executive Summary</em></div>
+        <div class="header-tagline">
+          Two purpose-built platforms — working in concert — to govern every cloud workload from
+          initial business request through architecture, deployment, observability, and cost management,
+          while giving engineering teams a self-service path to production.
+        </div>
+        <div class="header-tags">
+          <span class="htag">Unified Onboarding Portal</span>
+          <span class="htag">DevSecOps Self-Service</span>
+          <span class="htag">AI-Assisted Design</span>
+          <span class="htag">End-to-End Governance</span>
+          <span class="htag">Azure Native</span>
+          <span class="htag">Full Audit Trail</span>
+        </div>
+      </div>
+      <div class="stat-col">
+        <div class="stat-item">
+          <div class="stat-val">&lt; 2 hrs</div>
+          <div class="stat-lbl">AI-generated Cloud<br/>Architecture Blueprint</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">5</div>
+          <div class="stat-lbl">Named SPOCs<br/>One per Phase</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">100%</div>
+          <div class="stat-lbl">Decisions<br/>Auditable</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Vision ── -->
+  <div class="vision">
+    <div class="slabel" style="text-align:center;">Our Vision</div>
+    <div class="vision-text">
+      McCain has built a <span>complete cloud delivery platform</span> — the
+      <span>Unified Onboarding Portal</span> governs every workload from business request to cost management,
+      while the <span>DevSecOps Self-Service Portal</span> powers the Infrastructure Deployment phase —
+      automating repository creation, Helm chart scaffolding, and CI/CD pipeline setup for every approved workload.
+      Together, they deliver speed <em>with</em> governance — not instead of it.
+    </div>
+  </div>
+
+  <!-- ── Two Platforms ── -->
+  <div class="platforms">
+
+    <div class="platform">
+      <div class="platform-badge">Platform 01 &nbsp;·&nbsp; Governance</div>
+      <div class="platform-title">Unified Cloud<br/>Onboarding Portal</div>
+      <div class="platform-sub">A single, governed platform that takes every cloud workload through five structured phases — each with a named SPOC, AI-assisted design, and a complete audit trail.</div>
+      <div class="feat-list">
+        <div class="feat"><span class="fdot"></span>5-phase workflow: Architecture Review → Cloud Architecture Blueprint → Infrastructure Deployment → Observability Setup → Cost Management</div>
+        <div class="feat"><span class="fdot"></span>AI-generated Cloud Architecture Blueprint covering infrastructure, security controls, data flows, and cost estimates in under 2 hours</div>
+        <div class="feat"><span class="fdot"></span>Named SPOC accountable for each phase — EA, CA, DevSecOps, Observability, and FinOps Architects</div>
+        <div class="feat"><span class="fdot"></span>Intelligent auto-fill: LOB-aware forms auto-populate SLT Leader, financial codes, and support contacts</div>
+        <div class="feat"><span class="fdot"></span>Observability gate enforced before FinOps activation; 100% of decisions auditable and downloadable</div>
+      </div>
+    </div>
+
+    <div class="platform">
+      <div class="platform-badge">Platform 02 &nbsp;·&nbsp; Phase 03 Execution Engine</div>
+      <div class="platform-title">DevSecOps<br/>Self-Service Portal</div>
+      <div class="platform-sub">Embedded within the Infrastructure Deployment phase — engineering teams self-service GitHub repositories, Helm charts, and CI/CD pipelines the moment a Cloud Architecture Blueprint is approved.</div>
+      <div class="feat-list">
+        <div class="feat"><span class="fdot"></span>Two-step wizard onboards any application with configurable repo type and technology stack (React, Angular, Node.js, .NET, Python)</div>
+        <div class="feat"><span class="fdot"></span>Automated GitHub provisioning: triggers repository creation and Helm chart scaffolding via GitHub Actions</div>
+        <div class="feat"><span class="fdot"></span>Real-time progress streaming via Server-Sent Events — live job status delivered to the browser instantly</div>
+        <div class="feat"><span class="fdot"></span>Multi-environment support: sandbox, dev, UAT, and production — with role-based environment selection</div>
+        <div class="feat"><span class="fdot"></span>Central application dashboard with per-environment status indicators for all registered workloads</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Integrated Journey ── -->
+  <div class="journey">
+    <div class="slabel">The Integrated Delivery Journey</div>
+    <div class="journey-h">From Business Idea to Production — End to End</div>
+    <div class="journey-sub">The DevSecOps Self-Service Portal powers Phase 03 — repo creation, Helm charts, and CI/CD pipelines are provisioned automatically once a Cloud Architecture Blueprint is approved.</div>
+    <div class="steps">
+
+      <div class="step">
+        <span class="sarrow">›</span>
+        <span class="step-num">Phase 01</span>
+        <div class="step-name">Architecture Review</div>
+        <div class="step-owner">SPOC: Enterprise Architect</div>
+        <span class="step-tag tag-portal">Onboarding Portal</span>
+      </div>
+
+      <div class="step">
+        <span class="sarrow">›</span>
+        <span class="step-num">Phase 02</span>
+        <div class="step-name">Cloud Architecture Blueprint</div>
+        <div class="step-owner">SPOC: Cloud Architect</div>
+        <span class="step-tag tag-portal">Onboarding Portal</span>
+      </div>
+
+      <div class="step devops">
+        <span class="sarrow">›</span>
+        <span class="step-num">Phase 03</span>
+        <div class="step-name">Infrastructure Deployment</div>
+        <div class="step-owner">SPOC: DevSecOps Architect</div>
+        <span class="step-tag tag-portal" style="margin-bottom:3px;">Onboarding Portal</span><br/>
+        <span class="step-tag tag-devops">DevSecOps Portal</span>
+      </div>
+
+      <div class="step">
+        <span class="sarrow">›</span>
+        <span class="step-num">Phase 04</span>
+        <div class="step-name">Observability Setup</div>
+        <div class="step-owner">SPOC: Observability Architect</div>
+        <span class="step-tag tag-portal">Onboarding Portal</span>
+      </div>
+
+      <div class="step">
+        <span class="sarrow">›</span>
+        <span class="step-num">Phase 05</span>
+        <div class="step-name">Cost Management</div>
+        <div class="step-owner">SPOC: FinOps Architect</div>
+        <span class="step-tag tag-portal">Onboarding Portal</span>
+      </div>
+
+      <div class="step" style="border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.06);">
+        <span class="step-num" style="color:rgba(34,197,94,0.8);">Live</span>
+        <div class="step-name">Production Workload</div>
+        <div class="step-owner">Governed · Monitored · Costed</div>
+      </div>
+
+    </div>
+
+    <!-- SPOC Strip -->
+    <div class="spoc-strip">
+      <div class="spoc-card">
+        <div class="spoc-avatar">EA</div>
+        <div class="spoc-info"><div class="spoc-role">Phase 01</div><div class="spoc-name">Enterprise Architect</div></div>
+      </div>
+      <div class="spoc-card">
+        <div class="spoc-avatar">CA</div>
+        <div class="spoc-info"><div class="spoc-role">Phase 02</div><div class="spoc-name">Cloud Architect</div></div>
+      </div>
+      <div class="spoc-card">
+        <div class="spoc-avatar">DSO</div>
+        <div class="spoc-info"><div class="spoc-role">Phase 03</div><div class="spoc-name">DevSecOps Architect</div></div>
+      </div>
+      <div class="spoc-card">
+        <div class="spoc-avatar">OA</div>
+        <div class="spoc-info"><div class="spoc-role">Phase 04</div><div class="spoc-name">Observability Architect</div></div>
+      </div>
+      <div class="spoc-card">
+        <div class="spoc-avatar">FA</div>
+        <div class="spoc-info"><div class="spoc-role">Phase 05</div><div class="spoc-name">FinOps Architect</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Combined Capabilities ── -->
+  <div class="caps">
+    <div class="slabel">Combined Platform Capabilities</div>
+    <div class="caps-grid">
+
+      <div class="capcard">
+        <span class="cap-icon">🤖</span>
+        <div class="cap-title">AI-Assisted Cloud Architecture Blueprint</div>
+        <div class="cap-desc">Azure OpenAI generates complete Cloud Architecture Blueprints — architecture diagrams, security controls, and cost estimates — in under 2 hours, replacing days of manual design work.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">⚡</span>
+        <div class="cap-title">Automated Repo &amp; Pipeline Provisioning</div>
+        <div class="cap-desc">GitHub Actions workflows scaffold repositories, Helm charts, and CI/CD pipelines on demand. Real-time progress streamed to the browser — zero manual steps for engineering teams.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">🛡️</span>
+        <div class="cap-title">End-to-End Governance &amp; Security</div>
+        <div class="cap-desc">Structured EA review with AI-identified risk flags, WAF alignment, zero-trust guidance, Checkov security scanning, OPA policy-as-code, and mandatory dual approval for Production.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">👁️</span>
+        <div class="cap-title">Observability Gate</div>
+        <div class="cap-desc">Every workload must pass SLA tier classification (Tier 1–4), alert severity framework (SEV 0–3), and runbook link validation before FinOps activation is permitted.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">💰</span>
+        <div class="cap-title">FinOps &amp; Cost Governance</div>
+        <div class="cap-desc">Azure Cost Management–powered budget tracking with three-tier alerts, LOB-specific GL account auto-assignment, Reserved Instance analysis, and monthly chargeback reports by business unit.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">📋</span>
+        <div class="cap-title">Full Audit Trail &amp; Compliance</div>
+        <div class="cap-desc">Every approval, design version, deployment event, and provisioning action is logged with correlation IDs. Downloadable audit reports available for compliance and governance reviews.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Tech Stack + Who Uses It ── -->
+  <div class="bottom-row">
+    <div class="bcol">
+      <div class="slabel">Technology &amp; Integrations</div>
+      <div class="chips">
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Microsoft Azure</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure OpenAI</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure DevOps</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure Monitor</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure Cost Management</div>
+        <div class="chip"><span class="chipdot" style="background:#24292f;"></span>GitHub Actions</div>
+        <div class="chip"><span class="chipdot" style="background:#7B42BC;"></span>Terraform</div>
+        <div class="chip"><span class="chipdot" style="background:#ee4a27;"></span>LeanIX</div>
+        <div class="chip"><span class="chipdot" style="background:#0052CC;"></span>Confluence</div>
+        <div class="chip"><span class="chipdot" style="background:#336791;"></span>PostgreSQL</div>
+        <div class="chip"><span class="chipdot" style="background:#009688;"></span>FastAPI</div>
+      </div>
+    </div>
+    <div class="bcol">
+      <div class="slabel">Who Uses It</div>
+      <div class="roles">
+        <div class="role-row">
+          <span class="rbadge" style="background:#fef3c7;color:#92400e;">Application Teams</span>
+          <div class="rtxt">Submit onboarding requests, self-service repo provisioning, and track progress end-to-end.</div>
+        </div>
+        <div class="role-row">
+          <span class="rbadge" style="background:#ede9fe;color:#5b21b6;">Enterprise Architects</span>
+          <div class="rtxt">Review requests using AI risk flags, architecture recommendations, and WAF guidance.</div>
+        </div>
+        <div class="role-row">
+          <span class="rbadge" style="background:#dbeafe;color:#1e40af;">Cloud &amp; DevSecOps Architects</span>
+          <div class="rtxt">Generate Cloud Architecture Blueprints, manage IaC pipelines, enforce security standards.</div>
+        </div>
+        <div class="role-row">
+          <span class="rbadge" style="background:#f3e8ff;color:#6b21a8;">Observability &amp; FinOps Architects</span>
+          <div class="rtxt">Validate monitoring coverage and govern ongoing cloud spend for all active workloads.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-left">
+      © 2026 <strong>McCain Foods Limited</strong> &nbsp;·&nbsp; Internal Use Only
+    </div>
+    <div class="footer-right">
+      <span class="fpill">Confidential</span>
+      <span class="fcopy">June 2026</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -16,9 +16,9 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * @summary Generate a TDD document from form data
+ * @summary Generate a CAB document from form data
  */
-export const GenerateTddBody = zod.object({
+export const GenerateCabBody = zod.object({
   infrastructureSupportManager: zod.string(),
   applicationSupportManager: zod.string(),
   itOwner: zod.string(),
@@ -79,15 +79,15 @@ export const GenerateTddBody = zod.object({
 });
 
 /**
- * @summary Export a generated TDD document as PDF or Word
+ * @summary Export a generated CAB document as PDF or Word
  */
-export const ExportTddBody = zod.object({
-  content: zod.string().describe("The markdown content of the generated TDD"),
+export const ExportCabBody = zod.object({
+  content: zod.string().describe("The markdown content of the generated CAB"),
   format: zod.enum(["pdf", "docx"]),
   applicationName: zod.string(),
 });
 
-export const ExportTddResponse = zod.object({
+export const ExportCabResponse = zod.object({
   fileBase64: zod.string(),
   fileName: zod.string(),
   mimeType: zod.string(),

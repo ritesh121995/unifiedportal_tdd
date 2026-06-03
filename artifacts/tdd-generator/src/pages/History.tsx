@@ -10,7 +10,7 @@ import MermaidDiagram from "@/components/MermaidDiagram";
 import { getApiBase } from "@/lib/api-base";
 import { useAuth } from "@/store/auth-context";
 
-interface TddSubmission {
+interface CabSubmission {
   id: number;
   applicationName: string;
   organization: string;
@@ -22,7 +22,7 @@ interface TddSubmission {
   updatedAt: string;
 }
 
-interface TddSubmissionFull extends TddSubmission {
+interface CabSubmissionFull extends CabSubmission {
   generatedContent: string | null;
 }
 
@@ -43,8 +43,8 @@ export default function History() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [submissions, setSubmissions] = useState<TddSubmission[]>([]);
-  const [selected, setSelected] = useState<TddSubmissionFull | null>(null);
+  const [submissions, setSubmissions] = useState<CabSubmission[]>([]);
+  const [selected, setSelected] = useState<CabSubmissionFull | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -55,7 +55,7 @@ export default function History() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${getApiBase()}/api/tdd/submissions`, { credentials: "include" });
+      const res = await fetch(`${getApiBase()}/api/cab/submissions`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load history");
       const d = await res.json();
       setSubmissions(d.submissions ?? []);
@@ -73,7 +73,7 @@ export default function History() {
     if (!window.confirm("Delete this design document? This cannot be undone.")) return;
     setDeletingId(id);
     try {
-      await fetch(`${getApiBase()}/api/tdd/submissions/${id}`, { method: "DELETE", credentials: "include" });
+      await fetch(`${getApiBase()}/api/cab/submissions/${id}`, { method: "DELETE", credentials: "include" });
       setSubmissions((prev) => prev.filter((s) => s.id !== id));
       if (selected?.id === id) setSelected(null);
     } catch {
@@ -83,11 +83,11 @@ export default function History() {
     }
   };
 
-  const handleSelect = async (sub: TddSubmission) => {
+  const handleSelect = async (sub: CabSubmission) => {
     if (selected?.id === sub.id) { setSelected(null); return; }
     setLoadingDetail(true);
     try {
-      const res = await fetch(`${getApiBase()}/api/tdd/submissions/${sub.id}`, { credentials: "include" });
+      const res = await fetch(`${getApiBase()}/api/cab/submissions/${sub.id}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load document");
       const d = await res.json();
       setSelected(d.submission);

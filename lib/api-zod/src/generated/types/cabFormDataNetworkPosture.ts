@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TddFormDataNetworkPosture =
-  (typeof TddFormDataNetworkPosture)[keyof typeof TddFormDataNetworkPosture];
+export type CabFormDataNetworkPosture =
+  (typeof CabFormDataNetworkPosture)[keyof typeof CabFormDataNetworkPosture];
 
-export const TddFormDataNetworkPosture = {
+export const CabFormDataNetworkPosture = {
   "Internet-Facing": "Internet-Facing",
   "Internal-Only": "Internal-Only",
   Hybrid: "Hybrid",

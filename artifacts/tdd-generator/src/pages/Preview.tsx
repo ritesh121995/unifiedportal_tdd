@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAppContext, type FormDraft } from "@/store/app-context";
-import { useExportTdd, type TddExportResponse } from "@workspace/api-client-react";
+import { useExportCab, type CabExportResponse } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,7 +66,7 @@ interface IacDeployment {
   completed_at?: string;
 }
 
-const TDD_SECTION_HEADINGS = [
+const CAB_SECTION_HEADINGS = [
   "1. Executive Summary",
   "2. Ownership, Stakeholders & Billing Context",
   "3. Workload Context & Classification",
@@ -84,7 +84,7 @@ function escapeForRegex(value: string): string {
 function extractHeadingOptions(markdown: string): string[] {
   const matched = markdown.match(/^##\s+(.+)$/gm);
   if (!matched || matched.length === 0) {
-    return [...TDD_SECTION_HEADINGS];
+    return [...CAB_SECTION_HEADINGS];
   }
 
   return matched.map((line) => line.replace(/^##\s+/, "").trim());
@@ -254,10 +254,10 @@ function getJsonHeaders(): HeadersInit {
 }
 
 
-function toTddFormDataOrNull(formData: FormDraft): Record<string, unknown> | null {
+function toCabFormDataOrNull(formData: FormDraft): Record<string, unknown> | null {
   // Only block generation on fields that are structurally essential —
   // optional fields (billing, personnel, architecture details) are allowed
-  // to be empty and will appear as blank cells / N/A in the TDD.
+  // to be empty and will appear as blank cells / N/A in the CAB.
   const requiredStrings = [
     "applicationName",
     "applicationType",
@@ -324,7 +324,7 @@ export default function Preview() {
   const [isGenerating, setIsGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string>(
-    TDD_SECTION_HEADINGS[0],
+    CAB_SECTION_HEADINGS[0],
   );
   const [isRegeneratingSection, setIsRegeneratingSection] = useState(false);
   const [sectionError, setSectionError] = useState<string | null>(null);
@@ -354,7 +354,7 @@ export default function Preview() {
   const [confluenceError, setConfluenceError] = useState<string | null>(null);
 
   const hasStartedRef = useRef(false);
-  const exportMutation = useExportTdd();
+  const exportMutation = useExportCab();
   const sectionOptions = useMemo(() => extractHeadingOptions(content), [content]);
 
   useEffect(() => {
@@ -389,12 +389,12 @@ export default function Preview() {
       setBlobWarning(null);
       
       try {
-        const payload = toTddFormDataOrNull(formData);
+        const payload = toCabFormDataOrNull(formData);
         if (!payload) {
           throw new Error("Form data is incomplete. Please review all required fields.");
         }
 
-        const response = await fetch(`${getApiBase()}/api/tdd/generate`, {
+        const response = await fetch(`${getApiBase()}/api/cab/generate`, {
           method: 'POST',
           headers: getJsonHeaders(),
           body: JSON.stringify(payload),
@@ -524,7 +524,7 @@ export default function Preview() {
         setContent(finalContent);
         setSectionError(null);
 
-        // Auto-detect Azure services from TDD and pre-select them
+        // Auto-detect Azure services from CAB and pre-select them
         const detected = detectServicesFromTdd(finalContent);
         if (detected.length > 0) {
           setSelectedServices(detected);
@@ -537,7 +537,7 @@ export default function Preview() {
           markdown: finalContent,
         });
 
-        // If this TDD was generated from an architecture request, hold for human review
+        // If this CAB was generated from an architecture request, hold for human review
         const activeRequestId = localStorage.getItem("activeRequestId");
         if (activeRequestId) {
           setPendingRequestId(activeRequestId);
@@ -562,10 +562,10 @@ export default function Preview() {
       data: {
         content: content,
         format: format,
-        applicationName: formData.applicationName || "TDD_Document"
+        applicationName: formData.applicationName || "CAB_Document"
       }
     }, {
-      onSuccess: (result: TddExportResponse) => {
+      onSuccess: (result: CabExportResponse) => {
         const link = document.createElement('a');
         link.href = `data:${result.mimeType};base64,${result.fileBase64}`;
         link.download = result.fileName;
@@ -577,12 +577,12 @@ export default function Preview() {
   const handlePrintPdf = () => {
     const articleEl = previewRef.current;
     if (!articleEl) return;
-    const appName = formData.applicationName || "Technical Design";
+    const appName = formData.applicationName || "Cloud Architecture Blueprint";
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>${appName} — Technical Design</title>
+  <title>${appName} — Cloud Architecture Blueprint</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 11pt; color: #111; line-height: 1.5; padding: 2cm 2.5cm; }
@@ -631,7 +631,7 @@ ${articleEl.innerHTML}
       return;
     }
 
-    const payload = toTddFormDataOrNull(formData);
+    const payload = toCabFormDataOrNull(formData);
     if (!payload) {
       setSectionError("Form data is incomplete. Please go back and review required fields.");
       return;
@@ -655,7 +655,7 @@ ${articleEl.innerHTML}
         throw new Error("Selected section is empty and cannot be regenerated.");
       }
 
-      const response = await fetch(`${getApiBase()}/api/tdd/regenerate-section`, {
+      const response = await fetch(`${getApiBase()}/api/cab/regenerate-section`, {
         method: "POST",
         headers: getJsonHeaders(),
         body: JSON.stringify({
@@ -692,11 +692,11 @@ ${articleEl.innerHTML}
     setReviewCompleting(true);
     const targetId = pendingRequestId;
     try {
-      await fetch(`${getApiBase()}/api/requests/${targetId}/complete-tdd`, {
+      await fetch(`${getApiBase()}/api/requests/${targetId}/complete-cab`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null, tddSubmissionId: pendingSubmissionId }),
+        body: JSON.stringify({ reviewNotes: reviewNotes.trim() || null, cabSubmissionId: pendingSubmissionId }),
       });
       localStorage.removeItem("activeRequestId");
       setPendingRequestId(null);
@@ -771,7 +771,7 @@ ${articleEl.innerHTML}
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `Technical Design — ${formData.applicationName ?? "Application"}`,
+          title: `Cloud Architecture Blueprint — ${formData.applicationName ?? "Application"}`,
           markdownContent: content,
         }),
       });
@@ -792,7 +792,7 @@ ${articleEl.innerHTML}
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Technical Design Document</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Cloud Architecture Blueprint</h2>
           <p className="text-slate-500 mt-1">
             {isGenerating
               ? "Generating..."
@@ -1099,7 +1099,7 @@ ${articleEl.innerHTML}
                 >
                   {reviewCompleting
                     ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>
-                    : <><ClipboardCheck className="w-4 h-4 mr-2" />Mark Technical Design as Complete</>
+                    : <><ClipboardCheck className="w-4 h-4 mr-2" />Mark CAB as Complete</>
                   }
                 </Button>
               </div>
@@ -1140,7 +1140,7 @@ ${articleEl.innerHTML}
       )}
 
       {/* ─── Azure Service Selector ───────────────────────────────────────── */}
-      {/* Shown only after "Mark TDD as Complete" (when coming from a request),
+      {/* Shown only after "Mark CAB as Complete" (when coming from a request),
           or immediately after generation when there is no pending request. */}
       {content && !isGenerating && !pendingRequestId && (
         <Card className="border border-blue-200 shadow-sm overflow-hidden">
@@ -1154,14 +1154,14 @@ ${articleEl.innerHTML}
                   Select Azure Services for IaC
                 </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Services are auto-detected from your Technical Design. Adjust the selection — Terraform code and deployment will reflect your choices.
+                  Services are auto-detected from your Cloud Architecture Blueprint. Adjust the selection — Terraform code and deployment will reflect your choices.
                 </p>
               </div>
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-6 pt-4">
             <AzureServiceSelector
-              tddContent={content}
+              cabContent={content}
               selectedIds={selectedServices}
               onChange={setSelectedServices}
             />
@@ -1413,3 +1413,4 @@ ${articleEl.innerHTML}
     </div>
   );
 }
+

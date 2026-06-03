@@ -24,8 +24,8 @@ function statusToPhase(status: string): { activeStep: number; rejected: boolean 
     case "modification_requested": return { activeStep: 1, rejected: false };
     case "ea_rejected":            return { activeStep: 1, rejected: true };
     case "ea_approved":
-    case "tdd_in_progress":        return { activeStep: 2, rejected: false };
-    case "tdd_completed":          return { activeStep: 3, rejected: false };
+    case "cab_in_progress":        return { activeStep: 2, rejected: false };
+    case "cab_completed":          return { activeStep: 3, rejected: false };
     case "devsecops_rejected":     return { activeStep: 3, rejected: true };
     case "devsecops_approved":
     case "vendor_active":          return { activeStep: 4, rejected: false };
@@ -81,7 +81,7 @@ interface ArchitectureRequest {
   applicationType: string;
   deploymentModel?: string;
   targetEnvironments: string[];
-  tddFormData?: { workflowType?: string } | null;
+  cabFormData?: { workflowType?: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -204,7 +204,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
       }
       let matchesEnvType = true;
       if (envTypeFilter !== "all") {
-        const wf = r.tddFormData?.workflowType ?? "standard";
+        const wf = r.cabFormData?.workflowType ?? "standard";
         if (envTypeFilter === "sandbox") matchesEnvType = wf === "sandbox";
         else if (envTypeFilter === "development") matchesEnvType = wf === "development";
         else if (envTypeFilter === "qa_uat") matchesEnvType = wf === "standard" && (r.targetEnvironments ?? []).some((e) => e === "QA/UAT" || e === "QA" || e === "UAT");
@@ -335,8 +335,8 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
               <SelectItem value="modification_requested">Changes requested</SelectItem>
               <SelectItem value="ea_approved">Architecture approved</SelectItem>
               <SelectItem value="ea_rejected">Not approved</SelectItem>
-              <SelectItem value="tdd_in_progress">Technical design in progress</SelectItem>
-              <SelectItem value="tdd_completed">Technical design complete</SelectItem>
+              <SelectItem value="cab_in_progress">CAB generation in progress</SelectItem>
+              <SelectItem value="cab_completed">CAB generation complete</SelectItem>
               <SelectItem value="devsecops_approved">Infrastructure approved</SelectItem>
               <SelectItem value="devsecops_rejected">Infrastructure rejected</SelectItem>
               <SelectItem value="observability_approved">Observability approved</SelectItem>

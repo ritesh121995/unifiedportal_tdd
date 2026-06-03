@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { TddFormData } from "@workspace/api-client-react";
+import type { CabFormData } from "@workspace/api-client-react";
 
 export type FormDraft = Omit<
-  Partial<TddFormData>,
+  Partial<CabFormData>,
   "environmentsRequired" | "azureRegions"
 > & {
   environmentsRequired?: string[];
@@ -32,7 +32,7 @@ interface AppContextType {
   restoreFromHistory: (entry: HistoryEntry) => void;
 }
 
-const HISTORY_KEY = "tdd-document-history";
+const HISTORY_KEY = "cab-document-history";
 const MAX_HISTORY = 10;
 
 function loadHistoryFromStorage(): HistoryEntry[] {

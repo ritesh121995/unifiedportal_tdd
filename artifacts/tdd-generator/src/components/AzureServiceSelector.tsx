@@ -16,7 +16,7 @@ export interface AzureService {
 export const AZURE_SERVICE_CATALOG: AzureService[] = [
   // ── Compute ──────────────────────────────────────────────────────────────
   // NOTE: VM keywords are intentionally narrow — generic terms like "compute", "iaas", "vm"
-  // appear in every PaaS TDD ("no IaaS VMs required") and would cause false positives.
+  // appear in every PaaS CAB ("no IaaS VMs required") and would cause false positives.
   { id: "vm", name: "Virtual Machine", category: "Compute", icon: "🖥️", description: "Windows/Linux IaaS VM — Standard_B2s for demo", keywords: ["virtual machine", "azure vm", "iaas vm", "windows vm", "linux vm", "iaasvirtualmachine"] },
   { id: "app_service", name: "App Service", category: "Compute", icon: "🌐", description: "PaaS web hosting for .NET, Node, Python, Java", keywords: ["app service", "web app", "web application", "webapp", "app service plan"] },
   { id: "function_app", name: "Function App", category: "Compute", icon: "⚡", description: "Event-driven serverless compute", keywords: ["function app", "azure functions", "serverless", "event-driven", "faas"] },
@@ -76,7 +76,7 @@ export const AZURE_SERVICE_CATALOG: AzureService[] = [
 const CATEGORIES = [...new Set(AZURE_SERVICE_CATALOG.map((s) => s.category))];
 
 /**
- * Detect Azure services referenced in a TDD markdown document.
+ * Detect Azure services referenced in a CAB markdown document.
  *
  * Uses word-boundary regex matching to prevent false positives from
  * short substrings (e.g. "vm" inside "environment" or "VMs" in
@@ -101,15 +101,15 @@ export function detectServicesFromTdd(markdown: string): string[] {
 }
 
 interface Props {
-  tddContent: string;
+  cabContent: string;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
 }
 
-export default function AzureServiceSelector({ tddContent, selectedIds, onChange }: Props) {
+export default function AzureServiceSelector({ cabContent, selectedIds, onChange }: Props) {
   const [search, setSearch] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CATEGORIES));
-  const [autoDetected] = useState<string[]>(() => detectServicesFromTdd(tddContent));
+  const [autoDetected] = useState<string[]>(() => detectServicesFromTdd(cabContent));
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
     }
   }, []);
 
-  // The working catalog: only TDD-detected + alwaysIncluded unless "show all" is toggled
+  // The working catalog: only CAB-detected + alwaysIncluded unless "show all" is toggled
   const activeCatalog = useMemo(() => {
     if (showAll || autoDetected.length === 0) return AZURE_SERVICE_CATALOG;
     const allowedIds = new Set([
@@ -188,7 +188,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
         <div className="flex items-start gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
           <Zap className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
           <p className="text-sm text-blue-800">
-            <span className="font-semibold">Auto-detected from your TDD:</span>{" "}
+            <span className="font-semibold">Auto-detected from your CAB:</span>{" "}
             {autoDetected
               .map((id) => AZURE_SERVICE_CATALOG.find((s) => s.id === id)?.name)
               .filter(Boolean)
@@ -214,7 +214,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
         <span>
           <span className="font-semibold text-slate-700">{selectedIds.length}</span> service{selectedIds.length !== 1 ? "s" : ""} selected
           {autoDetected.length > 0 && (
-            <span className="ml-2 text-blue-600">({autoDetected.filter((id) => selectedIds.includes(id)).length} from TDD)</span>
+            <span className="ml-2 text-blue-600">({autoDetected.filter((id) => selectedIds.includes(id)).length} from CAB)</span>
           )}
         </span>
         <div className="flex gap-3">
@@ -224,7 +224,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
               onClick={() => setShowAll((v) => !v)}
             >
               <Plus className="w-3 h-3" />
-              {showAll ? "Show TDD services only" : "Show all Azure services"}
+              {showAll ? "Show CAB services only" : "Show all Azure services"}
             </button>
           )}
           <button
@@ -294,7 +294,7 @@ export default function AzureServiceSelector({ tddContent, selectedIds, onChange
                             </span>
                             {detected && (
                               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                                TDD
+                                CAB
                               </span>
                             )}
                             {svc.alwaysIncluded && (

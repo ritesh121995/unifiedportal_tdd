@@ -16,20 +16,20 @@ flowchart TB
     subgraph SPA["React SPA — Vite · Tailwind · Radix UI"]
         F1["Dashboard · Submit Request · Request List"]
         F2["Request Detail — all workflow phases"]
-        F3["TDD Wizard · TDD Preview · TDD Viewer"]
+        F3["CAB Wizard · CAB Preview · CAB Viewer"]
         F4["Integrations · Admin Users"]
     end
 
     subgraph ACA["Azure Container App — test1995 · Port 8080"]
-        API["Express REST API — Node 22\n/api/auth    — JWT · httpOnly cookie · 8h\n/api/requests — Workflow engine · AI classify\n/api/tdd      — Generate · Export · SSE\n/api/iac      — Deploy · status poll\n/api/users    — Admin CRUD\n/api/healthz  — Liveness probe"]
+        API["Express REST API — Node 22\n/api/auth    — JWT · httpOnly cookie · 8h\n/api/requests — Workflow engine · AI classify\n/api/cab      — Generate · Export · SSE\n/api/iac      — Deploy · status poll\n/api/users    — Admin CRUD\n/api/healthz  — Liveness probe"]
     end
 
     subgraph DATA["Data Layer"]
-        PG[("PostgreSQL 16\narchitecture_requests\ntdd_submissions\nrequest_events\nusers · settings")]
+        PG[("PostgreSQL 16\narchitecture_requests\ncab_submissions\nrequest_events\nusers · settings")]
     end
 
     subgraph AI["Azure OpenAI — gpt-4o"]
-        AOAI["Classify: simple vs complex\nStream TDD — 8 sections via SSE\nSection regeneration\nConnection diagnostics"]
+        AOAI["Classify: simple vs complex\nStream CAB — 8 sections via SSE\nSection regeneration\nConnection diagnostics"]
     end
 
     subgraph IAC["IaC Target"]
@@ -46,8 +46,8 @@ flowchart TB
         S1([submitted]) -->|AI complex| S2([ea_triage])
         S1 -->|AI simple| S3([ea_approved])
         S2 -->|EA approves| S3
-        S3 --> S4([tdd_in_progress])
-        S4 --> S5([tdd_completed])
+        S3 --> S4([cab_in_progress])
+        S4 --> S5([cab_completed])
         S5 --> S6([devsecops_approved])
         S6 --> S7([finops_active])
     end
@@ -129,12 +129,12 @@ stateDiagram-v2
     ea_triage --> ea_approved          : EA approves
     ea_triage --> submitted            : EA requests changes
 
-    ea_approved --> tdd_in_progress    : Cloud Architect starts TDD
+    ea_approved --> cab_in_progress    : Cloud Architect starts CAB
 
-    tdd_in_progress --> tdd_completed  : CA completes TDD
+    cab_in_progress --> cab_completed  : CA completes CAB
 
-    tdd_completed --> devsecops_approved : CA approves DevSecOps / IaC
-    tdd_completed --> tdd_in_progress    : CA rejects — rework
+    cab_completed --> devsecops_approved : CA approves DevSecOps / IaC
+    cab_completed --> cab_in_progress    : CA rejects — rework
 
     devsecops_approved --> finops_active : EA activates FinOps
 
@@ -151,7 +151,7 @@ flowchart TD
     Submit --> AI
 
     AI -->|"Security / Regulatory /\nIntegration impact: Medium or High\nOR user base ≥ 500\nOR cost: XL or XXL"| Complex["complex\n→ EA review required"]
-    AI -->|"All impacts Low / None\nAND users < 500\nAND cost not XL/XXL"| Simple["simple\n→ fast-track to TDD"]
+    AI -->|"All impacts Low / None\nAND users < 500\nAND cost not XL/XXL"| Simple["simple\n→ fast-track to CAB"]
 
     Complex --> EATriage["ea_triage → ea_approved"]
     Simple   --> EAApproved["ea_approved directly"]
@@ -169,7 +169,7 @@ flowchart LR
     Login --> JWT
 
     JWT --> R1["requestor\nSubmit · view own\nrequests · clone"]
-    JWT --> R2["cloud_architect\nTDD generation\nRisk review\nDevSecOps / IaC\nDeploy to Azure"]
+    JWT --> R2["cloud_architect\nCAB generation\nRisk review\nDevSecOps / IaC\nDeploy to Azure"]
     JWT --> R3["enterprise_architect\nEA triage + review\nFinOps activation\nCSV export"]
     JWT --> R4["admin\nAll of the above\nUser management\nPortal settings"]
 ```
@@ -195,7 +195,7 @@ flowchart LR
         B6["GET /export (CSV)"]
     end
 
-    subgraph TDD["/api/tdd"]
+    subgraph CAB["/api/cab"]
         C1["POST /generate (SSE)"]
         C2["POST /section-regenerate"]
         C3["POST /export (md/docx/pdf)"]
@@ -246,9 +246,9 @@ erDiagram
         string  deployment_model
         string  ai_classification
         string  ai_classification_reason
-        jsonb   tdd_form_data
+        jsonb   cab_form_data
         int     requestor_id            FK
-        int     tdd_submission_id       FK
+        int     cab_submission_id       FK
         string  ea_reviewer_name
         string  risk_reviewer_name
         string  ca_assignee_name
@@ -258,7 +258,7 @@ erDiagram
         timestamp updated_at
     }
 
-    tdd_submissions {
+    cab_submissions {
         int     id              PK
         string  application_name
         string  organization
@@ -291,7 +291,7 @@ erDiagram
     }
 
     users                  ||--o{ architecture_requests : "submits"
-    architecture_requests  ||--o|  tdd_submissions      : "links to"
+    architecture_requests  ||--o|  cab_submissions      : "links to"
     architecture_requests  ||--o{ request_events        : "has audit trail"
 ```
 
@@ -312,13 +312,13 @@ flowchart TD
 
     RequestList --> RequestDetail["/requests/:id\nRequest Detail\nfull workflow view"]
 
-    RequestDetail -->|"status: tdd_completed\n(View TDD)"| TddViewer["/tdd-view/:requestId\nTDD Viewer\nread-only markdown"]
-    RequestDetail -->|"status: tdd_in_progress\n(Continue TDD)"| Wizard["/wizard/:requestId\nTDD Wizard\n5-step generation form"]
+    RequestDetail -->|"status: cab_completed\n(View CAB)"| CabViewer["/cab-view/:requestId\nCAB Viewer\nread-only markdown"]
+    RequestDetail -->|"status: cab_in_progress\n(Continue CAB)"| Wizard["/wizard/:requestId\nCAB Wizard\n5-step generation form"]
 
-    Wizard --> Preview["/preview\nTDD Preview\nSSE streaming + IaC"]
+    Wizard --> Preview["/preview\nCAB Preview\nSSE streaming + IaC"]
 
     subgraph Phase3["Phase 3 — DevSecOps (inside /requests/:id)"]
-        P3A["AzureServiceSelector\nauto-detected from TDD"]
+        P3A["AzureServiceSelector\nauto-detected from CAB"]
         P3B["Terraform code preview\ncopy / download"]
         P3C["Deploy to Azure\nstatus polling"]
         P3D["Approve / Reject"]
@@ -344,9 +344,9 @@ sequenceDiagram
     AOAI-->>API: {classification, confidence, reason}
     API-->>U: {request, fastTrack, aiClassification}
 
-    Note over U,AOAI: TDD Generation (SSE streaming)
-    U->>API: POST /api/tdd/generate
-    loop 8 TDD sections
+    Note over U,AOAI: CAB Generation (SSE streaming)
+    U->>API: POST /api/cab/generate
+    loop 8 CAB sections
         API->>AOAI: generate section N
         AOAI-->>API: streamed tokens
         API-->>U: SSE chunk {content, sectionTitle}
@@ -354,13 +354,13 @@ sequenceDiagram
     API-->>U: SSE done {fullContent}
 
     Note over U,AOAI: Section Regeneration
-    U->>API: POST /api/tdd/section-regenerate
+    U->>API: POST /api/cab/section-regenerate
     API->>AOAI: regenerate {sectionTitle, context}
     AOAI-->>API: regenerated content
     API-->>U: {sectionTitle, regenerated}
 
     Note over U,AOAI: Connectivity Diagnostics
-    U->>API: GET /api/tdd/diagnostics
+    U->>API: GET /api/cab/diagnostics
     API->>AOAI: "Reply with exactly: OK"
     AOAI-->>API: "OK" + latency
     API-->>U: {status, latencyMs, provider, diagnosis}
@@ -377,10 +377,10 @@ sequenceDiagram
     participant API as Express API
     participant AZ as Azure SDK
 
-    CA->>UI: Phase 3 — opens request (tdd_completed)
-    UI->>API: GET /api/tdd/submissions/:tddSubmissionId
+    CA->>UI: Phase 3 — opens request (cab_completed)
+    UI->>API: GET /api/cab/submissions/:cabSubmissionId
     API-->>UI: {generatedContent}
-    UI->>UI: detectServicesFromTdd(content)
+    UI->>UI: detectServicesFromCab(content)
     UI-->>CA: AzureServiceSelector (auto-selected)
 
     CA->>UI: confirm services + enter password
@@ -448,3 +448,5 @@ flowchart TD
     Push --> C1 --> C2 --> C3 --> C4 --> C5
     C5 -->|CI passes on main| D1 --> D2 --> D3
 ```
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getApiBase } from "@/lib/api-base";
 
-interface TddSubmission {
+interface CabSubmission {
   id: number;
   applicationName: string;
   generatedContent: string;
@@ -17,10 +17,10 @@ interface RequestSummary {
   id: number;
   applicationName: string;
   title: string;
-  tddSubmissionId: number | null;
+  CabSubmissionId: number | null;
 }
 
-export default function TddViewer() {
+export default function CabViewer() {
   const { requestId } = useParams<{ requestId: string }>();
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
@@ -42,18 +42,18 @@ export default function TddViewer() {
         if (!d.request) throw new Error(d.error ?? "Request not found");
         setAppName(d.request.applicationName);
 
-        const subId = d.request.tddSubmissionId;
-        if (!subId) throw new Error("No TDD has been generated for this request yet.");
+        const subId = d.request.CabSubmissionId;
+        if (!subId) throw new Error("No CAB has been generated for this request yet.");
 
-        const sr = await fetch(`${api}/api/tdd/submissions/${subId}`, { credentials: "include" });
-        const sd = await sr.json() as { submission?: TddSubmission; error?: string };
-        if (!sd.submission) throw new Error(sd.error ?? "TDD submission not found");
+        const sr = await fetch(`${api}/api/cab/submissions/${subId}`, { credentials: "include" });
+        const sd = await sr.json() as { submission?: CabSubmission; error?: string };
+        if (!sd.submission) throw new Error(sd.error ?? "CAB submission not found");
 
         setContent(sd.submission.generatedContent ?? "");
         setSubmissionDate(sd.submission.createdAt ? new Date(sd.submission.createdAt).toLocaleDateString() : "");
       })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Failed to load TDD");
+        setError(err instanceof Error ? err.message : "Failed to load CAB");
       })
       .finally(() => setLoading(false));
   }, [requestId]);
@@ -69,7 +69,7 @@ export default function TddViewer() {
         <div className="h-5 w-px bg-slate-200" />
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <FileText className="w-4 h-4 text-purple-500" />
-          <span className="font-medium text-slate-800">{appName || "Technical Design Document"}</span>
+          <span className="font-medium text-slate-800">{appName || "Cloud Architecture Blueprint"}</span>
           {submissionDate && <span className="text-xs text-slate-400">· Generated {submissionDate}</span>}
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function TddViewer() {
       {loading && (
         <div className="flex items-center justify-center py-24 gap-2 text-slate-400">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Loading Technical Design Document…</span>
+          <span className="text-sm">Loading Cloud Architecture Blueprint…</span>
         </div>
       )}
 
@@ -89,12 +89,12 @@ export default function TddViewer() {
         </div>
       )}
 
-      {/* TDD Content */}
+      {/* CAB Content */}
       {!loading && !error && content && (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-100 px-6 py-3 flex items-center gap-2">
             <FileText className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-semibold text-slate-700">Technical Design Document</span>
+            <span className="text-sm font-semibold text-slate-700">Cloud Architecture Blueprint</span>
             <span className="ml-auto text-xs text-slate-400">Read-only view</span>
           </div>
           <div className="px-8 py-6">

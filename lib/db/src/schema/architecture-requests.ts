@@ -30,7 +30,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
 
   // Status lifecycle:
   // submitted → ea_triage → ea_approved | ea_rejected
-  //   → tdd_in_progress → tdd_completed
+  //   → cab_in_progress → cab_completed (status values unchanged for DB compat)
   //     → devsecops_approved | devsecops_rejected
   //       → observability_approved
   //         → finops_active
@@ -48,10 +48,10 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   riskReviewedAt: timestamp("risk_reviewed_at"),
   riskComments: text("risk_comments"),
 
-  // Phase 3 — Cloud Architect / TDD
+  // Phase 3 — Cloud Architect / CAB
   caAssigneeId: integer("ca_assignee_id"),
   caAssigneeName: text("ca_assignee_name"),
-  tddSubmissionId: integer("tdd_submission_id"),
+  cabSubmissionId: integer("cab_submission_id"),
 
   // Phase 4 — DevSecOps / IaC
   devsecopsApproverId: integer("devsecops_approver_id"),
@@ -68,8 +68,8 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   finopsActivatedAt: timestamp("finops_activated_at"),
   finopsActivatedBy: text("finops_activated_by"),
 
-  // Partial form data pre-fill for TDD wizard (populated from request on approval)
-  tddFormData: jsonb("tdd_form_data"),
+  // Partial form data pre-fill for CAB wizard (populated from request on approval)
+  cabFormData: jsonb("cab_form_data"),
 
   // AI-driven routing classification set at submission time
   aiClassification: text("ai_classification"),       // 'simple' | 'complex'
@@ -93,14 +93,14 @@ export const insertArchitectureRequestSchema = createInsertSchema(architectureRe
   riskComments: true,
   caAssigneeId: true,
   caAssigneeName: true,
-  tddSubmissionId: true,
+  cabSubmissionId: true,
   devsecopsApproverId: true,
   devsecopsApproverName: true,
   devsecopsApprovedAt: true,
   devsecopsComments: true,
   finopsActivatedAt: true,
   finopsActivatedBy: true,
-  tddFormData: true,
+  cabFormData: true,
   status: true,
 });
 
@@ -112,8 +112,8 @@ export type RequestStatus =
   | "ea_approved"
   | "ea_rejected"
   | "modification_requested"
-  | "tdd_in_progress"
-  | "tdd_completed"
+  | "cab_in_progress"
+  | "cab_completed"
   | "devsecops_approved"
   | "devsecops_rejected"
   | "observability_approved"

@@ -4,7 +4,7 @@ import { requireRole } from "../../middleware/authenticate.js";
 
 const router: IRouter = Router();
 
-// GET /api/tdd/diagnostics — admin/architect only: test Azure OpenAI connectivity
+// GET /api/cab/diagnostics — admin/architect only: test Azure OpenAI connectivity
 router.get("/diagnostics", requireRole("admin", "cloud_architect", "enterprise_architect"), async (req, res) => {
   const result: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
@@ -47,7 +47,7 @@ router.get("/diagnostics", requireRole("admin", "cloud_architect", "enterprise_a
     result.usage = response.usage;
     result.diagnosis = "Azure OpenAI connection is working correctly.";
 
-    req.log.info({ model, latencyMs }, "TDD diagnostics: connection OK");
+    req.log.info({ model, latencyMs }, "CAB diagnostics: connection OK");
     res.json(result);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -68,7 +68,7 @@ router.get("/diagnostics", requireRole("admin", "cloud_architect", "enterprise_a
       result.diagnosis = "Unexpected error — see the error field above. Check Container App logs for more details.";
     }
 
-    req.log.error({ err, msg }, "TDD diagnostics: connection failed");
+    req.log.error({ err, msg }, "CAB diagnostics: connection failed");
     res.status(200).json(result); // 200 so the UI can read the diagnosis
   }
 });

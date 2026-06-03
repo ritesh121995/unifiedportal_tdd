@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TddExportRequestFormat =
-  (typeof TddExportRequestFormat)[keyof typeof TddExportRequestFormat];
+export type CabExportRequestFormat =
+  (typeof CabExportRequestFormat)[keyof typeof CabExportRequestFormat];
 
-export const TddExportRequestFormat = {
+export const CabExportRequestFormat = {
   pdf: "pdf",
   docx: "docx",
 } as const;

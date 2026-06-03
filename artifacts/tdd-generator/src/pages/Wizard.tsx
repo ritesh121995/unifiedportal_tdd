@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import {
   type NamingPreviewResponse,
   type NamingConvention,
   type SubnetInfo,
-  type TddFormData,
+  type CabFormData,
 } from "@workspace/api-client-react";
 import { ChevronRight, ChevronLeft, Check, FileText, Server, Users, Layers, ShieldCheck, UploadCloud, X, ImageIcon } from "lucide-react";
 
@@ -273,8 +273,8 @@ export default function Wizard() {
             .filter((r) => ["canadacentral", "canadaeast"].includes(r));
           form.setValue("azureRegions", normalized.length ? normalized : ["canadacentral"]);
         }
-        // Pre-fill workloadTier / HA / DR from tddFormData saved at request submission
-        const tdd = request.tddFormData as { workloadTier?: string; haEnabled?: boolean; drEnabled?: boolean } | null;
+        // Pre-fill workloadTier / HA / DR from cabFormData saved at request submission
+        const tdd = request.cabFormData as { workloadTier?: string; haEnabled?: boolean; drEnabled?: boolean } | null;
         if (tdd?.workloadTier && ["Tier 0","Tier 1","Tier 2","Tier 3"].includes(tdd.workloadTier)) {
           form.setValue("workloadTier", tdd.workloadTier as "Tier 0"|"Tier 1"|"Tier 2"|"Tier 3");
         }
@@ -329,8 +329,8 @@ export default function Wizard() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Generate Technical Design Document</h2>
-        <p className="text-slate-500 mt-1">Complete the intake form to generate a structured Azure TDD.</p>
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Generate Cloud Architecture Blueprint</h2>
+        <p className="text-slate-500 mt-1">Complete the intake form to generate a structured Azure CAB.</p>
       </div>
 
       {/* Re-generate shortcut — shown when returning from Preview with a filled draft */}
@@ -339,7 +339,7 @@ export default function Wizard() {
           <div className="flex-1">
             <p className="text-sm font-semibold text-yellow-900">Draft from previous generation detected</p>
             <p className="text-xs text-yellow-700 mt-0.5">
-              Form data for <strong>{formData.applicationName}</strong> is pre-filled. You can re-generate the TDD immediately or edit steps below first.
+              Form data for <strong>{formData.applicationName}</strong> is pre-filled. You can re-generate the CAB immediately or edit steps below first.
             </p>
           </div>
           <Button
@@ -349,7 +349,7 @@ export default function Wizard() {
             onClick={() => form.handleSubmit(onSubmit)()}
           >
             <FileText className="w-4 h-4 mr-2" />
-            Re-generate TDD
+            Re-generate CAB
           </Button>
         </div>
       )}
@@ -708,7 +708,7 @@ export default function Wizard() {
                     <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
                   </label>
                   <p className="text-xs text-slate-500 mb-3">
-                    Upload an existing diagram (PNG, JPG, GIF, WebP). The AI will analyze it to produce a more accurate architecture section. The image will also be embedded in section 6.2 of the TDD.
+                    Upload an existing diagram (PNG, JPG, GIF, WebP). The AI will analyze it to produce a more accurate architecture section. The image will also be embedded in section 6.2 of the CAB.
                   </p>
 
                   {diagramBase64 ? (
@@ -864,7 +864,7 @@ export default function Wizard() {
                   <p className="text-slate-500 max-w-md">Your configuration has been validated. Generating the document will stream the results live so you can see the architecture take shape.</p>
                   
                   <Button type="submit" size="lg" className="mt-4 w-full md:w-auto px-12 h-14 text-lg">
-                    Generate TDD Document
+                    Generate CAB Document
                   </Button>
                 </div>
               </div>
@@ -997,7 +997,7 @@ function NamingPreviewPanel({ appName, org, lob, envs, region }: { appName: stri
       setIsLoading(true);
       setFetchError(null);
       try {
-        const res = await fetch(`${getApiBase()}/api/tdd/naming-preview`, {
+        const res = await fetch(`${getApiBase()}/api/cab/naming-preview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1067,3 +1067,5 @@ function NamingPreviewPanel({ appName, org, lob, envs, region }: { appName: stri
     </div>
   );
 }
+
+

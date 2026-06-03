@@ -10,7 +10,7 @@ import { authenticate } from "../../middleware/authenticate.js";
 
 const router: IRouter = Router();
 
-// All TDD routes require a valid session — protects expensive OpenAI calls.
+// All CAB routes require a valid session — protects expensive OpenAI calls.
 router.use(authenticate);
 
 router.use(generateRouter);

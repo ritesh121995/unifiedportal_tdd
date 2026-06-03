@@ -9,8 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
-  - name: tdd
-    description: TDD document generation
+  - name: cab
+    description: CAB document generation
 paths:
   /healthz:
     get:
@@ -25,44 +25,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
-  /tdd/generate:
+  /cab/generate:
     post:
-      operationId: generateTdd
-      tags: [tdd]
-      summary: Generate a TDD document from form data
+      operationId: generateCab
+      tags: [cab]
+      summary: Generate a CAB document from form data
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TddFormData"
+              $ref: "#/components/schemas/CabFormData"
       responses:
         "200":
-          description: SSE stream of generated TDD content
+          description: SSE stream of generated CAB content
           content:
             text/event-stream: {}
-  /tdd/export:
+  /cab/export:
     post:
-      operationId: exportTdd
-      tags: [tdd]
-      summary: Export a generated TDD document as PDF or Word
+      operationId: exportCab
+      tags: [cab]
+      summary: Export a generated CAB document as PDF or Word
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TddExportRequest"
+              $ref: "#/components/schemas/CabExportRequest"
       responses:
         "200":
           description: Exported document file (base64 encoded)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TddExportResponse"
-  /tdd/subnet-analysis:
+                $ref: "#/components/schemas/CabExportResponse"
+  /cab/subnet-analysis:
     post:
       operationId: analyzeCidr
-      tags: [tdd]
+      tags: [cab]
       summary: Analyze a CIDR block and recommend subnets
       requestBody:
         required: true
@@ -77,10 +77,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CidrAnalysisResponse"
-  /tdd/naming-preview:
+  /cab/naming-preview:
     post:
       operationId: previewNaming
-      tags: [tdd]
+      tags: [cab]
       summary: Preview resource naming conventions based on form values
       requestBody:
         required: true
@@ -104,7 +104,7 @@ components:
           type: string
       required:
         - status
-    TddFormData:
+    CabFormData:
       type: object
       properties:
         infrastructureSupportManager:
@@ -232,12 +232,12 @@ components:
         - applicationFlow
         - applicationOverview
         - applicationType
-    TddExportRequest:
+    CabExportRequest:
       type: object
       properties:
         content:
           type: string
-          description: The markdown content of the generated TDD
+          description: The markdown content of the generated CAB
         format:
           type: string
           enum: [pdf, docx]
@@ -247,7 +247,7 @@ components:
         - content
         - format
         - applicationName
-    TddExportResponse:
+    CabExportResponse:
       type: object
       properties:
         fileBase64:

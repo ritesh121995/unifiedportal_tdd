@@ -32,7 +32,7 @@ Behavior:
 
 - User sees `/login` style screen in SPA.
 - Login calls `POST /api/auth/login`.
-- Backend returns JWT; frontend stores token and uses it for `/api/tdd/*`.
+- Backend returns JWT; frontend stores token and uses it for `/api/cab/*`.
 
 ---
 
@@ -50,7 +50,7 @@ You can use one app registration for both frontend and backend API audience, but
 ### SPA registration
 
 1. Azure Portal -> Microsoft Entra ID -> App registrations -> New registration
-2. Name: `tdd-generator-spa`
+2. Name: `cab-generator-spa`
 3. Redirect URI type: **Single-page application (SPA)**
 4. Redirect URI values:
    - `https://<your-webapp>.azurewebsites.net`
@@ -58,19 +58,19 @@ You can use one app registration for both frontend and backend API audience, but
 
 ### API registration
 
-1. Create another app registration named `tdd-generator-api`
+1. Create another app registration named `cab-generator-api`
 2. Go to **Expose an API**
 3. Set Application ID URI, for example:
    - `api://<API_CLIENT_ID>`
 4. Add scope:
-   - Scope name: `tdd.generate`
-   - Admin consent display name: `Generate TDD documents`
+   - Scope name: `cab.generate`
+   - Admin consent display name: `Generate CAB documents`
 
 ### Grant permissions from SPA to API
 
 1. Open SPA app -> API permissions -> Add a permission
-2. My APIs -> select `tdd-generator-api`
-3. Select delegated permission `tdd.generate`
+2. My APIs -> select `cab-generator-api`
+3. Select delegated permission `cab.generate`
 4. Grant admin consent
 
 ### 2) Configure frontend environment variables

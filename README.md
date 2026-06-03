@@ -1,6 +1,6 @@
 # McCain Unified Onboarding Portal
 
-An enterprise Azure cloud infrastructure governance platform that manages the end-to-end lifecycle of cloud onboarding requests — from submission through EA review, TDD generation, DevSecOps approval, and FinOps activation.
+An enterprise Azure cloud infrastructure governance platform that manages the end-to-end lifecycle of cloud onboarding requests — from submission through EA review, CAB generation, DevSecOps approval, and FinOps activation.
 
 ---
 
@@ -16,20 +16,20 @@ flowchart TB
     subgraph SPA["React SPA — Vite · Tailwind · Radix UI"]
         F1["Dashboard · Submit Request · Request List"]
         F2["Request Detail — all workflow phases"]
-        F3["TDD Wizard · TDD Preview · TDD Viewer"]
+        F3["CAB Wizard · CAB Preview · CAB Viewer"]
         F4["Integrations · Admin Users"]
     end
 
     subgraph ACA["Azure Container App — test1995 · Port 8080"]
-        API["Express REST API — Node 22\n/api/auth    — JWT · httpOnly cookie · 8h\n/api/requests — Workflow engine · AI classify\n/api/tdd      — Generate · Export · SSE\n/api/iac      — Deploy · status poll\n/api/users    — Admin CRUD\n/api/healthz  — Liveness probe"]
+        API["Express REST API — Node 22\n/api/auth    — JWT · httpOnly cookie · 8h\n/api/requests — Workflow engine · AI classify\n/api/cab      — Generate · Export · SSE\n/api/iac      — Deploy · status poll\n/api/users    — Admin CRUD\n/api/healthz  — Liveness probe"]
     end
 
     subgraph DATA["Data Layer"]
-        PG[("PostgreSQL 16\narchitecture_requests\ntdd_submissions\nrequest_events\nusers · settings")]
+        PG[("PostgreSQL 16\narchitecture_requests\ncab_submissions\nrequest_events\nusers · settings")]
     end
 
     subgraph AI["Azure OpenAI — gpt-4o"]
-        AOAI["Classify: simple vs complex\nStream TDD — 8 sections via SSE\nSection regeneration\nConnection diagnostics"]
+        AOAI["Classify: simple vs complex\nStream CAB — 8 sections via SSE\nSection regeneration\nConnection diagnostics"]
     end
 
     subgraph IAC["IaC Target"]
@@ -46,8 +46,8 @@ flowchart TB
         S1([submitted]) -->|AI complex| S2([ea_triage])
         S1 -->|AI simple| S3([ea_approved])
         S2 -->|EA approves| S3
-        S3 --> S4([tdd_in_progress])
-        S4 --> S5([tdd_completed])
+        S3 --> S4([cab_in_progress])
+        S4 --> S5([cab_completed])
         S5 --> S6([devsecops_approved])
         S6 --> S7([finops_active])
     end
@@ -85,7 +85,7 @@ flowchart TB
 | Role | Capabilities |
 |------|-------------|
 | `requestor` | Submit requests · view own requests · clone |
-| `cloud_architect` | TDD generation · risk review · DevSecOps/IaC · deploy to Azure |
+| `cloud_architect` | CAB generation · risk review · DevSecOps/IaC · deploy to Azure |
 | `enterprise_architect` | EA triage & review · FinOps activation · CSV export |
 | `admin` | All of the above · user management · portal settings |
 
@@ -94,7 +94,7 @@ flowchart TB
 ## Request Workflow
 
 ```
-submitted → ea_triage → ea_approved → tdd_in_progress → tdd_completed → devsecops_approved → finops_active
+submitted → ea_triage → ea_approved → cab_in_progress → cab_completed → devsecops_approved → finops_active
                 ↑                          ↑
          AI: complex              AI: simple fast-tracks
                                   directly to ea_approved
@@ -147,3 +147,5 @@ pnpm start
 ## Deployment
 
 Pushes to `main` trigger GitHub Actions which builds the Docker image and pushes to Azure Container Registry (`testregistry1995.azurecr.io`), then updates the Container App (`test1995`, RG: `Rishi_RG`).
+
+

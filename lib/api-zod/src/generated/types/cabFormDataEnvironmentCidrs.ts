@@ -9,4 +9,4 @@
 /**
  * Per-environment CIDR blocks keyed by environment name (e.g. Dev, QA, Prod)
  */
-export type TddFormDataEnvironmentCidrs = { [key: string]: string };
+export type CabFormDataEnvironmentCidrs = { [key: string]: string };

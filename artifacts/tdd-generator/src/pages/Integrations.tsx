@@ -133,7 +133,7 @@ export default function Integrations() {
     setAiDiagnosing(true);
     setAiDiagnostic(null);
     try {
-      const r = await fetch(`${getApiBase()}/api/tdd/diagnostics`, { credentials: "include" });
+      const r = await fetch(`${getApiBase()}/api/cab/diagnostics`, { credentials: "include" });
       const d = await r.json() as AiDiagnosticResult;
       setAiDiagnostic(d);
     } catch {
@@ -250,7 +250,7 @@ export default function Integrations() {
             <ul className="list-disc list-inside space-y-0.5 text-blue-700">
               <li>A new Architecture Review Request is submitted</li>
               <li>EA approves or rejects a request</li>
-              <li>TDD generation completes</li>
+              <li>CAB generation completes</li>
               <li>IaC deployment starts or finishes</li>
               <li>DevSecOps / FinOps activation</li>
             </ul>
@@ -369,7 +369,7 @@ export default function Integrations() {
             <div className="space-y-1.5">
               <Label>Space Key</Label>
               <Input placeholder="MCCAIN" value={confluenceSpaceKey} onChange={(e) => setConfluenceSpaceKey(e.target.value)} />
-              <p className="text-xs text-slate-400">The Confluence space where TDDs will be published (e.g. MCCAIN, CCoE)</p>
+              <p className="text-xs text-slate-400">The Confluence space where CABs will be published (e.g. MCCAIN, CCoE)</p>
             </div>
             <div className="space-y-1.5">
               <Label>Parent Page ID <span className="text-slate-400 font-normal">(optional)</span></Label>
@@ -415,10 +415,10 @@ export default function Integrations() {
             )}
           </div>
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-800 space-y-1">
-            <p className="font-medium">How TDD publishing works</p>
+            <p className="font-medium">How CAB publishing works</p>
             <ol className="list-decimal list-inside space-y-0.5 text-blue-700">
-              <li>Cloud Architect completes the sign-off review on the TDD</li>
-              <li>Click "Publish to Confluence" on the TDD page</li>
+              <li>Cloud Architect completes the sign-off review on the CAB</li>
+              <li>Click "Publish to Confluence" on the CAB page</li>
               <li>The portal converts the markdown document to Confluence HTML and creates a new page in the configured space</li>
               <li>A link to the published page is returned and shown inline</li>
             </ol>
@@ -501,7 +501,7 @@ export default function Integrations() {
             </div>
             <div>
               <CardTitle className="text-base">Azure OpenAI — Connection Diagnostics</CardTitle>
-              <CardDescription>Test whether the TDD generator can reach your Azure OpenAI deployment</CardDescription>
+              <CardDescription>Test whether the CAB generator can reach your Azure OpenAI deployment</CardDescription>
             </div>
           </div>
         </CardHeader>

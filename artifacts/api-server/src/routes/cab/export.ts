@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { ExportTddBody } from "@workspace/api-zod";
+import { ExportCabBody } from "@workspace/api-zod";
 import { and, desc, eq } from "drizzle-orm";
 import {
   Document,
@@ -17,12 +17,12 @@ import { uploadBufferBlob } from "../../lib/blob-storage";
 
 const router: IRouter = Router();
 
-interface TddPersistenceContext {
+interface CabPersistenceContext {
   db: typeof import("@workspace/db").db;
-  tddSubmissionsTable: typeof import("@workspace/db").tddSubmissionsTable;
+  cabSubmissionsTable: typeof import("@workspace/db").cabSubmissionsTable;
 }
 
-async function loadTddPersistenceContext(): Promise<TddPersistenceContext | null> {
+async function loadCabPersistenceContext(): Promise<TddPersistenceContext | null> {
   if (!process.env.DATABASE_URL) {
     return null;
   }
@@ -31,7 +31,7 @@ async function loadTddPersistenceContext(): Promise<TddPersistenceContext | null
     const dbModule = await import("@workspace/db");
     return {
       db: dbModule.db,
-      tddSubmissionsTable: dbModule.tddSubmissionsTable,
+      cabSubmissionsTable: dbModule.cabSubmissionsTable,
     };
   } catch {
     return null;
@@ -53,15 +53,15 @@ async function findSubmissionIdForExport(
   content: string,
 ): Promise<number | null> {
   const exactRows = await context.db
-    .select({ id: context.tddSubmissionsTable.id })
-    .from(context.tddSubmissionsTable)
+    .select({ id: context.cabSubmissionsTable.id })
+    .from(context.cabSubmissionsTable)
     .where(
       and(
-        eq(context.tddSubmissionsTable.applicationName, applicationName),
-        eq(context.tddSubmissionsTable.generatedContent, content),
+        eq(context.cabSubmissionsTable.applicationName, applicationName),
+        eq(context.cabSubmissionsTable.generatedContent, content),
       ),
     )
-    .orderBy(desc(context.tddSubmissionsTable.id))
+    .orderBy(desc(context.cabSubmissionsTable.id))
     .limit(1);
 
   const exactMatchId = exactRows.at(0)?.id ?? null;
@@ -73,15 +73,15 @@ async function findSubmissionIdForExport(
   // due to client-side normalization. In that case, bind export to the latest
   // completed submission for the same application.
   const latestCompletedRows = await context.db
-    .select({ id: context.tddSubmissionsTable.id })
-    .from(context.tddSubmissionsTable)
+    .select({ id: context.cabSubmissionsTable.id })
+    .from(context.cabSubmissionsTable)
     .where(
       and(
-        eq(context.tddSubmissionsTable.applicationName, applicationName),
-        eq(context.tddSubmissionsTable.status, "completed"),
+        eq(context.cabSubmissionsTable.applicationName, applicationName),
+        eq(context.cabSubmissionsTable.status, "completed"),
       ),
     )
-    .orderBy(desc(context.tddSubmissionsTable.id))
+    .orderBy(desc(context.cabSubmissionsTable.id))
     .limit(1);
 
   return latestCompletedRows.at(0)?.id ?? null;
@@ -107,9 +107,9 @@ async function updateSubmissionBlobPath(
         };
 
   await context.db
-    .update(context.tddSubmissionsTable)
+    .update(context.cabSubmissionsTable)
     .set(updateValues)
-    .where(eq(context.tddSubmissionsTable.id, submissionId));
+    .where(eq(context.cabSubmissionsTable.id, submissionId));
 }
 
 function parseMarkdownToDocx(markdown: string, appName: string): Document {
@@ -224,9 +224,9 @@ function parseMarkdownToDocx(markdown: string, appName: string): Document {
   }
 
   return new Document({
-    creator: "Azure TDD Generator",
-    title: `Azure TDD - ${appName}`,
-    description: `Technical Design Document for ${appName}`,
+    creator: "Azure CAB Generator",
+    title: `Azure CAB - ${appName}`,
+    description: `Cloud Architecture Blueprint for ${appName}`,
     styles: {
       paragraphStyles: [
         {
@@ -285,7 +285,7 @@ function parseInlineText(text: string): TextRun[] {
 }
 
 router.post("/export", async (req, res) => {
-  const parseResult = ExportTddBody.safeParse(req.body);
+  const parseResult = ExportCabBody.safeParse(req.body);
   if (!parseResult.success) {
     res.status(400).json({ error: "Invalid request body" });
     return;
@@ -294,7 +294,7 @@ router.post("/export", async (req, res) => {
   const { content, format, applicationName } = parseResult.data;
 
   try {
-    const persistence = await loadTddPersistenceContext();
+    const persistence = await loadCabPersistenceContext();
     const submissionId = persistence
       ? await findSubmissionIdForExport(persistence, applicationName, content)
       : null;
@@ -303,7 +303,7 @@ router.post("/export", async (req, res) => {
       const doc = parseMarkdownToDocx(content, applicationName);
       const buffer = await Packer.toBuffer(doc);
       const base64 = buffer.toString("base64");
-      const fileName = `TDD_${applicationName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.docx`;
+      const fileName = `CAB_${applicationName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.docx`;
       let blobPath: string | null = null;
 
       const trackingKey =
@@ -311,7 +311,7 @@ router.post("/export", async (req, res) => {
           ? String(submissionId)
           : `untracked-${Date.now()}-${sanitizeBlobSegment(applicationName)}`;
       const uploadResult = await uploadBufferBlob(
-        `tdd/${trackingKey}/${fileName}`,
+        `cab/${trackingKey}/${fileName}`,
         buffer,
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       );
@@ -417,7 +417,7 @@ router.post("/export", async (req, res) => {
 
       const pdfBytes = await pdfDoc.save();
       const base64 = Buffer.from(pdfBytes).toString("base64");
-      const fileName = `TDD_${applicationName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
+      const fileName = `CAB_${applicationName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
       let blobPath: string | null = null;
 
       const trackingKey =
@@ -425,7 +425,7 @@ router.post("/export", async (req, res) => {
           ? String(submissionId)
           : `untracked-${Date.now()}-${sanitizeBlobSegment(applicationName)}`;
       const uploadResult = await uploadBufferBlob(
-        `tdd/${trackingKey}/${fileName}`,
+        `cab/${trackingKey}/${fileName}`,
         Buffer.from(pdfBytes),
         "application/pdf",
       );
@@ -454,7 +454,7 @@ router.post("/export", async (req, res) => {
       });
     }
   } catch (err) {
-    req.log.error({ err }, "Error exporting TDD");
+    req.log.error({ err }, "Error exporting CAB");
     res.status(500).json({ error: "Failed to export document" });
   }
 });

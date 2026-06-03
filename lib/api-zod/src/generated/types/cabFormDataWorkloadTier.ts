@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TddFormDataWorkloadTier =
-  (typeof TddFormDataWorkloadTier)[keyof typeof TddFormDataWorkloadTier];
+export type CabFormDataWorkloadTier =
+  (typeof CabFormDataWorkloadTier)[keyof typeof CabFormDataWorkloadTier];
 
-export const TddFormDataWorkloadTier = {
+export const CabFormDataWorkloadTier = {
   Tier_0: "Tier 0",
   Tier_1: "Tier 1",
   Tier_2: "Tier 2",

@@ -20,7 +20,7 @@ import { getApiBase } from "@/lib/api-base";
 import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge";
 import { computeArchitectRecommendations, computeRisksAndInsights, computeArchitecturePattern, type FormSnapshot } from "@/lib/architect-utils";
 
-interface StoredTddFormData {
+interface StoredCabFormData {
   workflowType?: string;         // 'sandbox' | 'development' | 'standard'
   businessCriticality?: string;
   solutionArchitecture?: string;
@@ -57,7 +57,7 @@ interface StoredTddFormData {
   rto?: string;
   rpo?: string;
   environmentCidrs?: Record<string, string>;
-  // Impact assessment fields (stored in tddFormData JSON blob)
+  // Impact assessment fields (stored in cabFormData JSON blob)
   securityImpact?: string;
   dataImpact?: string;
   integrationImpact?: string;
@@ -117,7 +117,7 @@ interface ArchitectureRequest {
   riskComments: string | null;
   // Phase 3
   caAssigneeName: string | null;
-  tddSubmissionId: number | null;
+  cabSubmissionId: number | null;
   // Phase 4
   devsecopsApproverName: string | null;
   devsecopsApprovedAt: string | null;
@@ -129,7 +129,7 @@ interface ArchitectureRequest {
   // Phase 6
   finopsActivatedAt: string | null;
   finopsActivatedBy: string | null;
-  tddFormData: StoredTddFormData | null;
+  cabFormData: StoredCabFormData | null;
   aiClassification: string | null;
   aiClassificationReason: string | null;
   createdAt: string;
@@ -174,8 +174,8 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
   modification_requested:   AlertTriangle,
   risk_approved:            ShieldCheck,
   risk_rejected:            ShieldX,
-  tdd_started:              Play,
-  tdd_completed:            Flag,
+  cab_started:              Play,
+  cab_completed:            Flag,
   devsecops_approved:       Code2,
   devsecops_rejected:       ShieldX,
   finops_active:            DollarSign,
@@ -198,8 +198,8 @@ const EVENT_COLORS: Record<string, string> = {
   modification_requested:   "bg-amber-100 text-amber-600 border-amber-200",
   risk_approved:            "bg-teal-100 text-teal-600 border-teal-200",
   risk_rejected:            "bg-red-100 text-red-600 border-red-200",
-  tdd_started:              "bg-blue-100 text-blue-600 border-blue-200",
-  tdd_completed:            "bg-purple-100 text-purple-600 border-purple-200",
+  cab_started:              "bg-blue-100 text-blue-600 border-blue-200",
+  cab_completed:            "bg-purple-100 text-purple-600 border-purple-200",
   devsecops_approved:       "bg-indigo-100 text-indigo-600 border-indigo-200",
   devsecops_rejected:       "bg-red-100 text-red-600 border-red-200",
   finops_active:            "bg-emerald-100 text-emerald-600 border-emerald-200",
@@ -323,9 +323,9 @@ export default function RequestDetail() {
   const [cloningRequest, setCloningRequest] = useState(false);
 
   // Phase 3 IaC state
-  const [iacTddContent, setIacTddContent] = useState("");
-  const [iacTddLoading, setIacTddLoading] = useState(false);
-  const [iacTddError, setIacTddError] = useState<string | null>(null);
+  const [iacCabContent, setIacTddContent] = useState("");
+  const [iacCabLoading, setIacTddLoading] = useState(false);
+  const [iacCabError, setIacTddError] = useState<string | null>(null);
   const [iacSelectedServices, setIacSelectedServices] = useState<string[]>([]);
   const [iacDeployFormOpen, setIacDeployFormOpen] = useState(false);
   const [iacDeployPassword, setIacDeployPassword] = useState("");
@@ -365,7 +365,7 @@ export default function RequestDetail() {
       setEaComments(req?.eaComments ?? "");
       setEvents(evtData.events ?? []);
       // Pre-populate CIDRs: prefer saved values, fall back to defaults per environment
-      const saved = req?.tddFormData?.environmentCidrs;
+      const saved = req?.cabFormData?.environmentCidrs;
       if (saved && typeof saved === "object" && Object.keys(saved).length > 0) {
         setCidrs(saved as Record<string, string>);
       } else {
@@ -377,21 +377,21 @@ export default function RequestDetail() {
         if (Object.keys(auto).length > 0) setCidrs(auto);
       }
       // Auto-pre-select domain architect checkboxes only if EA hasn't reviewed yet
-      if (req && ["submitted", "ea_triage"].includes(req.status) && req.tddFormData) {
+      if (req && ["submitted", "ea_triage"].includes(req.status) && req.cabFormData) {
         const snap: FormSnapshot = {
           deploymentModel:          req.deploymentModel          ?? "",
-          networkPosture:           req.tddFormData?.networkPosture           ?? "",
-          securityImpact:           req.tddFormData?.securityImpact           ?? "",
-          dataImpact:               req.tddFormData?.dataImpact               ?? "",
-          integrationImpact:        req.tddFormData?.integrationImpact        ?? "",
-          regulatoryImpact:         req.tddFormData?.regulatoryImpact         ?? "",
-          aiImpact:                 req.tddFormData?.aiImpact                 ?? "",
-          haEnabled:                req.tddFormData?.haEnabled                ?? false,
-          drEnabled:                req.tddFormData?.drEnabled                ?? false,
-          securityAssessmentRequired: req.tddFormData?.securityAssessmentRequired ?? false,
-          integrationRequired:      req.tddFormData?.integrationRequired      ?? false,
-          costTShirtSize:           req.tddFormData?.costTShirtSize           ?? "",
-          businessCriticality:      req.tddFormData?.businessCriticality      ?? "",
+          networkPosture:           req.cabFormData?.networkPosture           ?? "",
+          securityImpact:           req.cabFormData?.securityImpact           ?? "",
+          dataImpact:               req.cabFormData?.dataImpact               ?? "",
+          integrationImpact:        req.cabFormData?.integrationImpact        ?? "",
+          regulatoryImpact:         req.cabFormData?.regulatoryImpact         ?? "",
+          aiImpact:                 req.cabFormData?.aiImpact                 ?? "",
+          haEnabled:                req.cabFormData?.haEnabled                ?? false,
+          drEnabled:                req.cabFormData?.drEnabled                ?? false,
+          securityAssessmentRequired: req.cabFormData?.securityAssessmentRequired ?? false,
+          integrationRequired:      req.cabFormData?.integrationRequired      ?? false,
+          costTShirtSize:           req.cabFormData?.costTShirtSize           ?? "",
+          businessCriticality:      req.cabFormData?.businessCriticality      ?? "",
           applicationType:          req.applicationType                       ?? "",
         };
         const recs = computeArchitectRecommendations(snap);
@@ -420,23 +420,23 @@ export default function RequestDetail() {
     }
   }, [loading]);
 
-  // Load TDD content when the request is in tdd_completed status (needed for Phase 3 IaC)
+  // Load CAB content when the request is in cab_completed status (needed for Phase 3 IaC)
   useEffect(() => {
-    if (!request || request.status !== "tdd_completed" || !request.tddSubmissionId) return;
+    if (!request || request.status !== "cab_completed" || !request.cabSubmissionId) return;
     setIacTddLoading(true);
     setIacTddError(null);
-    fetch(`${getApiBase()}/api/tdd/submissions/${request.tddSubmissionId}`, { credentials: "include" })
+    fetch(`${getApiBase()}/api/cab/submissions/${request.cabSubmissionId}`, { credentials: "include" })
       .then((r) => r.json())
       .then((d: { submission?: { generatedContent?: string }; error?: string }) => {
-        if (!d.submission) throw new Error(d.error ?? "TDD not found");
+        if (!d.submission) throw new Error(d.error ?? "CAB not found");
         const txt = d.submission.generatedContent ?? "";
         setIacTddContent(txt);
         const detected = detectServicesFromTdd(txt);
         if (detected.length > 0) setIacSelectedServices(detected);
       })
-      .catch((err: unknown) => setIacTddError(err instanceof Error ? err.message : "Failed to load TDD"))
+      .catch((err: unknown) => setIacTddError(err instanceof Error ? err.message : "Failed to load CAB"))
       .finally(() => setIacTddLoading(false));
-  }, [request?.tddSubmissionId, request?.status]);
+  }, [request?.cabSubmissionId, request?.status]);
 
   // Poll deployment status in Phase 3
   useEffect(() => {
@@ -461,18 +461,18 @@ export default function RequestDetail() {
     if (!request) return null;
     return {
       deploymentModel:            request.deploymentModel                        ?? "",
-      networkPosture:             request.tddFormData?.networkPosture            ?? "",
-      securityImpact:             request.tddFormData?.securityImpact            ?? "",
-      dataImpact:                 request.tddFormData?.dataImpact                ?? "",
-      integrationImpact:          request.tddFormData?.integrationImpact         ?? "",
-      regulatoryImpact:           request.tddFormData?.regulatoryImpact          ?? "",
-      aiImpact:                   request.tddFormData?.aiImpact                  ?? "",
-      haEnabled:                  request.tddFormData?.haEnabled                 ?? false,
-      drEnabled:                  request.tddFormData?.drEnabled                 ?? false,
-      securityAssessmentRequired: request.tddFormData?.securityAssessmentRequired ?? false,
-      integrationRequired:        request.tddFormData?.integrationRequired        ?? false,
-      costTShirtSize:             request.tddFormData?.costTShirtSize             ?? "",
-      businessCriticality:        request.tddFormData?.businessCriticality        ?? "",
+      networkPosture:             request.cabFormData?.networkPosture            ?? "",
+      securityImpact:             request.cabFormData?.securityImpact            ?? "",
+      dataImpact:                 request.cabFormData?.dataImpact                ?? "",
+      integrationImpact:          request.cabFormData?.integrationImpact         ?? "",
+      regulatoryImpact:           request.cabFormData?.regulatoryImpact          ?? "",
+      aiImpact:                   request.cabFormData?.aiImpact                  ?? "",
+      haEnabled:                  request.cabFormData?.haEnabled                 ?? false,
+      drEnabled:                  request.cabFormData?.drEnabled                 ?? false,
+      securityAssessmentRequired: request.cabFormData?.securityAssessmentRequired ?? false,
+      integrationRequired:        request.cabFormData?.integrationRequired        ?? false,
+      costTShirtSize:             request.cabFormData?.costTShirtSize             ?? "",
+      businessCriticality:        request.cabFormData?.businessCriticality        ?? "",
       applicationType:            request.applicationType                         ?? "",
     };
   }, [request]);
@@ -615,7 +615,7 @@ export default function RequestDetail() {
     }
   };
 
-  const handleGenerateTDD = async () => {
+  const handleGenerateCAB = async () => {
     if (!request) return;
     setError("");
 
@@ -627,7 +627,7 @@ export default function RequestDetail() {
       return;
     }
 
-    const stored = request.tddFormData ?? {};
+    const stored = request.cabFormData ?? {};
     const VALID_ENVS = ["Dev", "QA", "UAT", "Prod"] as const;
     type ValidEnv = typeof VALID_ENVS[number];
     // "QA/UAT" means a single combined testing environment — treated as "QA"
@@ -677,7 +677,7 @@ export default function RequestDetail() {
       workloadTier:         ((stored.workloadTier ?? "Tier 2") as FormDraft["workloadTier"]),
       haEnabled:            stored.haEnabled ?? false,
       drEnabled:            stored.drEnabled ?? false,
-      // Personnel — use only what was captured in the form; empty = left blank in TDD
+      // Personnel — use only what was captured in the form; empty = left blank in CAB
       businessOwner:                stored.businessOwner              ?? "",
       businessOwnerEmail:           stored.businessOwnerEmail         ?? "",
       itOwner:                      stored.itOwner                    ?? "",
@@ -686,7 +686,7 @@ export default function RequestDetail() {
       infrastructureSupportManager: stored.infrastructureSupportManager ?? "",
       glAccountOwnerEmail:          stored.glAccountOwnerEmail        ?? "",
       categoryOwner:                stored.categoryOwner              ?? "",
-      // Billing — use only what was captured; empty = left blank in TDD
+      // Billing — use only what was captured; empty = left blank in CAB
       billingCompanyCode:     stored.billingCompanyCode     ?? "",
       billingPlant:           stored.billingPlant           ?? "",
       billingCostObject:      stored.billingCostObject      ?? "",
@@ -711,8 +711,8 @@ export default function RequestDetail() {
     setFormData(fullFormData);
     localStorage.setItem("activeRequestId", String(request.id));
 
-    // Mark TDD as in-progress and persist CIDRs
-    await doAction("start-tdd", { environmentCidrs: cidrs });
+    // Mark CAB as in-progress and persist CIDRs
+    await doAction("start-cab", { environmentCidrs: cidrs });
 
     setLocation("/preview");
   };
@@ -750,22 +750,22 @@ export default function RequestDetail() {
   ];
   const isCloudTenant  = request.deploymentModel === "Azure Cloud (McCain Tenant)";
   const isThirdParty   = THIRD_PARTY_MODELS.includes(request.deploymentModel ?? "");
-  const isSandbox      = request.tddFormData?.workflowType === "sandbox";
-  const isDevelopment  = request.tddFormData?.workflowType === "development";
+  const isSandbox      = request.cabFormData?.workflowType === "sandbox";
+  const isDevelopment  = request.cabFormData?.workflowType === "development";
 
-  // Simple app fast-track detection — AI classification takes precedence; fall back to legacy tddFormData field
+  // Simple app fast-track detection — AI classification takes precedence; fall back to legacy cabFormData field
   const isSimpleFastTrack = isCloudTenant && !isSandbox && !isDevelopment && (
     request.aiClassification === "simple" ||
-    (request.tddFormData as Record<string, unknown> | null)?.appComplexity === "Simple"
+    (request.cabFormData as Record<string, unknown> | null)?.appComplexity === "Simple"
   );
 
   const canEAReview    = isEA && ["submitted", "ea_triage"].includes(request.status) && !isSimpleFastTrack && !isSandbox && !isDevelopment;
   const canEATriage    = isEA && request.status === "submitted" && !isSimpleFastTrack && !isSandbox && !isDevelopment;
-  // TDD generation: sandbox skips TDD entirely
-  const canGenerateTDD = isCA && ["ea_approved", "tdd_in_progress"].includes(request.status) && isCloudTenant && !isSandbox;
-  // Only show View TDD when an actual TDD document exists
-  const canViewTDD     = request.status === "tdd_completed" && isCA && !!request.tddSubmissionId;
-  const canDevSecOps   = isCA && request.status === "tdd_completed";
+  // CAB generation: sandbox skips CAB entirely
+  const canGenerateCAB = isCA && ["ea_approved", "cab_in_progress"].includes(request.status) && isCloudTenant && !isSandbox;
+  // Only show View CAB when an actual CAB document exists
+  const canViewCAB     = request.status === "cab_completed" && isCA && !!request.cabSubmissionId;
+  const canDevSecOps   = isCA && request.status === "cab_completed";
   // Sandbox and Development skip Observability and FinOps
   const canObservability = isCA && isCloudTenant && request.status === "devsecops_approved" && !isSandbox && !isDevelopment;
   const canFinOps      = isEA && !isSandbox && !isDevelopment && (
@@ -773,17 +773,17 @@ export default function RequestDetail() {
     (isThirdParty  && request.status === "ea_approved")
   );
   // True when ea_approved but no next action available for the current user/model
-  const noActionAfterApproval = request.status === "ea_approved" && !canGenerateTDD && !canFinOps;
-  // Requestor can view their completed TDD in read-only mode
-  const canRequestorViewTDD = isRequestor &&
-    ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(request.status) &&
-    !!request.tddSubmissionId;
+  const noActionAfterApproval = request.status === "ea_approved" && !canGenerateCAB && !canFinOps;
+  // Requestor can view their completed CAB in read-only mode
+  const canRequestorViewCAB = isRequestor &&
+    ["cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(request.status) &&
+    !!request.cabSubmissionId;
 
   // Phase progress steps — dynamic based on workflow type
   const PHASE_STEPS_CLOUD: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
-    { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
-    { label: "Technical Design",    statuses: ["ea_approved", "tdd_in_progress"], doneStatuses: ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
-    { label: "Infrastructure",      statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Architecture Review", statuses: ["submitted", "ea_triage", "modification_requested"], doneStatuses: ["ea_approved", "ea_rejected", "cab_in_progress", "cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Technical Design",    statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
+    { label: "Infrastructure",      statuses: ["cab_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"] },
     { label: "Observability",       statuses: ["devsecops_approved"], doneStatuses: ["observability_approved", "finops_active"] },
     { label: "Cost Management",     statuses: ["observability_approved"], doneStatuses: ["finops_active"] },
   ];
@@ -792,11 +792,11 @@ export default function RequestDetail() {
     { label: "Cost Management",     statuses: ["ea_approved"], doneStatuses: ["finops_active"] },
   ];
   const PHASE_STEPS_DEV: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
-    { label: "Technical Design", statuses: ["ea_approved", "tdd_in_progress"], doneStatuses: ["tdd_completed", "devsecops_approved", "devsecops_rejected"] },
-    { label: "Infrastructure",   statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
+    { label: "Technical Design", statuses: ["ea_approved", "cab_in_progress"], doneStatuses: ["cab_completed", "devsecops_approved", "devsecops_rejected"] },
+    { label: "Infrastructure",   statuses: ["cab_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
   ];
   const PHASE_STEPS_SANDBOX: { label: string; statuses: string[]; doneStatuses: string[] }[] = [
-    { label: "Deployment", statuses: ["tdd_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
+    { label: "Deployment", statuses: ["cab_completed"], doneStatuses: ["devsecops_approved", "devsecops_rejected"] },
   ];
   const PHASE_STEPS = isSandbox ? PHASE_STEPS_SANDBOX
     : isDevelopment ? PHASE_STEPS_DEV
@@ -926,7 +926,7 @@ export default function RequestDetail() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-bold text-orange-900">Sandbox Environment — Accelerated Path</p>
-              <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-300 rounded-full px-2 py-0.5">No EA Review · No TDD Required</span>
+              <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-300 rounded-full px-2 py-0.5">No EA Review · No CAB Required</span>
             </div>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               This is a Sandbox request. EA review, Technical Design, Observability, and FinOps phases are skipped. A Cloud Architect can proceed directly to Infrastructure Deployment below.
@@ -965,7 +965,7 @@ export default function RequestDetail() {
               {request.status === "ea_approved" && (
                 <span className="text-[10px] font-semibold bg-green-100 text-green-700 border border-green-200 rounded-full px-2 py-0.5">EA Auto-Approved</span>
               )}
-              {request.status === "tdd_in_progress" && (
+              {request.status === "cab_in_progress" && (
                 <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">Technical Design In Progress</span>
               )}
             </div>
@@ -1038,17 +1038,17 @@ export default function RequestDetail() {
             color: "border-blue-400 bg-blue-50",
             icon: <FileText className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />,
             heading: "Technical Design Required — Awaiting Cloud Architect",
-            detail: "Architecture Review is approved. A Cloud Architect must generate the Technical Design Document. As admin you can trigger Technical Design generation directly.",
-            anchor: "#tdd-action-section",
+            detail: "Architecture Review is approved. A Cloud Architect must generate the Cloud Architecture Blueprint. As admin you can trigger Technical Design generation directly.",
+            anchor: "#cab-action-section",
             label: "Go to Technical Design ↓",
-          } : s === "tdd_in_progress" ? {
+          } : s === "cab_in_progress" ? {
             color: "border-blue-300 bg-blue-50",
             icon: <Loader2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />,
             heading: "Technical Design In Progress — Cloud Architect is Generating the Document",
             detail: "A Cloud Architect has started the Technical Design. You can re-generate it if needed.",
-            anchor: "#tdd-action-section",
+            anchor: "#cab-action-section",
             label: "View Technical Design Section ↓",
-          } : s === "tdd_completed" ? {
+          } : s === "cab_completed" ? {
             color: "border-indigo-400 bg-indigo-50",
             icon: <Code2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />,
             heading: "Infrastructure Deployment Approval Required — Awaiting Cloud Architect Sign-off",
@@ -1117,20 +1117,20 @@ export default function RequestDetail() {
 
         // For sandbox/development: skip EA review phase card
         const p1Status: PhaseStatus = isSandbox || isDevelopment ? "skipped"
-          : ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
+          : ["ea_approved", "cab_in_progress", "cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "ea_rejected" ? "rejected"
           : s === "modification_requested" ? "revision"
           : "active";
 
         const p2Status: PhaseStatus = (!isCloudTenant || isSandbox) ? "skipped"
-          : ["tdd_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
-          : ["ea_approved", "tdd_in_progress"].includes(s) ? "active"
+          : ["cab_completed", "devsecops_approved", "devsecops_rejected", "observability_approved", "finops_active"].includes(s) ? "done"
+          : ["ea_approved", "cab_in_progress"].includes(s) ? "active"
           : "pending";
 
         const p3Status: PhaseStatus = !isCloudTenant ? "skipped"
           : ["devsecops_approved", "observability_approved", "finops_active"].includes(s) ? "done"
           : s === "devsecops_rejected" ? "rejected"
-          : s === "tdd_completed" ? "active"
+          : s === "cab_completed" ? "active"
           : "pending";
 
         // Observability is skipped for sandbox and development
@@ -1226,11 +1226,11 @@ export default function RequestDetail() {
                 ? ["Submitted", "Architecture Review", "Technical Design", "Infrastructure", "Observability", "Cost Management"]
                 : ["Submitted", "Architecture Review", "Cost Management"];
               const phaseForStatus: Record<string, number> = isSandbox
-                ? { submitted: 0, tdd_completed: 1, devsecops_approved: 1, devsecops_rejected: 1 }
+                ? { submitted: 0, cab_completed: 1, devsecops_approved: 1, devsecops_rejected: 1 }
                 : isDevelopment
-                ? { submitted: 0, ea_approved: 1, tdd_in_progress: 1, tdd_completed: 2, devsecops_approved: 2, devsecops_rejected: 2 }
+                ? { submitted: 0, ea_approved: 1, cab_in_progress: 1, cab_completed: 2, devsecops_approved: 2, devsecops_rejected: 2 }
                 : isCloudTenant
-                ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, tdd_in_progress: 2, tdd_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, observability_approved: 5, finops_active: 5 }
+                ? { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, cab_in_progress: 2, cab_completed: 3, devsecops_approved: 4, devsecops_rejected: 3, observability_approved: 5, finops_active: 5 }
                 : { submitted: 0, ea_triage: 0, modification_requested: 0, ea_rejected: 0, ea_approved: 1, finops_active: 2 };
               const phaseIdx = phaseForStatus[s] ?? 0;
               const daysSince = Math.floor((Date.now() - new Date(request.createdAt).getTime()) / 86400000);
@@ -1238,7 +1238,7 @@ export default function RequestDetail() {
                 ? (["devsecops_approved", "devsecops_rejected"].includes(s) ? "Completed" : "Cloud Architecture")
                 : s === "modification_requested" ? "You — Action Required"
                 : ["submitted", "ea_triage"].includes(s) ? "Enterprise Architecture"
-                : ["ea_approved", "tdd_in_progress", "tdd_completed", "devsecops_approved"].includes(s) ? "Cloud Architecture"
+                : ["ea_approved", "cab_in_progress", "cab_completed", "devsecops_approved"].includes(s) ? "Cloud Architecture"
                 : s === "observability_approved" ? "Enterprise Architecture"
                 : s === "finops_active" ? "Completed"
                 : s === "ea_rejected" ? "Rejected" : "—";
@@ -1322,10 +1322,10 @@ export default function RequestDetail() {
                   phase={2}
                   title="Technical Design"
                   desc={p2Status === "active"
-                    ? (isAdmin ? "Architecture Review is approved. Generate the Technical Design Document to proceed." : "The Cloud Architect is currently preparing the Technical Design Document.")
+                    ? (isAdmin ? "Architecture Review is approved. Generate the Cloud Architecture Blueprint to proceed." : "The Cloud Architect is currently preparing the Cloud Architecture Blueprint.")
                     : (isAdmin ? "Architecture Review complete — Technical Design can now be started." : "Architecture Review is complete. The Cloud Architect team will begin the Technical Design.")}
                   status={p2Status}
-                  adminContinuePath="#tdd-action-section"
+                  adminContinuePath="#cab-action-section"
                   adminContinueLabel="Generate / Continue Technical Design"
                 />
               ) : isCloudTenant && p3Status !== "done" && p3Status !== "skipped" ? (
@@ -1391,22 +1391,22 @@ export default function RequestDetail() {
       })()}
 
 
-      {/* TDD document available to requestor (view-only) once TDD is completed */}
-      {canRequestorViewTDD && (
+      {/* CAB document available to requestor (view-only) once CAB is completed */}
+      {canRequestorViewCAB && (
         <Card className="border-purple-200 bg-purple-50">
           <CardContent className="p-4 flex items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <FileText className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-purple-800 text-sm">Technical Design Document is ready</p>
+                <p className="font-medium text-purple-800 text-sm">Cloud Architecture Blueprint is ready</p>
                 <p className="text-xs text-purple-600 mt-0.5">
-                  The Cloud Architect has completed the Technical Design Document for your application. You can view it in read-only mode.
+                  The Cloud Architect has completed the Cloud Architecture Blueprint for your application. You can view it in read-only mode.
                 </p>
               </div>
             </div>
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
-              onClick={() => setLocation(`/tdd-view/${request.id}`)}
+              onClick={() => setLocation(`/cab-view/${request.id}`)}
             >
               <FileText className="w-4 h-4 mr-2" />
               View Design Document
@@ -1436,10 +1436,10 @@ export default function RequestDetail() {
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Request Type</p>
                 <p className="text-sm font-medium text-slate-800">{request.applicationType}</p>
               </div>
-              {request.tddFormData?.businessCriticality && (
+              {request.cabFormData?.businessCriticality && (
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Business Criticality</p>
-                  <p className="text-sm font-medium text-slate-800">{request.tddFormData.businessCriticality}</p>
+                  <p className="text-sm font-medium text-slate-800">{request.cabFormData.businessCriticality}</p>
                 </div>
               )}
               <div>
@@ -1454,10 +1454,10 @@ export default function RequestDetail() {
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Priority</p>
                 <p className={`text-sm font-semibold ${PRIORITY_COLORS[request.priority] ?? "text-slate-500"}`}>{request.priority}</p>
               </div>
-              {request.tddFormData?.solutionArchitecture && (
+              {request.cabFormData?.solutionArchitecture && (
                 <div className="col-span-2 sm:col-span-3">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Solution Architecture</p>
-                  <p className="text-sm text-slate-800">{request.tddFormData.solutionArchitecture}</p>
+                  <p className="text-sm text-slate-800">{request.cabFormData.solutionArchitecture}</p>
                 </div>
               )}
             </div>
@@ -1508,10 +1508,10 @@ export default function RequestDetail() {
                   <p className="text-sm font-medium text-slate-800">{request.deploymentModel}</p>
                 </div>
               )}
-              {request.tddFormData?.networkPosture && (
+              {request.cabFormData?.networkPosture && (
                 <div>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Network Posture</p>
-                  <p className="text-sm font-medium text-slate-800">{request.tddFormData.networkPosture}</p>
+                  <p className="text-sm font-medium text-slate-800">{request.cabFormData.networkPosture}</p>
                 </div>
               )}
             </div>
@@ -1841,21 +1841,21 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* Phase 2 — Network CIDR + Generate TDD (Cloud Tenant only) */}
-      {canGenerateTDD && (
-        <Card id="tdd-action-section" className="border-yellow-200 bg-yellow-50">
+      {/* Phase 2 — Network CIDR + Generate CAB (Cloud Tenant only) */}
+      {canGenerateCAB && (
+        <Card id="cab-action-section" className="border-yellow-200 bg-yellow-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Network className="w-4 h-4" style={{ color: "#b49000" }} />
-              Phase 2 — Network Configuration &amp; Technical Design Generation
+              Phase 2 — Network Configuration &amp; CAB Generation
               <span className="ml-auto text-[10px] font-mono text-yellow-700 border border-yellow-300 bg-yellow-50 px-2 py-0.5 rounded">Cloud Architect · 1–2 Hours</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-slate-700">
-              {request.status === "tdd_in_progress"
-                ? "A Technical Design generation was started but not confirmed. Adjust CIDRs if needed, then click Re-generate Technical Design to create a new draft."
-                : "This request has been approved. Network CIDRs have been pre-filled with standard McCain address ranges — adjust if needed, then click Generate Technical Design."}
+              {request.status === "cab_in_progress"
+                ? "A CAB generation was started but not confirmed. Adjust CIDRs if needed, then click Re-generate CAB to create a new draft."
+                : "This request has been approved. Network CIDRs have been pre-filled with standard McCain address ranges — adjust if needed, then click Generate CAB."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {environments.map((env) => (
@@ -1880,14 +1880,14 @@ export default function RequestDetail() {
               className="font-semibold"
               style={{ background: "#FFCD00", color: "#1a1a2e" }}
               disabled={!!actionLoading}
-              onClick={handleGenerateTDD}
+              onClick={handleGenerateCAB}
             >
-              {actionLoading === "start-tdd" ? (
+              {actionLoading === "start-cab" ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
-              ) : request.status === "tdd_in_progress" ? (
-                <><FileText className="w-4 h-4 mr-2" />Re-generate Technical Design</>
+              ) : request.status === "cab_in_progress" ? (
+                <><FileText className="w-4 h-4 mr-2" />Re-generate CAB</>
               ) : (
-                <><FileText className="w-4 h-4 mr-2" />Generate Technical Design</>
+                <><FileText className="w-4 h-4 mr-2" />Generate CAB</>
               )}
             </Button>
           </CardContent>
@@ -1913,23 +1913,23 @@ export default function RequestDetail() {
         </Card>
       )}
 
-      {/* View / Continue TDD */}
-      {canViewTDD && (
-        <Card id="tdd-action-section" className="border-purple-200 bg-purple-50">
+      {/* View / Continue CAB */}
+      {canViewCAB && (
+        <Card id="cab-action-section" className="border-purple-200 bg-purple-50">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="font-medium text-purple-800 text-sm">
-                {request.status === "tdd_completed" ? "Technical Design is complete — Awaiting Infrastructure sign-off" : "Technical Design is in progress"}
+                {request.status === "cab_completed" ? "Cloud Architecture Blueprint is complete — Awaiting Infrastructure sign-off" : "CAB is in progress"}
               </p>
               <p className="text-xs text-purple-600">
-                {request.status === "tdd_completed"
-                  ? "Review the completed Technical Design, then proceed to Infrastructure Deployment approval below"
-                  : "Continue working on the Technical Design Document"}
+                {request.status === "cab_completed"
+                  ? "Review the completed Cloud Architecture Blueprint, then proceed to Infrastructure Deployment approval below"
+                  : "Continue working on the Cloud Architecture Blueprint"}
               </p>
             </div>
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={() => setLocation(`/tdd-view/${request.id}`)}
+              onClick={() => setLocation(`/cab-view/${request.id}`)}
             >
               <FileText className="w-4 h-4 mr-2" />
               View Design Document
@@ -1951,8 +1951,8 @@ export default function RequestDetail() {
           <CardContent className="space-y-5">
             <p className="text-sm text-slate-700">
               {isSandbox
-                ? "Sandbox request — no Technical Design required. Select the Azure services to provision, generate the Terraform IaC, then approve the Infrastructure pipeline."
-                : "Technical Design is complete and reviewed. Select the Azure services detected from the Technical Design, generate the Terraform IaC, then approve the Infrastructure pipeline."}
+                ? "Sandbox request — no CAB required. Select the Azure services to provision, generate the Terraform IaC, then approve the Infrastructure pipeline."
+                : "Technical Design is complete and reviewed. Select the Azure services detected from the Cloud Architecture Blueprint, generate the Terraform IaC, then approve the Infrastructure pipeline."}
             </p>
 
             {/* IaC Service Selection */}
@@ -1962,19 +1962,19 @@ export default function RequestDetail() {
                 Infrastructure as Code — Service Selection
               </h4>
 
-              {iacTddLoading && (
+              {iacCabLoading && (
                 <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Detecting Azure services from Technical Design…
                 </div>
               )}
-              {iacTddError && (
-                <p className="text-sm text-red-600">{iacTddError}</p>
+              {iacCabError && (
+                <p className="text-sm text-red-600">{iacCabError}</p>
               )}
-              {!iacTddLoading && !iacTddError && (
+              {!iacCabLoading && !iacCabError && (
                 <>
                   <AzureServiceSelector
-                    tddContent={iacTddContent}
+                    cabContent={iacCabContent}
                     selectedIds={iacSelectedServices}
                     onChange={setIacSelectedServices}
                   />
@@ -2621,3 +2621,6 @@ export default function RequestDetail() {
     </div>
   );
 }
+
+
+

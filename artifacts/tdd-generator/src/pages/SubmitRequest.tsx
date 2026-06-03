@@ -590,7 +590,7 @@ export default function SubmitRequest() {
     if (workflowType === "sandbox") {
       const steps = [
         { done: true,  label: "Request submitted" },
-        { done: true,  label: "EA review & TDD — skipped for Sandbox" },
+        { done: true,  label: "EA review & CAB — skipped for Sandbox" },
         { done: false, label: "Infrastructure Deployment — awaiting Cloud Architect" },
       ];
       return (
@@ -1266,7 +1266,7 @@ export default function SubmitRequest() {
               color: "border-orange-300 hover:border-orange-400 hover:bg-orange-50",
               badge: "bg-orange-100 text-orange-700",
               badgeText: "No Review Required",
-              desc: "Quick environment for experimentation and testing. No EA review, no TDD — submit basic details and deploy directly.",
+              desc: "Quick environment for experimentation and testing. No EA review, no CAB — submit basic details and deploy directly.",
               steps: ["Submit basic details", "Cloud Architect deploys infrastructure"],
             },
             {
@@ -1372,7 +1372,7 @@ export default function SubmitRequest() {
             <p className="font-bold text-slate-900">{envLabel} Request</p>
             <p className="text-xs text-slate-600">
               {workflowType === "sandbox"
-                ? "No EA review or TDD required — fill in basic details and a Cloud Architect will deploy your environment."
+                ? "No EA review or CAB required — fill in basic details and a Cloud Architect will deploy your environment."
                 : "EA review is skipped — fill in basic details and a Cloud Architect will generate the Technical Design."}
             </p>
           </div>
@@ -1562,7 +1562,7 @@ export default function SubmitRequest() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold text-slate-700">
-                    5. Technical Hints <span className="text-slate-400 text-xs font-normal">(optional — helps generate the TDD)</span>
+                    5. Technical Hints <span className="text-slate-400 text-xs font-normal">(optional — helps generate the CAB)</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">

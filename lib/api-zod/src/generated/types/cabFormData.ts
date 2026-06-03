@@ -5,14 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { TddFormDataApplicationType } from "./tddFormDataApplicationType";
-import type { TddFormDataAzureRegionsItem } from "./tddFormDataAzureRegionsItem";
-import type { TddFormDataEnvironmentCidrs } from "./tddFormDataEnvironmentCidrs";
-import type { TddFormDataEnvironmentsRequiredItem } from "./tddFormDataEnvironmentsRequiredItem";
-import type { TddFormDataNetworkPosture } from "./tddFormDataNetworkPosture";
-import type { TddFormDataWorkloadTier } from "./tddFormDataWorkloadTier";
+import type { CabFormDataApplicationType } from "./cabFormDataApplicationType";
+import type { CabFormDataAzureRegionsItem } from "./cabFormDataAzureRegionsItem";
+import type { CabFormDataEnvironmentCidrs } from "./cabFormDataEnvironmentCidrs";
+import type { CabFormDataEnvironmentsRequiredItem } from "./cabFormDataEnvironmentsRequiredItem";
+import type { CabFormDataNetworkPosture } from "./cabFormDataNetworkPosture";
+import type { CabFormDataWorkloadTier } from "./cabFormDataWorkloadTier";
 
-export interface TddFormData {
+export interface CabFormData {
   infrastructureSupportManager: string;
   applicationSupportManager: string;
   itOwner: string;
@@ -22,7 +22,7 @@ export interface TddFormData {
   lineOfBusiness: string;
   requestorEmail: string;
   applicationName: string;
-  environmentsRequired: TddFormDataEnvironmentsRequiredItem[];
+  environmentsRequired: CabFormDataEnvironmentsRequiredItem[];
   billingCompanyCode: string;
   billingPlant: string;
   billingCostObject: string;
@@ -32,17 +32,17 @@ export interface TddFormData {
   glAccountOwnerEmail: string;
   technologyOwnerEmail: string;
   businessOwnerEmail: string;
-  networkPosture: TddFormDataNetworkPosture;
-  azureRegions: TddFormDataAzureRegionsItem[];
+  networkPosture: CabFormDataNetworkPosture;
+  azureRegions: CabFormDataAzureRegionsItem[];
   keyStakeholders?: string;
   applicationArchitecture: string;
   applicationFlow: string;
   applicationOverview: string;
   networkCidr?: string;
   /** Per-environment CIDR blocks keyed by environment name (e.g. Dev, QA, Prod) */
-  environmentCidrs?: TddFormDataEnvironmentCidrs;
-  applicationType: TddFormDataApplicationType;
-  workloadTier?: TddFormDataWorkloadTier;
+  environmentCidrs?: CabFormDataEnvironmentCidrs;
+  applicationType: CabFormDataApplicationType;
+  workloadTier?: CabFormDataWorkloadTier;
   haEnabled?: boolean;
   drEnabled?: boolean;
   frontendStack?: string;

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface TddExportResponse {
+export interface CabExportResponse {
   fileBase64: string;
   fileName: string;
   mimeType: string;

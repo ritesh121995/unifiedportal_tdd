@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TddFormDataAzureRegionsItem =
-  (typeof TddFormDataAzureRegionsItem)[keyof typeof TddFormDataAzureRegionsItem];
+export type CabFormDataAzureRegionsItem =
+  (typeof CabFormDataAzureRegionsItem)[keyof typeof CabFormDataAzureRegionsItem];
 
-export const TddFormDataAzureRegionsItem = {
+export const CabFormDataAzureRegionsItem = {
   canadacentral: "canadacentral",
   canadaeast: "canadaeast",
 } as const;

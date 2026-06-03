@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { architectureRequestsTable, requestEventsTable, portalSettingsTable } from "@workspace/db/schema";
 import { eq, desc, inArray, and, ne } from "drizzle-orm";
 import { authenticate, requireRole } from "../middleware/authenticate.js";
-import { createOpenAiClientContext, resolveOpenAiModel } from "./tdd/openai-client.js";
+import { createOpenAiClientContext, resolveOpenAiModel } from "./cab/openai-client.js";
 
 interface AiClassificationResult {
   classification: "simple" | "complex";
@@ -23,11 +23,11 @@ async function classifyRequestWithAI(body: {
     const { client, usesAzure } = createOpenAiClientContext();
     const model = resolveOpenAiModel(usesAzure);
 
-    const prompt = `You are an Enterprise Architecture governance assistant at McCain Foods. Classify this cloud infrastructure request as "simple" (fast-track directly to TDD) or "complex" (requires EA review).
+    const prompt = `You are an Enterprise Architecture governance assistant at McCain Foods. Classify this cloud infrastructure request as "simple" (fast-track directly to CAB) or "complex" (requires EA review).
 
 Classification is based solely on impact, scale, and cost — not on environment choice, region count, HA/DR settings, priority, or availability targets.
 
-SIMPLE — fast-track to TDD (none of the complex triggers apply):
+SIMPLE — fast-track to CAB (none of the complex triggers apply):
 - Security impact: None or Low
 - Regulatory impact: None or Low
 - Integration impact: None or Low
@@ -100,8 +100,8 @@ async function sendWebhookNotification(requestTitle: string, actor: string, stat
       ea_rejected: "Rejected by Enterprise Architect",
       risk_approved: "Risk Analysis approved",
       risk_rejected: "Risk Analysis rejected",
-      tdd_in_progress: "TDD generation started",
-      tdd_completed: "TDD completed and reviewed",
+      cab_in_progress: "CAB generation started",
+      cab_completed: "CAB completed and reviewed",
       devsecops_approved: "DevSecOps deployment approved",
       devsecops_rejected: "DevSecOps deployment rejected",
       finops_active: "FinOps monitoring activated",
@@ -344,7 +344,7 @@ router.post("/", requireRole("requestor"), async (req, res) => {
       expectedUserBase: body.expectedUserBase || null,
       targetGoLiveDate: body.targetGoLiveDate || null,
       deploymentModel: body.deploymentModel || "To be defined",
-      tddFormData: {
+      cabFormData: {
         workflowType: (body.workflowType === "sandbox" || body.workflowType === "development") ? body.workflowType : "standard",
         businessCriticality: body.businessCriticality ?? "",
         solutionArchitecture: body.solutionArchitecture ?? "",
@@ -430,29 +430,29 @@ router.post("/", requireRole("requestor"), async (req, res) => {
 
   const wfType = body.workflowType;
 
-  // ── Sandbox: skip EA + TDD, go directly to Infrastructure Deployment ──
+  // ── Sandbox: skip EA + CAB, go directly to Infrastructure Deployment ──
   if (wfType === "sandbox") {
     const [sandboxRow] = await db
       .update(architectureRequestsTable)
       .set({
-        status: "tdd_completed",
+        status: "cab_completed",
         eaReviewerName: "Auto-approved (Sandbox)",
         eaReviewedAt: new Date(),
-        eaComments: "Sandbox environment — EA review, TDD, Observability, and FinOps phases skipped. Ready for direct Infrastructure Deployment.",
+        eaComments: "Sandbox environment — EA review, CAB, Observability, and FinOps phases skipped. Ready for direct Infrastructure Deployment.",
         updatedAt: new Date(),
       })
       .where(eq(architectureRequestsTable.id, row.id))
       .returning();
 
     await logEvent(row.id, "System", "system", "ea_approved",
-      "Sandbox request — bypassed EA review and TDD. Ready for Infrastructure Deployment."
+      "Sandbox request — bypassed EA review and CAB. Ready for Infrastructure Deployment."
     );
-    sendWebhookNotification(row.title, "System (Sandbox)", "tdd_completed", row.id);
+    sendWebhookNotification(row.title, "System (Sandbox)", "cab_completed", row.id);
     res.status(201).json({ request: sandboxRow, workflowType: "sandbox" });
     return;
   }
 
-  // ── Development: skip EA, go directly to TDD generation ──
+  // ── Development: skip EA, go directly to CAB generation ──
   if (wfType === "development") {
     const [devRow] = await db
       .update(architectureRequestsTable)
@@ -496,14 +496,14 @@ router.post("/", requireRole("requestor"), async (req, res) => {
         status: "ea_approved",
         eaReviewerName: "AI Auto-Classification",
         eaReviewedAt: new Date(),
-        eaComments: `AI classified this as a simple request (${aiResult.confidence} confidence) and fast-tracked it to TDD. Reason: ${aiResult.reason}`,
+        eaComments: `AI classified this as a simple request (${aiResult.confidence} confidence) and fast-tracked it to CAB. Reason: ${aiResult.reason}`,
         updatedAt: new Date(),
       })
       .where(eq(architectureRequestsTable.id, row.id))
       .returning();
 
     await logEvent(row.id, "AI System", "system", "ea_approved",
-      `AI classified as Simple (${aiResult.confidence} confidence) — fast-tracked to TDD. ${aiResult.reason}`
+      `AI classified as Simple (${aiResult.confidence} confidence) — fast-tracked to CAB. ${aiResult.reason}`
     );
     sendWebhookNotification(row.title, "AI Auto-Classification", "ea_approved", row.id);
 
@@ -690,7 +690,7 @@ router.post("/:id/clone", requireRole("requestor"), async (req, res) => {
       expectedUserBase: source.expectedUserBase,
       targetGoLiveDate: source.targetGoLiveDate,
       deploymentModel: source.deploymentModel,
-      tddFormData: source.tddFormData,
+      cabFormData: source.cabFormData,
       requestorId: user.id,
       requestorName: user.name,
       requestorEmail: user.email,
@@ -987,8 +987,8 @@ router.patch("/:id/finops-activate", requireRole("enterprise_architect"), async 
   res.json({ request: row });
 });
 
-// PATCH /api/requests/:id/start-tdd
-router.patch("/:id/start-tdd", requireRole("cloud_architect"), async (req, res) => {
+// PATCH /api/requests/:id/start-cab
+router.patch("/:id/start-cab", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
   const id = parseRequestId(req.params.id);
   const { environmentCidrs } = req.body as { environmentCidrs?: Record<string, string> };
@@ -1002,32 +1002,32 @@ router.patch("/:id/start-tdd", requireRole("cloud_architect"), async (req, res) 
   if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
 
   const mergedFormData = {
-    ...(existing.tddFormData as Record<string, unknown> ?? {}),
+    ...(existing.cabFormData as Record<string, unknown> ?? {}),
     ...(environmentCidrs ? { environmentCidrs } : {}),
   };
 
   const [row] = await db
     .update(architectureRequestsTable)
     .set({
-      status: "tdd_in_progress",
+      status: "cab_in_progress",
       caAssigneeId: user.id,
       caAssigneeName: user.name,
-      tddFormData: mergedFormData,
+      cabFormData: mergedFormData,
       updatedAt: new Date(),
     })
     .where(eq(architectureRequestsTable.id, id))
     .returning();
 
-  await logEvent(id, user.name, user.role, "tdd_started", `TDD generation started by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "tdd_in_progress", id);
+  await logEvent(id, user.name, user.role, "cab_started", `CAB generation started by ${user.name}`);
+  sendWebhookNotification(existing.title, user.name, "cab_in_progress", id);
   res.json({ request: row });
 });
 
-// PATCH /api/requests/:id/complete-tdd
-router.patch("/:id/complete-tdd", requireRole("cloud_architect"), async (req, res) => {
+// PATCH /api/requests/:id/complete-cab
+router.patch("/:id/complete-cab", requireRole("cloud_architect"), async (req, res) => {
   const user = req.user!;
   const id = parseRequestId(req.params.id);
-  const { tddSubmissionId, reviewNotes } = req.body as { tddSubmissionId?: number; reviewNotes?: string | null };
+  const { cabSubmissionId, reviewNotes } = req.body as { cabSubmissionId?: number; reviewNotes?: string | null };
 
   const [existing] = await db
     .select()
@@ -1038,7 +1038,7 @@ router.patch("/:id/complete-tdd", requireRole("cloud_architect"), async (req, re
   if (!existing) { res.status(404).json({ error: "Request not found" }); return; }
 
   const mergedFormData = {
-    ...(existing.tddFormData as Record<string, unknown> ?? {}),
+    ...(existing.cabFormData as Record<string, unknown> ?? {}),
     reviewedBy: user.name,
     reviewedAt: new Date().toISOString(),
     ...(reviewNotes != null ? { reviewNotes } : {}),
@@ -1047,9 +1047,9 @@ router.patch("/:id/complete-tdd", requireRole("cloud_architect"), async (req, re
   const [row] = await db
     .update(architectureRequestsTable)
     .set({
-      status: "tdd_completed",
-      tddSubmissionId: tddSubmissionId ?? null,
-      tddFormData: mergedFormData,
+      status: "cab_completed",
+      cabSubmissionId: cabSubmissionId ?? null,
+      cabFormData: mergedFormData,
       updatedAt: new Date(),
     })
     .where(eq(architectureRequestsTable.id, id))
@@ -1057,8 +1057,8 @@ router.patch("/:id/complete-tdd", requireRole("cloud_architect"), async (req, re
 
   if (!row) { res.status(404).json({ error: "Request not found" }); return; }
 
-  await logEvent(id, user.name, user.role, "tdd_completed", `TDD reviewed and completed by ${user.name}`);
-  sendWebhookNotification(existing.title, user.name, "tdd_completed", id);
+  await logEvent(id, user.name, user.role, "cab_completed", `CAB reviewed and completed by ${user.name}`);
+  sendWebhookNotification(existing.title, user.name, "cab_completed", id);
   res.json({ request: row });
 });
 

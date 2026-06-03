@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TddFormDataApplicationType =
-  (typeof TddFormDataApplicationType)[keyof typeof TddFormDataApplicationType];
+export type CabFormDataApplicationType =
+  (typeof CabFormDataApplicationType)[keyof typeof CabFormDataApplicationType];
 
-export const TddFormDataApplicationType = {
+export const CabFormDataApplicationType = {
   Migration: "Migration",
   Greenfield: "Greenfield",
 } as const;

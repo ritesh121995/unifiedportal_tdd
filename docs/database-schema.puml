@@ -63,10 +63,10 @@ entity "architecture_requests" as ar {
     risk_reviewer_name : text
     risk_reviewed_at : timestamp
     risk_comments : text
-    .. Phase 3 — Cloud Architect / TDD ..
+    .. Phase 3 — Cloud Architect / CAB ..
     ca_assignee_id : int <<FK→users>>
     ca_assignee_name : text
-    tdd_submission_id : int <<FK→tdd_submissions>>
+    cab_submission_id : int <<FK→cab_submissions>>
     .. Phase 4 — DevSecOps ..
     devsecops_approver_id : int <<FK→users>>
     devsecops_approver_name : text
@@ -75,15 +75,15 @@ entity "architecture_requests" as ar {
     .. Phase 5 — FinOps ..
     finops_activated_at : timestamp
     finops_activated_by : text
-    .. TDD Pre-fill Data ..
-    tdd_form_data : jsonb
+    .. CAB Pre-fill Data ..
+    cab_form_data : jsonb
     --
     * created_at : timestamp
     * updated_at : timestamp
 }
 
-' ─── TDD SUBMISSIONS ─────────────────────────────────────
-entity "tdd_submissions" as tdd {
+' ─── CAB SUBMISSIONS ─────────────────────────────────────
+entity "cab_submissions" as cab {
     * **id** : serial <<PK>>
     --
     * application_name : text
@@ -148,7 +148,7 @@ users  ||--o{ ar  : "risk_reviewer"
 users  ||--o{ ar  : "ca_assignee"
 users  ||--o{ ar  : "devsecops_approver"
 ar     ||--o{ ev  : "audit trail"
-ar     |o--o| tdd : "generates"
+ar     |o--o| cab : "generates"
 conv   ||--o{ msg : "contains"
 
 legend right

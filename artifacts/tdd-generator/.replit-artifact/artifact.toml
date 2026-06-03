@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Azure TDD Generator"
+title = "Azure CAB Generator"
 version = "1.0.0"
 id = "artifacts/tdd-generator"
 router = "path"

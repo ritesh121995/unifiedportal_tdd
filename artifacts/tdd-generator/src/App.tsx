@@ -15,13 +15,13 @@ import RequestList from "@/pages/RequestList";
 import RequestDetail from "@/pages/RequestDetail";
 import SubmitRequest from "@/pages/SubmitRequest";
 import Phase1EAReview from "@/pages/Phase1EAReview";
-import Phase4TDDGeneration from "@/pages/Phase4TDDGeneration";
+import Phase4CABGeneration from "@/pages/Phase4CABGeneration";
 import Phase5DevSecOps from "@/pages/Phase5DevSecOps";
 import Phase5Observability from "@/pages/Phase5Observability";
 import Phase6FinOps from "@/pages/Phase6FinOps";
 import AdminUsers from "@/pages/AdminUsers";
 import Integrations from "@/pages/Integrations";
-import TddViewer from "@/pages/TddViewer";
+import CabViewer from "@/pages/CabViewer";
 import DelegationManager from "@/pages/DelegationManager";
 import LeanIXInitiatives from "@/pages/LeanIXInitiatives";
 import "@/lib/api-base";
@@ -103,8 +103,8 @@ function Router() {
       <Route path="/ea-queue">
         <ProtectedRoute component={() => <RequestList fixedStatuses={["submitted", "ea_triage"]} pageTitle="Architecture Review Queue" />} />
       </Route>
-      <Route path="/tdd-queue">
-        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "tdd_in_progress"]} pageTitle="Design Document Queue" />} />
+      <Route path="/cab-queue">
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "cab_in_progress"]} pageTitle="Design Document Queue" />} />
       </Route>
 
       {/* Admin routes */}
@@ -123,7 +123,7 @@ function Router() {
         <ProtectedRoute component={Phase1EAReview} />
       </Route>
       <Route path="/phase/3">
-        <ProtectedRoute component={Phase4TDDGeneration} />
+        <ProtectedRoute component={Phase4CABGeneration} />
       </Route>
       <Route path="/phase/4">
         <ProtectedRoute component={Phase5DevSecOps} />
@@ -135,15 +135,15 @@ function Router() {
         <ProtectedRoute component={Phase6FinOps} />
       </Route>
 
-      {/* TDD Wizard routes */}
+      {/* CAB Wizard routes */}
       <Route path="/wizard/:requestId">
         <ProtectedRoute component={Wizard} />
       </Route>
       <Route path="/preview">
         <ProtectedRoute component={Preview} />
       </Route>
-      <Route path="/tdd-view/:requestId">
-        <ProtectedRoute component={TddViewer} />
+      <Route path="/cab-view/:requestId">
+        <ProtectedRoute component={CabViewer} />
       </Route>
       <Route path="/history">
         <ProtectedRoute component={History} />
@@ -193,3 +193,4 @@ function App() {
 }
 
 export default App;
+

@@ -6,7 +6,7 @@
   <title>McCain Unified Cloud Onboarding Portal — Executive Overview</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     :root {
       --yellow:     #FFCD00;
@@ -192,13 +192,25 @@
       margin-bottom: 22px;
     }
     .phases-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .pnew {
+      display: inline-block;
+      font-size: 8px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--yellow); color: var(--navy);
+      padding: 2px 7px; border-radius: 10px;
+      opacity: 1;
+    }
+    .pspoc {
+      font-size: 9px; color: rgba(255,205,0,0.55);
+      margin-bottom: 8px;
     }
     .pcard {
       background: rgba(255,255,255,0.055);
       border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 14px; padding: 20px 17px;
+      border-radius: 14px; padding: 16px 13px;
       position: relative;
     }
     .parrow {
@@ -212,17 +224,17 @@
       font-family: 'Outfit', sans-serif;
       font-size: 9px; font-weight: 700;
       letter-spacing: 2.5px; text-transform: uppercase;
-      color: var(--yellow); opacity: 0.7;
-      margin-bottom: 10px; display: block;
+      color: rgba(255,205,0,0.7);
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
     }
     .pname {
       font-family: 'Outfit', sans-serif;
-      font-size: 13.5px; font-weight: 700;
-      color: white; line-height: 1.3; margin-bottom: 8px;
+      font-size: 12px; font-weight: 700;
+      color: white; line-height: 1.3; margin-bottom: 7px;
     }
     .pdesc {
-      font-size: 10.5px; color: rgba(255,255,255,0.48);
-      line-height: 1.58; margin-bottom: 14px;
+      font-size: 9.5px; color: rgba(255,255,255,0.48);
+      line-height: 1.55; margin-bottom: 12px;
     }
     .pmeta {
       border-top: 1px solid rgba(255,255,255,0.09);
@@ -311,21 +323,41 @@
     }
     .fcopy { font-size: 10px; color: rgba(255,255,255,0.28); }
 
-    /* ─── Print ───────────────────────────────────────────── */
+    /* ─── Print / PDF ─────────────────────────────────────── */
     @media print {
-      body { background: white; padding: 0; }
-      .page { box-shadow: none; border-radius: 0; max-width: 100%; }
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body { background: white !important; padding: 0; margin: 0; }
+      .page { box-shadow: none; border-radius: 0; max-width: 100%; width: 100%; }
       @page { margin: 0; size: A4 portrait; }
-      .header        { padding: 26px 38px 22px; }
-      .status-bar    { padding: 7px 38px; }
-      .cs-row        { padding: 22px 38px; gap: 18px; }
-      .phase-section { padding: 22px 38px 26px; }
-      .caps-section  { padding: 22px 38px; page-break-before: always; break-before: always; }
-      .bcol          { padding: 20px 38px; }
-      .bcol + .bcol  { padding-left: 28px; }
-      .footer        { padding: 12px 38px; }
-      .header-title  { font-size: 26px; }
-      .stat-val      { font-size: 20px; }
+
+      .header        { padding: 22px 34px 18px; }
+      .status-bar    { padding: 6px 34px; }
+      .cs-row        { padding: 18px 34px; gap: 16px; }
+      .phase-section { padding: 18px 34px 22px; }
+      .caps-section  { padding: 18px 34px; }
+      .bottom-row    { page-break-inside: avoid; break-inside: avoid; }
+      .bcol          { padding: 18px 34px; }
+      .bcol + .bcol  { padding-left: 24px; }
+      .footer        { padding: 10px 34px; }
+
+      .header-title  { font-size: 24px; }
+      .stat-val      { font-size: 19px; }
+      .phase-h       { font-size: 15px; }
+      .pname         { font-size: 11px; }
+      .pdesc         { font-size: 9px; }
+      .cap-title     { font-size: 11.5px; }
+      .cap-desc      { font-size: 10px; }
+
+      .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important; }
+      .phase-section { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important; }
+      .footer { background: #1a1a2e !important; }
+      .cs-box.ch { background: #fff5f5 !important; }
+      .cs-box.so { background: #f0fdf4 !important; }
+      .status-bar { background: #f0fdf4 !important; }
+      .capcard { background: #f8fafc !important; }
     }
   </style>
 </head>
@@ -347,8 +379,9 @@
           and end-to-end cost governance.
         </div>
         <div class="header-tags">
-          <span class="htag">AI-Assisted Design</span>
-          <span class="htag">Structured Governance</span>
+          <span class="htag">AI-Assisted Design &amp; Best Practices</span>
+          <span class="htag">5-Phase Governance</span>
+          <span class="htag">Named SPOC per Phase</span>
           <span class="htag">Azure Native</span>
           <span class="htag">Infrastructure Automation</span>
           <span class="htag">Full Audit Trail</span>
@@ -358,10 +391,10 @@
       <div class="stat-col">
         <div class="stat-item">
           <div class="stat-val">&lt; 2 hrs</div>
-          <div class="stat-lbl">AI-generated<br/>Technical Design</div>
+          <div class="stat-lbl">AI-generated<br/>Cloud Architecture Blueprint</div>
         </div>
         <div class="stat-item">
-          <div class="stat-val">4</div>
+          <div class="stat-val">5</div>
           <div class="stat-lbl">End-to-end<br/>Governance Phases</div>
         </div>
         <div class="stat-item">
@@ -396,7 +429,7 @@
       <div class="cs-title"><span>✓</span> Our Solution</div>
       <ul class="cs-list">
         <li><span class="csdot"></span>Single portal for end-to-end cloud onboarding with structured, repeatable workflows</li>
-        <li><span class="csdot"></span>AI-assisted risk assessment and automated Technical Design Document generation</li>
+        <li><span class="csdot"></span>AI-assisted risk assessment and automated Cloud Architecture Blueprint generation</li>
         <li><span class="csdot"></span>Full audit trail with role-based approvals, delegation, and modification tracking</li>
         <li><span class="csdot"></span>Integrated cost governance with budget tracking, tagging, and chargeback reporting</li>
       </ul>
@@ -407,49 +440,65 @@
   <div class="phase-section">
     <div class="slabel">The Onboarding Journey</div>
     <div class="phase-h">From Business Request to Provisioned Workload</div>
-    <div class="phase-sub">Every cloud workload follows a consistent, auditable path through four governance phases.</div>
+    <div class="phase-sub">Every cloud workload follows a consistent, auditable path through five governance phases — each with a named SPOC accountable for delivery.</div>
     <div class="phases-grid">
 
       <div class="pcard">
         <span class="parrow">›</span>
         <span class="pnum">Phase 01</span>
+        <div class="pspoc">SPOC: Enterprise Architect</div>
         <div class="pname">Architecture Review</div>
-        <div class="pdesc">Enterprise and Security Architects assess the request for risk, compliance, and technical fit before any design work begins.</div>
+        <div class="pdesc">Enterprise Architects assess the request for risk, compliance, technical fit, and strategic alignment before any design work begins.</div>
         <div class="pmeta">
           <div class="pmeta-row">Duration &nbsp;<b>≤ 1 week</b></div>
-          <div class="pmeta-row">Gate &nbsp;<b>Architecture sign-off</b></div>
+          <div class="pmeta-row">Gate &nbsp;<b>EA sign-off</b></div>
         </div>
       </div>
 
       <div class="pcard">
         <span class="parrow">›</span>
         <span class="pnum">Phase 02</span>
-        <div class="pname">Technical Design</div>
-        <div class="pdesc">Cloud Architects generate an AI-assisted Technical Design Document covering infrastructure, security controls, and cost estimates.</div>
+        <div class="pspoc">SPOC: Cloud Architect</div>
+        <div class="pname">Cloud Architecture Blueprint</div>
+        <div class="pdesc">Cloud Architects generate an AI-assisted Cloud Architecture Blueprint covering infrastructure, security controls, data flows, and cost estimates in under 2 hours.</div>
         <div class="pmeta">
           <div class="pmeta-row">Duration &nbsp;<b>1–2 hours</b></div>
-          <div class="pmeta-row">Gate &nbsp;<b>Cloud Architect sign-off</b></div>
+          <div class="pmeta-row">Gate &nbsp;<b>CA sign-off</b></div>
         </div>
       </div>
 
       <div class="pcard">
         <span class="parrow">›</span>
         <span class="pnum">Phase 03</span>
+        <div class="pspoc">SPOC: DevSecOps Architect</div>
         <div class="pname">Infrastructure Deployment</div>
-        <div class="pdesc">The approved design is deployed to Azure via automated, policy-enforced Terraform pipelines across all target environments.</div>
+        <div class="pdesc">Approved design deployed via certified Terraform modules through a 4-stage pipeline (QA → STG → PRD) with policy-as-code gates and dual approval.</div>
         <div class="pmeta">
           <div class="pmeta-row">Duration &nbsp;<b>~2 weeks</b></div>
-          <div class="pmeta-row">Gate &nbsp;<b>Dual approval for Production</b></div>
+          <div class="pmeta-row">Gate &nbsp;<b>Dual approval for PRD</b></div>
         </div>
       </div>
 
       <div class="pcard">
+        <span class="parrow">›</span>
         <span class="pnum">Phase 04</span>
+        <div class="pspoc">SPOC: Observability Architect</div>
+        <div class="pname">Observability Setup</div>
+        <div class="pdesc">Observability Architects validate monitoring coverage, SLA tiers, alert severity framework, and runbook links before FinOps activation is permitted.</div>
+        <div class="pmeta">
+          <div class="pmeta-row">Duration &nbsp;<b>~2 days</b></div>
+          <div class="pmeta-row">Gate &nbsp;<b>OA sign-off</b></div>
+        </div>
+      </div>
+
+      <div class="pcard">
+        <span class="pnum">Phase 05</span>
+        <div class="pspoc">SPOC: FinOps Architect</div>
         <div class="pname">Cost Management</div>
-        <div class="pdesc">Ongoing budget tracking, cost allocation, savings recommendations, and monthly chargeback reporting for all active workloads.</div>
+        <div class="pdesc">FinOps Architects activate budget governance, tagging enforcement, chargeback reporting, and Azure Advisor–driven savings recommendations.</div>
         <div class="pmeta">
           <div class="pmeta-row">Duration &nbsp;<b>Ongoing</b></div>
-          <div class="pmeta-row">Gate &nbsp;<b>Monthly review</b></div>
+          <div class="pmeta-row">Gate &nbsp;<b>Monthly FinOps review</b></div>
         </div>
       </div>
 
@@ -464,7 +513,7 @@
       <div class="capcard">
         <span class="cap-icon">🤖</span>
         <div class="cap-title">AI-Assisted Design Generation</div>
-        <div class="cap-desc">Powered by Azure OpenAI — generates Technical Design Documents complete with architecture diagrams and risk analysis. Reduces design time from days to under 2 hours.</div>
+        <div class="cap-desc">Powered by Azure OpenAI — generates Cloud Architecture Blueprints complete with architecture diagrams and risk analysis. Reduces design time from days to under 2 hours.</div>
       </div>
 
       <div class="capcard">
@@ -476,25 +525,31 @@
       <div class="capcard">
         <span class="cap-icon">⚙️</span>
         <div class="cap-title">Infrastructure as Code</div>
-        <div class="cap-desc">Terraform configurations generated directly from approved Technical Designs, covering core Azure services including AKS, SQL, App Service, APIM, and Key Vault.</div>
+        <div class="cap-desc">Terraform configurations generated directly from approved Cloud Architecture Blueprints, covering core Azure services including AKS, SQL, App Service, APIM, and Key Vault.</div>
+      </div>
+
+      <div class="capcard">
+        <span class="cap-icon">👁️</span>
+        <div class="cap-title">Observability Gate</div>
+        <div class="cap-desc">A mandatory Phase 4 check ensures every workload has monitoring coverage, SLA tier classification (Tier 1–4), alert severity framework (SEV 0–3), and runbook links validated before FinOps activation is permitted.</div>
       </div>
 
       <div class="capcard">
         <span class="cap-icon">💰</span>
-        <div class="cap-title">Cost Governance</div>
-        <div class="cap-desc">Azure Cost Management–powered subscription tracking with budget alerts, savings recommendations, and monthly chargeback reports by business unit.</div>
+        <div class="cap-title">FinOps &amp; Cost Governance</div>
+        <div class="cap-desc">Azure Cost Management–powered subscription tracking with three-tier budget alerts, LOB-specific cost object and GL account auto-assignment, Reserved Instance analysis, and monthly chargeback reports by business unit.</div>
       </div>
 
       <div class="capcard">
-        <span class="cap-icon">👥</span>
-        <div class="cap-title">Role-Based Access &amp; Delegation</div>
-        <div class="cap-desc">Four defined roles — Application Teams, Enterprise Architects, Cloud Architects, and CCoE Admins — with delegation and substitution support for business continuity.</div>
+        <span class="cap-icon">🧠</span>
+        <div class="cap-title">Intelligent Auto-Fill Forms</div>
+        <div class="cap-desc">Selecting Organisation and Line of Business instantly populates SLT Leader, Business Owner, IT Owner, and all financial governance codes — eliminating manual errors.</div>
       </div>
 
       <div class="capcard">
         <span class="cap-icon">📋</span>
-        <div class="cap-title">Audit Trail &amp; Compliance</div>
-        <div class="cap-desc">Every action is logged — approvals, comments, design versions, and deployment events. Downloadable audit reports available for compliance and governance reviews.</div>
+        <div class="cap-title">Audit Trail &amp; Role Governance</div>
+        <div class="cap-desc">Every action logged — approvals, design versions, deployment events. Five named SPOC roles with delegation support. Downloadable audit reports for compliance reviews.</div>
       </div>
 
     </div>
@@ -511,6 +566,8 @@
         <div class="chip"><span class="chipdot" style="background:#7B42BC;"></span>Terraform</div>
         <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure OpenAI</div>
         <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure Cost Management</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure Monitor</div>
+        <div class="chip"><span class="chipdot" style="background:#0078d4;"></span>Azure DevOps</div>
       </div>
     </div>
     <div class="bcol">
@@ -525,8 +582,12 @@
           <div class="rtxt">Review workload requests using AI-assisted risk flags and architecture recommendations.</div>
         </div>
         <div class="role-row">
-          <span class="rbadge" style="background:#dbeafe;color:#1e40af;">Cloud Architects</span>
-          <div class="rtxt">Generate Technical Designs, manage infrastructure pipelines, and maintain standards.</div>
+          <span class="rbadge" style="background:#dbeafe;color:#1e40af;">Cloud &amp; DevSecOps Architects</span>
+          <div class="rtxt">Generate Cloud Architecture Blueprints, manage IaC pipelines, and enforce security standards.</div>
+        </div>
+        <div class="role-row">
+          <span class="rbadge" style="background:#f3e8ff;color:#6b21a8;">Observability &amp; FinOps Architects</span>
+          <div class="rtxt">Validate monitoring coverage and govern ongoing cloud spend across all active workloads.</div>
         </div>
         <div class="role-row">
           <span class="rbadge" style="background:#dcfce7;color:#166534;">CCoE Admins</span>

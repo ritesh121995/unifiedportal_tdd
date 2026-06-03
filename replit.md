@@ -2,7 +2,7 @@
 
 ## Overview
 
-A 6-phase enterprise onboarding portal for McCain Foods Cloud Centre of Excellence (CCoE). Governs every new workload from Enterprise Architecture review through to live production deployment and ongoing cost management. Three roles collaborate through a complete lifecycle: Requestors submit architecture review requests → Enterprise Architects review and approve → Cloud Architects generate TDDs and deploy via IaC.
+A 6-phase enterprise onboarding portal for McCain Foods Cloud Centre of Excellence (CCoE). Governs every new workload from Enterprise Architecture review through to live production deployment and ongoing cost management. Three roles collaborate through a complete lifecycle: Requestors submit architecture review requests → Enterprise Architects review and approve → Cloud Architects Generate CABs and deploy via IaC.
 
 ### Key Features (v2.1)
 - **Activity log & audit trail** — every status change logged with actor, timestamp; visible on RequestDetail
@@ -18,7 +18,7 @@ A 6-phase enterprise onboarding portal for McCain Foods Cloud Centre of Excellen
 - **Phase 1 — EA Review**: Architecture domain cards (Business, Data, App, Tech, Security, Integration), intake form with file upload, ARB scoring metrics
 - **Phase 2 — Cloud Architecture Review**: Azure WAF 5-pillar assessment table, Landing Zone configuration status, WAF scoring with action items
 - **Phase 3 — Risk Analysis**: Live risk register with CVSS scoring, interactive 5×5 risk heat map, compliance checklists (NIST, ISO 27001, SOC2, PIPEDA, PCI-DSS)
-- **Phase 4 — TDD Generation**: 6-section document builder with auto-populate status, template/format/approval selectors, one-click AI generation
+- **Phase 4 — CAB Generation**: 6-section document builder with auto-populate status, template/format/approval selectors, one-click AI generation
 - **Phase 5 — DevSecOps / IaC**: McCain Certified Module catalog with versioning, copyable Terraform code, 4-stage deployment pipeline
 - **Phase 6 — FinOps**: Animated cost-by-service bar chart, savings recommendations with ROI, budget alerts with forecast vs actuals
 
@@ -52,10 +52,10 @@ artifacts/
 │       │   ├── health.ts    # GET /api/healthz — returns auth mode + health
 │       │   ├── auth.ts      # POST /api/auth/login, /logout, /session
 │       │   └── tdd/
-│       │       ├── generate.ts   # POST /api/tdd/generate — SSE streaming TDD generation (1900+ lines)
-│       │       ├── export.ts     # POST /api/tdd/export — DOCX/PDF export + Blob upload
-│       │       ├── cidr.ts       # POST /api/tdd/subnet-analysis
-│       │       └── naming.ts     # POST /api/tdd/naming-preview
+│       │       ├── generate.ts   # POST /api/cab/generate — SSE streaming CAB Generation (1900+ lines)
+│       │       ├── export.ts     # POST /api/cab/export — DOCX/PDF export + Blob upload
+│       │       ├── cidr.ts       # POST /api/cab/subnet-analysis
+│       │       └── naming.ts     # POST /api/cab/naming-preview
 │       ├── middleware/
 │       │   ├── portal-auth.ts   # Auth dispatcher (none/single_user/entra)
 │       │   ├── simple-user-auth.ts  # JWT username/password auth
@@ -88,9 +88,9 @@ lib/
 └── db/                  # Drizzle ORM schema + DB connection
 ```
 
-## TDD Document Sections (11 total)
+## CAB Document Sections (11 total)
 
-The AI-generated Technical Design Document has 11 sections:
+The AI-generated Cloud Architecture Blueprint has 11 sections:
 1. Executive Summary
 2. Ownership, Stakeholders & Billing Context
 3. Workload Context & Classification
@@ -199,7 +199,7 @@ The `openai-client.ts` checks in this order:
 | `AZURE_OPENAI_API_VERSION` | API version (default `2024-08-01-preview`) | Optional |
 | `OPENAI_API_KEY` | Standard OpenAI key (alternative to Azure) | If not using Azure OpenAI |
 | `ALLOWED_ORIGIN` | Frontend URL for CORS (blank = same-origin) | If hosting separately |
-| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage for TDD archival | Optional |
+| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage for CAB archival | Optional |
 | `AZURE_TENANT_ID` | Service Principal tenant | For IaC deployment feature |
 | `AZURE_CLIENT_ID` | Service Principal client ID | For IaC deployment feature |
 | `AZURE_CLIENT_SECRET` | Service Principal secret | For IaC deployment feature |

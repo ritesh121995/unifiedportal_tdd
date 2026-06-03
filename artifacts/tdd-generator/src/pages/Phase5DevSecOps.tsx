@@ -63,7 +63,7 @@ module "vnet" {
     CostCentre   = var.cost_centre
     DataClass    = "Confidential"
     CcoEApproved = "true"
-    TddVersion   = var.tdd_version
+    CabVersion   = var.cab_version
   })
 
   # Hub peering — auto-connects to McCain Hub
@@ -270,7 +270,7 @@ export default function Phase5DevSecOps() {
               { title: "Enforce Tagging via Policy-as-Code", body: "Use Azure Policy (deny effect) to block deployment of any resource missing required tags: CostCentre, Environment, Owner, CcoEApproved. Tagging gaps discovered post-deployment cause FinOps reporting failures.", tag: "Governance" },
               { title: "Never Bypass the QA → STG → PRD Pipeline", body: "Production deployments that skip QA/STG environments are the leading cause of P0 incidents at McCain. Dual-approval gates exist for this reason — no exceptions, even for hotfixes.", tag: "Process" },
               { title: "Use Terraform State Locking at All Times", body: "All remote state must use Azure Blob backend with state locking enabled. Concurrent apply operations without locking cause state corruption that can require full environment rebuild.", tag: "Reliability" },
-              { title: "Validate Cost Estimates Before Production Deploy", body: "Run Infracost diff between the approved TDD design and the terraform plan output. Any cost increase >20% above the TDD estimate must be reviewed by the FinOps Architect before Production deployment proceeds.", tag: "FinOps" },
+              { title: "Validate Cost Estimates Before Production Deploy", body: "Run Infracost diff between the approved CAB design and the terraform plan output. Any cost increase >20% above the CAB estimate must be reviewed by the FinOps Architect before Production deployment proceeds.", tag: "FinOps" },
               { title: "Implement Drift Detection from Day One", body: "Configure Azure Defender for Resource Manager and Terraform drift detection to run daily. Infrastructure that drifts from its approved state is an unmanaged security and compliance risk.", tag: "Operations" },
             ].map((bp) => (
               <div key={bp.title} className="p-3 rounded-xl border border-slate-200 bg-white">
