@@ -211,6 +211,7 @@ router.get("/export", requireRole("enterprise_architect"), async (_req, res) => 
 
 // POST /api/requests
 router.post("/", requireRole("requestor"), async (req, res) => {
+  try {
   const user = req.user!;
   const body = req.body as {
     title: string;
@@ -327,12 +328,16 @@ router.post("/", requireRole("requestor"), async (req, res) => {
     return;
   } }
 
+  if (!body.title?.trim()) { res.status(400).json({ error: "Request title is required" }); return; }
+  if (!body.applicationName?.trim()) { res.status(400).json({ error: "Application name is required" }); return; }
+  if (!body.lineOfBusiness?.trim()) { res.status(400).json({ error: "Line of business is required" }); return; }
+
   const [row] = await db
     .insert(architectureRequestsTable)
     .values({
       title: body.title,
       applicationName: body.applicationName,
-      applicationType: body.applicationType,
+      applicationType: body.applicationType ?? "Greenfield",
       businessUnit: body.organization ?? body.businessUnit ?? "",
       lineOfBusiness: body.lineOfBusiness,
       priority: body.priority ?? "Medium",
@@ -512,6 +517,11 @@ router.post("/", requireRole("requestor"), async (req, res) => {
   }
 
   res.status(201).json({ request: row, fastTrack: false, aiClassification: "complex", aiReason: aiResult.reason, aiConfidence: aiResult.confidence });
+  } catch (err: unknown) {
+    console.error("[POST /api/requests] Unhandled error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    if (!res.headersSent) res.status(500).json({ error: message });
+  }
 });
 
 // POST /api/requests/bulk-action — EA / admin only
