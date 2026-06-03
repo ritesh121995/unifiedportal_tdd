@@ -60,7 +60,7 @@ export default function History() {
       const d = await res.json();
       setSubmissions(d.submissions ?? []);
     } catch {
-      setError("Could not load design documents. Please try again.");
+      setError("Could not load cloud architecture blueprints. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export default function History() {
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("Delete this design document? This cannot be undone.")) return;
+    if (!window.confirm("Delete this cloud architecture blueprint? This cannot be undone.")) return;
     setDeletingId(id);
     try {
       await fetch(`${getApiBase()}/api/cab/submissions/${id}`, { method: "DELETE", credentials: "include" });
@@ -106,7 +106,7 @@ export default function History() {
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Design Documents</h2>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Cloud Architecture Blueprints</h2>
           <p className="text-slate-500 mt-1 text-sm">
             {loading ? "Loading…" : `${queueItems.length} in queue · ${historyItems.length} completed`}
           </p>
@@ -134,7 +134,7 @@ export default function History() {
           }`}
         >
           <ListTodo className="w-4 h-4" />
-          Design Queue
+          Blueprint Queue
           {queueItems.length > 0 && (
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
               activeTab === "queue" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-500"
@@ -170,19 +170,19 @@ export default function History() {
       {loading ? (
         <div className="flex items-center justify-center py-24 text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin mr-3" />
-          <span className="text-sm">Loading design documents…</span>
+          <span className="text-sm">Loading cloud architecture blueprints…</span>
         </div>
       ) : visibleItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <FileText className="w-16 h-16 mb-4 opacity-30" />
           {activeTab === "queue" ? (
             <>
-              <p className="text-lg font-medium">No design documents in queue</p>
+              <p className="text-lg font-medium">No cloud architecture blueprints in queue</p>
               <p className="text-sm mt-1">Design documents awaiting Cloud Architect review will appear here.</p>
             </>
           ) : (
             <>
-              <p className="text-lg font-medium">No completed design documents yet</p>
+              <p className="text-lg font-medium">No completed cloud architecture blueprints yet</p>
               <p className="text-sm mt-1">Design documents signed off by the Cloud Architect will appear here.</p>
             </>
           )}

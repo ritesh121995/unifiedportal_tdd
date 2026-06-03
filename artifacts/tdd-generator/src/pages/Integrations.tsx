@@ -184,7 +184,7 @@ export default function Integrations() {
                 { name: "LeanIX", desc: "Enterprise Architecture repository — initiative pre-fill" },
                 { name: "Microsoft Azure", desc: "Automated infrastructure deployment" },
                 { name: "Confluence", desc: "Design document publishing" },
-                { name: "Azure OpenAI", desc: "AI-assisted design document generation" },
+                { name: "Azure OpenAI", desc: "AI-assisted cloud architecture blueprint generation" },
               ].map(({ name, desc }) => (
                 <div key={name} className="flex items-center gap-2 py-0.5">
                   <Plug className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -339,7 +339,7 @@ export default function Integrations() {
             </div>
             <div>
               <CardTitle className="text-base">Confluence</CardTitle>
-              <CardDescription>Publish reviewed design documents directly to your Confluence space</CardDescription>
+              <CardDescription>Publish reviewed cloud architecture blueprints directly to your Confluence space</CardDescription>
             </div>
             <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${isConfluenceConfigured ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
               {isConfluenceConfigured ? "Connected" : "Not configured"}

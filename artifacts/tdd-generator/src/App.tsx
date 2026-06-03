@@ -104,7 +104,7 @@ function Router() {
         <ProtectedRoute component={() => <RequestList fixedStatuses={["submitted", "ea_triage"]} pageTitle="Architecture Review Queue" />} />
       </Route>
       <Route path="/cab-queue">
-        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "cab_in_progress"]} pageTitle="Design Document Queue" />} />
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "cab_in_progress"]} pageTitle="Blueprint Queue" />} />
       </Route>
 
       {/* Admin routes */}

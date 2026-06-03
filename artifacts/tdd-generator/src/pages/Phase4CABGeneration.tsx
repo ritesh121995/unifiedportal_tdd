@@ -94,7 +94,7 @@ export default function Phase4CABGeneration() {
                   <Zap className="w-6 h-6" style={{ color: PHASE_COLOR }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800">Generate Design Document</p>
+                  <p className="text-sm font-bold text-slate-800">Generate Cloud Architecture Blueprint</p>
                   <p className="text-xs text-slate-500 mt-1">Auto-generates all sections using AI from your submitted request details. Review before final submission.</p>
                 </div>
                 <Button className="w-full font-semibold" style={{ background: PHASE_COLOR, color: "#1a1a2e" }} onClick={() => setLocation("/requests")}>

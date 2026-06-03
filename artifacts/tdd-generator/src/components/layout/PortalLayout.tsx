@@ -39,13 +39,13 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
-    label: "My Work",
+    label: "Work Queue",
     items: [
       { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "My Requests", path: "/requests", icon: FileText, roles: ["requestor"] },
       { label: "Architecture Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
-      { label: "Design Document Queue", path: "/cab-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
-      { label: "Design Document History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
+      { label: "Blueprint Queue", path: "/cab-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
+      { label: "Blueprint History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
     ],
   },
   {

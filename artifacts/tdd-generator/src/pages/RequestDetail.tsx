@@ -1409,7 +1409,7 @@ export default function RequestDetail() {
               onClick={() => setLocation(`/cab-view/${request.id}`)}
             >
               <FileText className="w-4 h-4 mr-2" />
-              View Design Document
+              View Cloud Architecture Blueprint
             </Button>
           </CardContent>
         </Card>
@@ -1932,7 +1932,7 @@ export default function RequestDetail() {
               onClick={() => setLocation(`/cab-view/${request.id}`)}
             >
               <FileText className="w-4 h-4 mr-2" />
-              View Design Document
+              View Cloud Architecture Blueprint
             </Button>
           </CardContent>
         </Card>
