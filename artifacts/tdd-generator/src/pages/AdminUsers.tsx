@@ -45,6 +45,7 @@ export default function AdminUsers() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editRole, setEditRole] = useState("");
   const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -73,21 +74,22 @@ export default function AdminUsers() {
     setEditId(u.id);
     setEditRole(u.role);
     setEditName(u.name);
+    setEditEmail(u.email);
     setEditPassword("");
     setFormError("");
   };
 
-  const cancelEdit = () => { setEditId(null); setEditPassword(""); setFormError(""); };
+  const cancelEdit = () => { setEditId(null); setEditEmail(""); setEditPassword(""); setFormError(""); };
 
   const saveEdit = async (id: number) => {
-    if (editPassword && editPassword.length < 8) {
-      setFormError("New password must be at least 8 characters");
-      return;
-    }
+    if (!editName.trim()) { setFormError("Full name is required."); return; }
+    if (!editEmail.trim()) { setFormError("Email address is required."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) { setFormError("Please enter a valid email address."); return; }
+    if (editPassword && editPassword.length < 8) { setFormError("New password must be at least 8 characters."); return; }
     setSaving(true);
     setFormError("");
     try {
-      const body: Record<string, string> = { role: editRole, name: editName };
+      const body: Record<string, string> = { role: editRole, name: editName, email: editEmail };
       if (editPassword) body.password = editPassword;
       const res = await fetch(`${getApiBase()}/api/users/${id}`, {
         method: "PATCH",
@@ -97,7 +99,7 @@ export default function AdminUsers() {
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Failed to save");
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: d.user.role, name: d.user.name } : u)));
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: d.user.role, name: d.user.name, email: d.user.email ?? editEmail } : u)));
       setEditId(null);
       setEditPassword("");
     } catch (e: unknown) {
@@ -108,6 +110,10 @@ export default function AdminUsers() {
   };
 
   const createUser = async () => {
+    if (!newForm.name.trim()) { setFormError("Full name is required."); return; }
+    if (!newForm.email.trim()) { setFormError("Email address is required."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newForm.email)) { setFormError("Please enter a valid email address."); return; }
+    if (!newForm.password || newForm.password.length < 8) { setFormError("Password must be at least 8 characters."); return; }
     setCreating(true);
     setFormError("");
     try {
@@ -290,13 +296,24 @@ export default function AdminUsers() {
                     {editId === u.id && (
                       <tr key={`edit-${u.id}`} className="bg-yellow-50 border-b border-yellow-200">
                         <td colSpan={4} className="px-4 pb-4 pt-0">
-                          <div className="grid grid-cols-3 gap-3 items-end">
+                          <div className="grid grid-cols-4 gap-3 items-end">
                             <div className="space-y-1">
                               <Label className="text-xs text-slate-600">Full Name</Label>
                               <Input
                                 className="h-8 text-sm"
+                                placeholder="Full name"
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-slate-600">Email Address</Label>
+                              <Input
+                                type="email"
+                                className="h-8 text-sm"
+                                placeholder="user@mccain.com"
+                                value={editEmail}
+                                onChange={(e) => setEditEmail(e.target.value)}
                               />
                             </div>
                             <div className="space-y-1">
@@ -313,7 +330,7 @@ export default function AdminUsers() {
                             <div className="space-y-1">
                               <Label className="text-xs text-slate-600 flex items-center gap-1">
                                 <KeyRound className="w-3 h-3" /> New Password
-                                <span className="text-slate-400 font-normal">(leave blank to keep current)</span>
+                                <span className="text-slate-400 font-normal">(leave blank to keep)</span>
                               </Label>
                               <Input
                                 type="password"
