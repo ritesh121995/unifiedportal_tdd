@@ -550,13 +550,17 @@ export default function SubmitRequest() {
   const confirmAndSubmit = async (force = false) => {
     setError("");
     setSubmitting(true);
+    console.log("[Submit] Starting submission, workflowType:", workflowType, "force:", force);
     try {
-      const res = await fetch(`${getApiBase()}/api/requests`, {
+      const apiBase = getApiBase();
+      console.log("[Submit] API base:", apiBase, "→ POST", `${apiBase}/api/requests`);
+      const res = await fetch(`${apiBase}/api/requests`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, workflowType: workflowType ?? "standard", force }),
       });
+      console.log("[Submit] Response status:", res.status);
       if (res.status === 409) {
         const d = await res.json().catch(() => ({}));
         setDuplicateWarning({ id: d.existingRequest?.id, title: d.existingRequest?.title ?? form.applicationName });
@@ -566,9 +570,11 @@ export default function SubmitRequest() {
       }
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.error ?? "Failed to submit request");
+        console.error("[Submit] Error response:", d);
+        throw new Error(d.error ?? `Server error ${res.status}`);
       }
       const d = await res.json();
+      console.log("[Submit] Success:", d);
       localStorage.removeItem(DRAFT_KEY);
       setSubmittedRequestId(d.request?.id ?? null);
       setFastTracked(d.fastTrack === true);
@@ -578,7 +584,8 @@ export default function SubmitRequest() {
       setSubmitted(true);
       setReviewing(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Submission failed");
+      console.error("[Submit] Caught error:", err);
+      setError(err instanceof Error ? err.message : "Submission failed. Please try again.");
       setReviewing(false);
     } finally {
       setSubmitting(false);
