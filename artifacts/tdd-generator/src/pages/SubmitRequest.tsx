@@ -185,7 +185,7 @@ const ORG_LOB_AUTOFILL: Record<string, OrgLobFill> = {
     categoryOwner: "Angela Li",
   },
 };
-const ENVIRONMENTS = ["QA/UAT", "Prod"];
+const ENVIRONMENTS = ["Sandbox", "Dev"];
 const REGIONS = [
   { id: "canadacentral", label: "Canada Central (Toronto)" },
   { id: "canadaeast", label: "Canada East (Quebec City)" },
@@ -304,7 +304,7 @@ const EMPTY_FORM = {
   priority: "Medium",
   description: "",
   businessJustification: "",
-  targetEnvironments: ["QA/UAT", "Prod"] as string[],
+  targetEnvironments: [] as string[],
   azureRegions: ["canadacentral"] as string[],
   workloadTier: "Tier 2",
   haEnabled: false as boolean,
@@ -1279,28 +1279,6 @@ export default function SubmitRequest() {
               desc: "Development environment. No EA review — submit basic details and move straight to Cloud Architecture Blueprint generation.",
               steps: ["Submit basic details", "Generate Cloud Architecture Blueprint", "Deploy infrastructure"],
             },
-            {
-              type: "standard" as const,
-              label: "QA / UAT",
-              icon: "🔍",
-              color: "border-amber-300 hover:border-amber-400 hover:bg-amber-50",
-              badge: "bg-amber-100 text-amber-700",
-              badgeText: "Full Review",
-              desc: "Quality and User Acceptance Testing. Full governance: EA review, Cloud Architecture Blueprint, DevSecOps, Observability, and FinOps.",
-              steps: ["Submit full details", "EA review", "CAB → DevSecOps → FinOps"],
-              envDefault: ["QA/UAT"] as string[],
-            },
-            {
-              type: "standard" as const,
-              label: "Production",
-              icon: "🚀",
-              color: "border-slate-300 hover:border-slate-400 hover:bg-slate-50",
-              badge: "bg-slate-100 text-slate-700",
-              badgeText: "Full Review",
-              desc: "Production environment. Complete governance lifecycle with all approval stages required.",
-              steps: ["Submit full details", "EA review", "CAB → DevSecOps → FinOps"],
-              envDefault: ["Prod"] as string[],
-            },
           ].map((opt) => (
             <button
               key={`${opt.type}-${opt.label}`}
@@ -1310,8 +1288,6 @@ export default function SubmitRequest() {
                   setForm((prev) => ({ ...prev, targetEnvironments: ["Sandbox"], deploymentModel: CLOUD_TENANT_VALUE }));
                 } else if (opt.type === "development") {
                   setForm((prev) => ({ ...prev, targetEnvironments: ["Dev"], deploymentModel: CLOUD_TENANT_VALUE }));
-                } else if (opt.envDefault) {
-                  setForm((prev) => ({ ...prev, targetEnvironments: opt.envDefault!, deploymentModel: CLOUD_TENANT_VALUE }));
                 }
                 setWorkflowType(opt.type);
               }}
@@ -1334,6 +1310,19 @@ export default function SubmitRequest() {
             </button>
           ))}
         </div>
+
+        {/* LeanIX info note */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-start gap-3">
+          <span className="text-lg mt-0.5">🏛️</span>
+          <div>
+            <p className="text-sm font-semibold text-slate-800 mb-1">QA / UAT &amp; Production environments</p>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              QA, UAT and Production workloads are governed through the <strong className="text-slate-700">LeanIX initiative</strong> managed by the Enterprise Architecture team.
+              Please raise your request directly with the EA team — they will initiate the full governance workflow including Architecture Review, Cloud Architecture Blueprint, Deployment, Observability, and FinOps.
+            </p>
+          </div>
+        </div>
+
       </div>
     );
   }
