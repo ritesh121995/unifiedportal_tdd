@@ -84,6 +84,17 @@ const frontendEntry = path.join(frontendDir, "index.html");
 const hasFrontendBuild = existsSync(frontendEntry);
 
 if (hasFrontendBuild) {
+  // Serve hashed assets with long cache + correct MIME types
+  app.use("/assets", express.static(path.join(frontendDir, "assets"), {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith(".js") || filePath.endsWith(".mjs")) {
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      }
+    },
+  }));
+
   app.use(express.static(frontendDir));
 
   app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {

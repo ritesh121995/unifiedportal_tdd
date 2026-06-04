@@ -39,10 +39,22 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+  optimizeDeps: {
+    include: ["mermaid"],
+  },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/mermaid") || id.includes("node_modules/d3") || id.includes("node_modules/dagre")) {
+            return "vendor-mermaid";
+          }
+        },
+      },
+    },
   },
   server: {
     port,
