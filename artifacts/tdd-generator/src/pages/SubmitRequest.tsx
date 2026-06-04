@@ -400,6 +400,9 @@ export default function SubmitRequest() {
   const [error, setError] = useState("");
   const [regionInput, setRegionInput] = useState("");
   const [appSupportMgrCustom, setAppSupportMgrCustom] = useState(false);
+  const [frontendOther, setFrontendOther] = useState(false);
+  const [backendOther, setBackendOther] = useState(false);
+  const [dbOther, setDbOther] = useState(false);
   const [architectureDiagramFile, setArchitectureDiagramFile] = useState<File | null>(null);
   const [showPrepChecklist, setShowPrepChecklist] = useState(true);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
@@ -1567,8 +1570,11 @@ export default function SubmitRequest() {
                   <div className="space-y-1.5">
                     <Label>Frontend Framework</Label>
                     <Select
-                      value={["React","Angular","Vue.js","Next.js","TypeScript / Vanilla JS",".NET Blazor"].includes(form.frontendStack) ? form.frontendStack : form.frontendStack ? "Other" : ""}
-                      onValueChange={(v) => update("frontendStack", v === "Other" ? "" : v)}
+                      value={frontendOther ? "Other" : form.frontendStack}
+                      onValueChange={(v) => {
+                        if (v === "Other") { setFrontendOther(true); update("frontendStack", ""); }
+                        else { setFrontendOther(false); update("frontendStack", v); }
+                      }}
                     >
                       <SelectTrigger><SelectValue placeholder="Select frontend framework" /></SelectTrigger>
                       <SelectContent>
@@ -1581,8 +1587,8 @@ export default function SubmitRequest() {
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                    {!["React","Angular","Vue.js","Next.js","TypeScript / Vanilla JS",".NET Blazor",""].includes(form.frontendStack) && (
-                      <Input placeholder="Specify frontend framework" value={form.frontendStack} onChange={(e) => update("frontendStack", e.target.value)} className="mt-1.5" />
+                    {frontendOther && (
+                      <Input autoFocus placeholder="Enter your frontend framework" value={form.frontendStack} onChange={(e) => update("frontendStack", e.target.value)} className="mt-1.5" />
                     )}
                   </div>
 
@@ -1590,8 +1596,11 @@ export default function SubmitRequest() {
                   <div className="space-y-1.5">
                     <Label>Backend Framework</Label>
                     <Select
-                      value={["Node.js",".NET / C#","Python / FastAPI","Python / Django","Java / Spring Boot","Go","Ruby on Rails"].includes(form.backendStack) ? form.backendStack : form.backendStack ? "Other" : ""}
-                      onValueChange={(v) => update("backendStack", v === "Other" ? "" : v)}
+                      value={backendOther ? "Other" : form.backendStack}
+                      onValueChange={(v) => {
+                        if (v === "Other") { setBackendOther(true); update("backendStack", ""); }
+                        else { setBackendOther(false); update("backendStack", v); }
+                      }}
                     >
                       <SelectTrigger><SelectValue placeholder="Select backend framework" /></SelectTrigger>
                       <SelectContent>
@@ -1605,8 +1614,8 @@ export default function SubmitRequest() {
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                    {!["Node.js",".NET / C#","Python / FastAPI","Python / Django","Java / Spring Boot","Go","Ruby on Rails",""].includes(form.backendStack) && (
-                      <Input placeholder="Specify backend framework" value={form.backendStack} onChange={(e) => update("backendStack", e.target.value)} className="mt-1.5" />
+                    {backendOther && (
+                      <Input autoFocus placeholder="Enter your backend framework" value={form.backendStack} onChange={(e) => update("backendStack", e.target.value)} className="mt-1.5" />
                     )}
                   </div>
 
@@ -1614,8 +1623,11 @@ export default function SubmitRequest() {
                   <div className="space-y-1.5">
                     <Label>Database</Label>
                     <Select
-                      value={["PostgreSQL","Azure SQL / SQL Server","MySQL","MongoDB","Azure Cosmos DB","Redis","Oracle"].includes(form.databaseStack) ? form.databaseStack : form.databaseStack ? "Other" : ""}
-                      onValueChange={(v) => update("databaseStack", v === "Other" ? "" : v)}
+                      value={dbOther ? "Other" : form.databaseStack}
+                      onValueChange={(v) => {
+                        if (v === "Other") { setDbOther(true); update("databaseStack", ""); }
+                        else { setDbOther(false); update("databaseStack", v); }
+                      }}
                     >
                       <SelectTrigger><SelectValue placeholder="Select database" /></SelectTrigger>
                       <SelectContent>
@@ -1629,8 +1641,8 @@ export default function SubmitRequest() {
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
-                    {!["PostgreSQL","Azure SQL / SQL Server","MySQL","MongoDB","Azure Cosmos DB","Redis","Oracle",""].includes(form.databaseStack) && (
-                      <Input placeholder="Specify database" value={form.databaseStack} onChange={(e) => update("databaseStack", e.target.value)} className="mt-1.5" />
+                    {dbOther && (
+                      <Input autoFocus placeholder="Enter your database" value={form.databaseStack} onChange={(e) => update("databaseStack", e.target.value)} className="mt-1.5" />
                     )}
                   </div>
 
