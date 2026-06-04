@@ -1553,23 +1553,93 @@ export default function SubmitRequest() {
               </CardContent>
             </Card>
 
-            {/* Section 5 — Architecture hints (Development only) */}
+            {/* Section 5 — Technology Stack (Development only) */}
             {workflowType === "development" && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold text-slate-700">
-                    5. Technical Hints <span className="text-slate-400 text-xs font-normal">(optional — helps generate the CAB)</span>
+                    5. Technology Stack <span className="text-slate-400 text-xs font-normal">(optional — helps generate the Cloud Architecture Blueprint)</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+
+                  {/* Frontend */}
                   <div className="space-y-1.5">
-                    <Label>Application Architecture</Label>
-                    <Textarea placeholder="e.g. React frontend, Node.js API, PostgreSQL database on Azure" rows={2} value={form.applicationArchitecture} onChange={(e) => update("applicationArchitecture", e.target.value)} />
+                    <Label>Frontend Framework</Label>
+                    <Select
+                      value={["React","Angular","Vue.js","Next.js","TypeScript / Vanilla JS",".NET Blazor"].includes(form.frontendStack) ? form.frontendStack : form.frontendStack ? "Other" : ""}
+                      onValueChange={(v) => update("frontendStack", v === "Other" ? "" : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select frontend framework" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="React">React</SelectItem>
+                        <SelectItem value="Angular">Angular</SelectItem>
+                        <SelectItem value="Vue.js">Vue.js</SelectItem>
+                        <SelectItem value="Next.js">Next.js</SelectItem>
+                        <SelectItem value="TypeScript / Vanilla JS">TypeScript / Vanilla JS</SelectItem>
+                        <SelectItem value=".NET Blazor">.NET Blazor</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!["React","Angular","Vue.js","Next.js","TypeScript / Vanilla JS",".NET Blazor",""].includes(form.frontendStack) && (
+                      <Input placeholder="Specify frontend framework" value={form.frontendStack} onChange={(e) => update("frontendStack", e.target.value)} className="mt-1.5" />
+                    )}
                   </div>
+
+                  {/* Backend */}
+                  <div className="space-y-1.5">
+                    <Label>Backend Framework</Label>
+                    <Select
+                      value={["Node.js",".NET / C#","Python / FastAPI","Python / Django","Java / Spring Boot","Go","Ruby on Rails"].includes(form.backendStack) ? form.backendStack : form.backendStack ? "Other" : ""}
+                      onValueChange={(v) => update("backendStack", v === "Other" ? "" : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select backend framework" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Node.js">Node.js</SelectItem>
+                        <SelectItem value=".NET / C#">.NET / C#</SelectItem>
+                        <SelectItem value="Python / FastAPI">Python / FastAPI</SelectItem>
+                        <SelectItem value="Python / Django">Python / Django</SelectItem>
+                        <SelectItem value="Java / Spring Boot">Java / Spring Boot</SelectItem>
+                        <SelectItem value="Go">Go</SelectItem>
+                        <SelectItem value="Ruby on Rails">Ruby on Rails</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!["Node.js",".NET / C#","Python / FastAPI","Python / Django","Java / Spring Boot","Go","Ruby on Rails",""].includes(form.backendStack) && (
+                      <Input placeholder="Specify backend framework" value={form.backendStack} onChange={(e) => update("backendStack", e.target.value)} className="mt-1.5" />
+                    )}
+                  </div>
+
+                  {/* Database */}
+                  <div className="space-y-1.5">
+                    <Label>Database</Label>
+                    <Select
+                      value={["PostgreSQL","Azure SQL / SQL Server","MySQL","MongoDB","Azure Cosmos DB","Redis","Oracle"].includes(form.databaseStack) ? form.databaseStack : form.databaseStack ? "Other" : ""}
+                      onValueChange={(v) => update("databaseStack", v === "Other" ? "" : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select database" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PostgreSQL">PostgreSQL</SelectItem>
+                        <SelectItem value="Azure SQL / SQL Server">Azure SQL / SQL Server</SelectItem>
+                        <SelectItem value="MySQL">MySQL</SelectItem>
+                        <SelectItem value="MongoDB">MongoDB</SelectItem>
+                        <SelectItem value="Azure Cosmos DB">Azure Cosmos DB</SelectItem>
+                        <SelectItem value="Redis">Redis</SelectItem>
+                        <SelectItem value="Oracle">Oracle</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {!["PostgreSQL","Azure SQL / SQL Server","MySQL","MongoDB","Azure Cosmos DB","Redis","Oracle",""].includes(form.databaseStack) && (
+                      <Input placeholder="Specify database" value={form.databaseStack} onChange={(e) => update("databaseStack", e.target.value)} className="mt-1.5" />
+                    )}
+                  </div>
+
+                  {/* Application Flow */}
                   <div className="space-y-1.5">
                     <Label>Application Flow</Label>
                     <Textarea placeholder="e.g. User authenticates via Azure AD, submits form data, API writes to DB" rows={2} value={form.applicationFlow} onChange={(e) => update("applicationFlow", e.target.value)} />
                   </div>
+
                 </CardContent>
               </Card>
             )}
