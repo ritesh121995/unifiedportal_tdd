@@ -17,7 +17,7 @@ interface RequestSummary {
   id: number;
   applicationName: string;
   title: string;
-  CabSubmissionId: number | null;
+  cabSubmissionId: number | null;
 }
 
 export default function CabViewer() {
@@ -42,7 +42,7 @@ export default function CabViewer() {
         if (!d.request) throw new Error(d.error ?? "Request not found");
         setAppName(d.request.applicationName);
 
-        const subId = d.request.CabSubmissionId;
+        const subId = d.request.cabSubmissionId;
         if (!subId) throw new Error("No CAB has been generated for this request yet.");
 
         const sr = await fetch(`${api}/api/cab/submissions/${subId}`, { credentials: "include" });
