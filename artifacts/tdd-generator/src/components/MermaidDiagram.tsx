@@ -86,13 +86,15 @@ function sanitizeMermaidCode(code: string): string {
     // Remove horizontal rules
     if (/^[-*]{3,}$/.test(trimmed)) return "";
 
-    // Fix unquoted node labels that contain parentheses or special chars
-    // that Mermaid v11 might misinterpret as shape syntax.
-    // Excludes labels starting with ( to preserve cylinder [(label)] shapes.
-    const fixedLine = line.replace(
-      /\b(\w+)\[([^(\]"<>][^\]]*[()#+&][^\]]*)\]/g,
-      (_m, id: string, label: string) => `${id}["${label.replace(/"/g, "'")}"]`,
-    );
+    // Fix unquoted node labels containing special chars that confuse Mermaid v11
+    const fixedLine = line
+      // Quote unquoted rectangular-bracket labels with special chars
+      .replace(
+        /\b(\w+)\[([^(\]"<>][^\]]*[()#+&/][^\]]*)\]/g,
+        (_m, id: string, label: string) => `${id}["${label.replace(/"/g, "'")}"]`,
+      )
+      // Strip any bare "syntax error in text" noise that leaks into diagram code
+      .replace(/syntax error in text.*/gi, "");
     return fixedLine;
   });
 

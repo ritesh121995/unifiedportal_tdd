@@ -708,8 +708,9 @@ function buildFallbackSectionContent(heading: string): string {
 function toMermaidNodeLabel(value: string): string {
   return value
     .trim()
-    .replaceAll(/[^\w\s\-/().]/g, "")
-    .replaceAll(/\s+/g, " ");
+    .replaceAll(/[^\w\s\-]/g, "")   // keep only word chars, spaces, hyphens
+    .replaceAll(/\s+/g, " ")
+    .slice(0, 40);                  // cap length to avoid overly long labels
 }
 
 /**
@@ -778,19 +779,26 @@ function buildDeterministicArchitectureDiagram(data: {
       : "Internet access via shared enterprise edge";
   const drLabel = data.drEnabled ? "DR replication enabled" : "Single-region primary";
 
+  // Escape any double-quotes inside labels to avoid breaking Mermaid quoted strings
+  const esc = (s: string) => s.replace(/"/g, "'");
+  const safeApp = esc(appLabel) || "Application";
+  const safeRegion = esc(regionLabel) || "Canada Central";
+  const safePosture = esc(postureLabel);
+  const safeDR = esc(drLabel);
+
   return [
     "graph TD",
-    "    Users([End Users])",
-    '    Cloudflare["Cloudflare WAF - Shared L7 Firewall"]',
-    `    Web["Azure App Service - ${appLabel} Web"]`,
-    `    Api["Azure App Service - ${appLabel} API"]`,
-    "    Pg[(Azure Database for PostgreSQL)]",
-    "    Blob[(Azure Blob Storage)]",
+    '    Users(["End Users"])',
+    '    Cloudflare["Cloudflare WAF"]',
+    `    Web["App Service - ${safeApp} Web"]`,
+    `    Api["App Service - ${safeApp} API"]`,
+    '    Pg[("PostgreSQL Database")]',
+    '    Blob[("Blob Storage")]',
     '    KeyVault["Azure Key Vault"]',
-    '    Monitor["Azure Monitor and Application Insights"]',
-    `    Region["Primary Region - ${regionLabel}"]`,
-    `    Posture["${postureLabel}"]`,
-    `    DR["BCDR - ${drLabel}"]`,
+    '    Monitor["Azure Monitor"]',
+    `    Region["Region - ${safeRegion}"]`,
+    `    Posture["${safePosture}"]`,
+    `    DR["BCDR - ${safeDR}"]`,
     "    Users --> Cloudflare",
     "    Cloudflare --> Web",
     "    Web --> Api",
