@@ -54,7 +54,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 const PHASES = [
   { num: 1, label: "Architecture Review", sub: "Enterprise architects assess your request for risk, compliance, and technical fit.", color: "#FFCD00", icon: Building2, path: "/phase/1", duration: "≤ 1 week", gate: "Architecture sign-off" },
   { num: 2, label: "Cloud Architecture Blueprint", sub: "Cloud architects produce an AI-assisted Cloud Architecture Blueprint for your solution.", color: "#FFCD00", icon: FileText, path: "/phase/3", duration: "1–2 hours", gate: "CA sign-off" },
-  { num: 3, label: "Infrastructure Deployment", sub: "Approved design is deployed to Azure via automated, policy-enforced pipelines.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 weeks", gate: "Dual approval for Prod" },
+  { num: 3, label: "Infrastructure Deployment", sub: "Approved design is deployed to Azure via automated, policy-enforced pipelines.", color: "#FFCD00", icon: Code2, path: "/phase/4", duration: "~2 days", gate: "Dual approval for Prod" },
   { num: 4, label: "Observability", sub: "Monitoring, alerting, dashboards, and on-call runbooks confirmed before cost tracking begins.", color: "#FFCD00", icon: Activity, path: "/phase/observability", duration: "~2 days", gate: "CA sign-off" },
   { num: 5, label: "Cost Management", sub: "Ongoing budget alerts, cost allocation, tagging, and monthly chargeback reporting.", color: "#FFCD00", icon: DollarSign, path: "/phase/5", duration: "Ongoing", gate: "Monthly review" },
 ];
@@ -327,7 +327,7 @@ export default function Dashboard() {
           {[
             { label: "Architecture Review", w: "17%", sub: "≤1 wk" },
             { label: "Cloud Architecture Blueprint", w: "17%", sub: "1–2 hrs" },
-            { label: "Infrastructure Deployment", w: "36%", sub: "~2 weeks" },
+            { label: "Infrastructure Deployment", w: "36%", sub: "~2 days" },
             { label: "Observability", w: "15%", sub: "~2 days" },
             { label: "Cost Management", w: "15%", sub: "ongoing" },
           ].map((seg, idx) => (
