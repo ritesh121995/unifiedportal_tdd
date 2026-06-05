@@ -9,7 +9,7 @@ import { useAuth } from "@/store/auth-context";
 import { getApiBase } from "@/lib/api-base";
 import { StatusBadge, type RequestStatus } from "@/components/RequestStatusBadge";
 
-const PHASE_STEPS = ["Arch Review", "Tech Design", "Infrastructure", "Observability", "Cost Mgmt"];
+const PHASE_STEPS = ["Arch Review", "Blueprint", "Infrastructure", "Observability", "Cost Mgmt"];
 
 function toRequestNumber(id: number, createdAt: string): string {
   const year = new Date(createdAt).getFullYear();
@@ -329,7 +329,7 @@ export default function RequestList({ fixedStatuses, pageTitle }: RequestListPro
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="submitted">Submitted</SelectItem>
               <SelectItem value="ea_triage">Under review</SelectItem>
               <SelectItem value="modification_requested">Changes requested</SelectItem>

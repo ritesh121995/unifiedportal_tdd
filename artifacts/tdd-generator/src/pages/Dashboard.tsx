@@ -180,9 +180,9 @@ export default function Dashboard() {
   const personaQueue: Record<string, { label: string; statuses: string[]; emptyMsg: string; cta: string; ctaPath: string }> = {
     enterprise_architect:    { label: "Architecture Review Queue", statuses: ["submitted", "ea_triage"], emptyMsg: "No requests awaiting Architecture Review.", cta: "Go to Review Queue", ctaPath: "/ea-queue" },
     cloud_architect:         { label: "Blueprint Queue", statuses: ["ea_approved", "cab_in_progress"], emptyMsg: "No requests ready for Blueprint generation.", cta: "Go to Blueprint Queue", ctaPath: "/cab-queue" },
-    devsecops_architect:     { label: "Infrastructure Deployment Queue", statuses: ["cab_completed"], emptyMsg: "No requests ready for Infrastructure Deployment.", cta: "View All Requests", ctaPath: "/requests" },
-    observability_architect: { label: "Observability Setup Queue", statuses: ["devsecops_approved"], emptyMsg: "No requests awaiting Observability setup.", cta: "View All Requests", ctaPath: "/requests" },
-    finops_architect:        { label: "FinOps Activation Queue", statuses: ["observability_approved"], emptyMsg: "No requests awaiting FinOps activation.", cta: "View All Requests", ctaPath: "/requests" },
+    devsecops_architect:     { label: "Infrastructure Deployment Queue", statuses: ["cab_completed"], emptyMsg: "No requests ready for Infrastructure Deployment.", cta: "Go to Infrastructure Queue", ctaPath: "/infra-queue" },
+    observability_architect: { label: "Observability Setup Queue", statuses: ["devsecops_approved"], emptyMsg: "No requests awaiting Observability setup.", cta: "Go to Observability Queue", ctaPath: "/observability-queue" },
+    finops_architect:        { label: "FinOps Activation Queue", statuses: ["observability_approved"], emptyMsg: "No requests awaiting FinOps activation.", cta: "Go to FinOps Queue", ctaPath: "/finops-queue" },
   };
 
   const myQueue = personaQueue[user.role];

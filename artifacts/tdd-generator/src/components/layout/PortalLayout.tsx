@@ -38,9 +38,9 @@ const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
       { label: "Architecture Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
       { label: "Blueprint Queue", path: "/cab-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
       { label: "Blueprint History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
-      { label: "Infrastructure Queue", path: "/requests?status=cab_completed", icon: Code2, roles: ["devsecops_architect", "admin"] },
-      { label: "Observability Queue", path: "/requests?status=devsecops_approved", icon: Activity, roles: ["observability_architect", "admin"] },
-      { label: "FinOps Queue", path: "/requests?status=observability_approved", icon: DollarSign, roles: ["finops_architect", "admin"] },
+      { label: "Infrastructure Queue", path: "/infra-queue", icon: Code2, roles: ["devsecops_architect", "admin"] },
+      { label: "Observability Queue", path: "/observability-queue", icon: Activity, roles: ["observability_architect", "admin"] },
+      { label: "FinOps Queue", path: "/finops-queue", icon: DollarSign, roles: ["finops_architect", "admin"] },
     ],
   },
   {

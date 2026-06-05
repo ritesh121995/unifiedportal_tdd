@@ -106,6 +106,15 @@ function Router() {
       <Route path="/cab-queue">
         <ProtectedRoute component={() => <RequestList fixedStatuses={["ea_approved", "cab_in_progress"]} pageTitle="Blueprint Queue" />} />
       </Route>
+      <Route path="/infra-queue">
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["cab_completed"]} pageTitle="Infrastructure Deployment Queue" />} />
+      </Route>
+      <Route path="/observability-queue">
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["devsecops_approved"]} pageTitle="Observability Setup Queue" />} />
+      </Route>
+      <Route path="/finops-queue">
+        <ProtectedRoute component={() => <RequestList fixedStatuses={["observability_approved"]} pageTitle="FinOps Activation Queue" />} />
+      </Route>
 
       {/* Admin routes */}
       <Route path="/admin/users">
