@@ -19,40 +19,35 @@ interface NavItem {
   phase?: number;
 }
 
+const ALL_ROLES = ["requestor", "enterprise_architect", "cloud_architect", "devsecops_architect", "observability_architect", "finops_architect", "admin"];
+
 const NAV_SECTIONS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "Home",
     items: [
-      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"] },
+      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard, roles: ALL_ROLES },
       { label: "Submit a Request", path: "/requests/new", icon: PlusCircle, roles: ["requestor", "admin"] },
-      { label: "LeanIX Initiatives", path: "/leanix-initiatives", icon: Link2, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"] },
+      { label: "LeanIX Initiatives", path: "/leanix-initiatives", icon: Link2, roles: ALL_ROLES },
     ],
   },
   {
-    label: "Process Phases",
+    label: "My Queue",
     items: [
-      { label: "Phase 1 — Architecture Review", path: "/phase/1", icon: Building2, roles: ["requestor", "enterprise_architect", "admin"], phase: 1 },
-      { label: "Phase 2 — Cloud Architecture Blueprint", path: "/phase/3", icon: FileText, roles: ["requestor", "cloud_architect", "admin"], phase: 2 },
-      { label: "Phase 3 — Infrastructure Deployment", path: "/phase/4", icon: Code2, roles: ["requestor", "cloud_architect", "admin"], phase: 3 },
-      { label: "Phase 4 — Observability", path: "/phase/observability", icon: Activity, roles: ["requestor", "cloud_architect", "admin"], phase: 4 },
-      { label: "Phase 5 — Cost Management", path: "/phase/5", icon: DollarSign, roles: ["requestor", "enterprise_architect", "cloud_architect", "admin"], phase: 5 },
-    ],
-  },
-  {
-    label: "Admin Panel",
-    items: [
-      { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "admin"] },
       { label: "My Requests", path: "/requests", icon: FileText, roles: ["requestor"] },
+      { label: "All Requests", path: "/requests", icon: Layers, roles: ["enterprise_architect", "cloud_architect", "devsecops_architect", "observability_architect", "finops_architect", "admin"] },
       { label: "Architecture Review Queue", path: "/ea-queue", icon: CheckSquare, roles: ["enterprise_architect", "admin"] },
       { label: "Blueprint Queue", path: "/cab-queue", icon: Cloud, roles: ["cloud_architect", "admin"] },
       { label: "Blueprint History", path: "/history", icon: History, roles: ["cloud_architect", "admin"] },
+      { label: "Infrastructure Queue", path: "/requests?status=cab_completed", icon: Code2, roles: ["devsecops_architect", "admin"] },
+      { label: "Observability Queue", path: "/requests?status=devsecops_approved", icon: Activity, roles: ["observability_architect", "admin"] },
+      { label: "FinOps Queue", path: "/requests?status=observability_approved", icon: DollarSign, roles: ["finops_architect", "admin"] },
     ],
   },
   {
     label: "Settings",
     items: [
       { label: "User Management", path: "/admin/users", icon: UserCog, roles: ["admin"] },
-      { label: "Approval Delegation", path: "/admin/delegations", icon: UserCheck, roles: ["enterprise_architect", "cloud_architect", "admin"] },
+      { label: "Approval Delegation", path: "/admin/delegations", icon: UserCheck, roles: ["enterprise_architect", "cloud_architect", "devsecops_architect", "observability_architect", "finops_architect", "admin"] },
       { label: "Integrations", path: "/integrations", icon: Plug, roles: ["admin"] },
     ],
   },
@@ -70,6 +65,9 @@ const ROLE_LABELS: Record<string, string> = {
   requestor: "Requestor",
   enterprise_architect: "Enterprise Architect",
   cloud_architect: "Cloud Architect",
+  devsecops_architect: "DevSecOps Architect",
+  observability_architect: "Observability Architect",
+  finops_architect: "FinOps Architect",
   admin: "Admin",
 };
 
@@ -77,6 +75,9 @@ const ROLE_COLORS: Record<string, string> = {
   requestor: "bg-violet-100 text-violet-700",
   enterprise_architect: "bg-amber-100 text-amber-700",
   cloud_architect: "bg-blue-100 text-blue-700",
+  devsecops_architect: "bg-orange-100 text-orange-700",
+  observability_architect: "bg-teal-100 text-teal-700",
+  finops_architect: "bg-green-100 text-green-700",
   admin: "bg-red-100 text-red-700",
 };
 

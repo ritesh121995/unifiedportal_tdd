@@ -28,7 +28,7 @@ router.post("/", async (req, res) => {
     res.status(400).json({ error: "name, email, password and role are required" });
     return;
   }
-  const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "admin"];
+  const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "devsecops_architect", "observability_architect", "finops_architect", "admin"];
   if (!validRoles.includes(role)) {
     res.status(400).json({ error: "Invalid role" });
     return;
@@ -54,7 +54,7 @@ router.patch("/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
   const { role, name, email, password } = req.body as { role?: string; name?: string; email?: string; password?: string };
-  const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "admin"];
+  const validRoles = ["requestor", "enterprise_architect", "cloud_architect", "devsecops_architect", "observability_architect", "finops_architect", "admin"];
   if (role && !validRoles.includes(role)) {
     res.status(400).json({ error: "Invalid role" });
     return;

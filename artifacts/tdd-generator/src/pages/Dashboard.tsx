@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   FileText, CheckCircle, Clock, XCircle, PlusCircle, ArrowRight,
-  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign, Link2, Activity,
+  Loader2, Cloud, BarChart3, Building2, ShieldCheck, Code2, DollarSign, Link2, Activity, CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,11 +167,26 @@ export default function Dashboard() {
     : null;
 
   const roleDesc: Record<string, string> = {
-    requestor: "Use this portal to request review for a new application, migration, or technology project. The architecture team will guide you through each step.",
-    enterprise_architect: "Review incoming architecture requests, assess risk and domain impact, and approve or route workloads for technical design.",
-    cloud_architect: "Pick up approved requests, generate Cloud Architecture Blueprints, and drive infrastructure deployment.",
-    admin: "Full portal access — manage all phases, queues, users, and onboarding governance.",
+    requestor:               "Submit and track your cloud workload requests. The architecture team will guide each request through review, design, deployment, and cost governance.",
+    enterprise_architect:    "Review incoming architecture requests, assess risk and compliance, and approve workloads for Cloud Architecture Blueprint generation.",
+    cloud_architect:         "Pick up EA-approved requests, generate AI-assisted Cloud Architecture Blueprints, and oversee infrastructure deployment pipelines.",
+    devsecops_architect:     "Take approved Cloud Architecture Blueprints through the infrastructure deployment pipeline with policy-as-code gates and dual approval.",
+    observability_architect: "Validate monitoring coverage, SLA tiers, alert severity frameworks, and runbook links before FinOps activation is permitted.",
+    finops_architect:        "Activate budget governance, enforce tagging, configure chargeback reporting, and drive Azure Advisor savings recommendations.",
+    admin:                   "Full portal access — manage all phases, queues, users, and onboarding governance across all Lines of Business.",
   };
+
+  // Persona-specific queue config
+  const personaQueue: Record<string, { label: string; statuses: string[]; emptyMsg: string; cta: string; ctaPath: string }> = {
+    enterprise_architect:    { label: "Architecture Review Queue", statuses: ["submitted", "ea_triage"], emptyMsg: "No requests awaiting Architecture Review.", cta: "Go to Review Queue", ctaPath: "/ea-queue" },
+    cloud_architect:         { label: "Blueprint Queue", statuses: ["ea_approved", "cab_in_progress"], emptyMsg: "No requests ready for Blueprint generation.", cta: "Go to Blueprint Queue", ctaPath: "/cab-queue" },
+    devsecops_architect:     { label: "Infrastructure Deployment Queue", statuses: ["cab_completed"], emptyMsg: "No requests ready for Infrastructure Deployment.", cta: "View All Requests", ctaPath: "/requests" },
+    observability_architect: { label: "Observability Setup Queue", statuses: ["devsecops_approved"], emptyMsg: "No requests awaiting Observability setup.", cta: "View All Requests", ctaPath: "/requests" },
+    finops_architect:        { label: "FinOps Activation Queue", statuses: ["observability_approved"], emptyMsg: "No requests awaiting FinOps activation.", cta: "View All Requests", ctaPath: "/requests" },
+  };
+
+  const myQueue = personaQueue[user.role];
+  const myQueueRequests = myQueue ? requests.filter((r) => myQueue.statuses.includes(r.status)) : [];
 
   return (
     <div className="space-y-6">
@@ -183,24 +198,88 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: "Outfit, sans-serif" }}>Welcome back, {user.name.split(" ")[0]}</h1>
           <p className="text-sm opacity-70">{roleDesc[user.role]}</p>
           <div className="flex gap-3 mt-4 flex-wrap">
-            {(user.role === "requestor" || user.role === "admin") && (
+            {user.role === "requestor" && (
               <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests/new")}>
-                <PlusCircle className="w-4 h-4 mr-2" />
-                Submit New Request
+                <PlusCircle className="w-4 h-4 mr-2" /> Submit New Request
               </Button>
             )}
-            {(user.role === "requestor" || user.role === "admin") && (
-              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => setLocation("/leanix-initiatives")}>
-                <Link2 className="w-4 h-4 mr-2" />
-                Browse LeanIX Initiatives
+            {user.role === "enterprise_architect" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/ea-queue")}>
+                <CheckSquare className="w-4 h-4 mr-2" /> Go to Review Queue
               </Button>
             )}
-            <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => setLocation("/phase/1")}>
-              View Phase 1 <ArrowRight className="w-4 h-4 ml-2" />
+            {user.role === "cloud_architect" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/cab-queue")}>
+                <Cloud className="w-4 h-4 mr-2" /> Go to Blueprint Queue
+              </Button>
+            )}
+            {user.role === "devsecops_architect" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests")}>
+                <Code2 className="w-4 h-4 mr-2" /> Go to Deployment Queue
+              </Button>
+            )}
+            {user.role === "observability_architect" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests")}>
+                <Activity className="w-4 h-4 mr-2" /> Go to Observability Queue
+              </Button>
+            )}
+            {user.role === "finops_architect" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests")}>
+                <DollarSign className="w-4 h-4 mr-2" /> Go to FinOps Queue
+              </Button>
+            )}
+            {user.role === "admin" && (
+              <Button className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setLocation("/requests/new")}>
+                <PlusCircle className="w-4 h-4 mr-2" /> Submit New Request
+              </Button>
+            )}
+            <Button variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => setLocation("/requests")}>
+              View All Requests <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Persona-specific queue */}
+      {myQueue && (
+        <div>
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 className="text-base font-bold text-slate-800">{myQueue.label}</h2>
+            <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => setLocation(myQueue.ctaPath)}>
+              {myQueue.cta} <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </div>
+          {loading ? (
+            <div className="flex items-center gap-2 text-slate-400 text-sm py-4"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</div>
+          ) : myQueueRequests.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 py-8 text-center text-sm text-slate-400">{myQueue.emptyMsg}</div>
+          ) : (
+            <div className="space-y-2">
+              {myQueueRequests.slice(0, 8).map((r) => (
+                <button key={r.id} onClick={() => setLocation(`/requests/${r.id}`)}
+                  className="w-full text-left rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-3 flex items-center gap-4 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-slate-800 truncate">{r.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{r.applicationName} · {r.requestorName}</p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${r.priority === "Critical" ? "bg-red-100 text-red-700" : r.priority === "High" ? "bg-orange-100 text-orange-700" : "bg-amber-100 text-amber-700"}`}>
+                      {r.priority}
+                    </span>
+                    <StatusBadge status={r.status} />
+                    <ArrowRight className="w-4 h-4 text-slate-300" />
+                  </div>
+                </button>
+              ))}
+              {myQueueRequests.length > 8 && (
+                <button onClick={() => setLocation(myQueue.ctaPath)} className="w-full text-center text-xs text-slate-400 hover:text-slate-600 py-2">
+                  +{myQueueRequests.length - 8} more — {myQueue.cta}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Phase overview cards */}
       <div>

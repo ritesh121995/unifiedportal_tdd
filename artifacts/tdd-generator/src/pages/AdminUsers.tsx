@@ -16,24 +16,33 @@ interface User {
 }
 
 const ROLES = [
-  { value: "requestor", label: "Requestor" },
-  { value: "enterprise_architect", label: "Enterprise Architect" },
-  { value: "cloud_architect", label: "Cloud Architect" },
-  { value: "admin", label: "Administrator" },
+  { value: "requestor",              label: "Requestor" },
+  { value: "enterprise_architect",   label: "Enterprise Architect" },
+  { value: "cloud_architect",        label: "Cloud Architect" },
+  { value: "devsecops_architect",    label: "DevSecOps Architect" },
+  { value: "observability_architect",label: "Observability Architect" },
+  { value: "finops_architect",       label: "FinOps Architect" },
+  { value: "admin",                  label: "Administrator" },
 ];
 
 const ROLE_BADGE: Record<string, string> = {
-  requestor: "bg-violet-100 text-violet-700",
-  enterprise_architect: "bg-amber-100 text-amber-700",
-  cloud_architect: "bg-blue-100 text-blue-700",
-  admin: "bg-red-100 text-red-700",
+  requestor:               "bg-violet-100 text-violet-700",
+  enterprise_architect:    "bg-amber-100 text-amber-700",
+  cloud_architect:         "bg-blue-100 text-blue-700",
+  devsecops_architect:     "bg-orange-100 text-orange-700",
+  observability_architect: "bg-teal-100 text-teal-700",
+  finops_architect:        "bg-green-100 text-green-700",
+  admin:                   "bg-red-100 text-red-700",
 };
 
 const ROLE_LABEL: Record<string, string> = {
-  requestor: "Requestor",
-  enterprise_architect: "Enterprise Architect",
-  cloud_architect: "Cloud Architect",
-  admin: "Administrator",
+  requestor:               "Requestor",
+  enterprise_architect:    "Enterprise Architect",
+  cloud_architect:         "Cloud Architect",
+  devsecops_architect:     "DevSecOps Architect",
+  observability_architect: "Observability Architect",
+  finops_architect:        "FinOps Architect",
+  admin:                   "Administrator",
 };
 
 const EMPTY_NEW = { name: "", email: "", password: "", role: "requestor" };
