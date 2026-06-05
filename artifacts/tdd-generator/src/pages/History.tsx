@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowLeft, Clock, FileText, Eye, Loader2, RefreshCw, Trash2, ListTodo, History as HistoryIcon } from "lucide-react";
 import MermaidDiagram from "@/components/MermaidDiagram";
+import AzureArchitectureDiagram from "@/components/AzureArchitectureDiagram";
 import { getApiBase } from "@/lib/api-base";
 import { useAuth } from "@/store/auth-context";
 
@@ -134,7 +135,7 @@ export default function History() {
           }`}
         >
           <ListTodo className="w-4 h-4" />
-          Blueprint Queue
+          In Review
           {queueItems.length > 0 && (
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
               activeTab === "queue" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-500"
@@ -152,7 +153,7 @@ export default function History() {
           }`}
         >
           <HistoryIcon className="w-4 h-4" />
-          Design History
+          Blueprint History
           {historyItems.length > 0 && (
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
               activeTab === "history" ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-500"
@@ -177,13 +178,13 @@ export default function History() {
           <FileText className="w-16 h-16 mb-4 opacity-30" />
           {activeTab === "queue" ? (
             <>
-              <p className="text-lg font-medium">No cloud architecture blueprints in queue</p>
-              <p className="text-sm mt-1">Design documents awaiting Cloud Architect review will appear here.</p>
+              <p className="text-lg font-medium">No blueprints currently in review</p>
+              <p className="text-sm mt-1">Cloud Architecture Blueprints awaiting Cloud Architect sign-off will appear here.</p>
             </>
           ) : (
             <>
-              <p className="text-lg font-medium">No completed cloud architecture blueprints yet</p>
-              <p className="text-sm mt-1">Design documents signed off by the Cloud Architect will appear here.</p>
+              <p className="text-lg font-medium">No completed blueprints yet</p>
+              <p className="text-sm mt-1">Cloud Architecture Blueprints signed off by the Cloud Architect will appear here.</p>
             </>
           )}
         </div>
@@ -273,10 +274,10 @@ export default function History() {
                         remarkPlugins={[remarkGfm]}
                         components={{
                           code({ className, children, ...props }) {
-                            const lang = /language-(\w+)/.exec(className ?? "")?.[1];
-                            if (lang?.toLowerCase() === "mermaid") {
-                              return <MermaidDiagram code={String(children).replace(/\n$/, "")} />;
-                            }
+                            const lang = /language-(\w+)/.exec(className ?? "")?.[1]?.toLowerCase();
+                            const code = String(children).replace(/\n$/, "");
+                            if (lang === "azurediagram") return <AzureArchitectureDiagram code={code} />;
+                            if (lang === "mermaid") return <MermaidDiagram code={code} />;
                             return <code className={className} {...props}>{children}</code>;
                           },
                         }}
