@@ -34,6 +34,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidDiagram from "@/components/MermaidDiagram";
+import AzureArchitectureDiagram from "@/components/AzureArchitectureDiagram";
 import { getApiBase } from "@/lib/api-base";
 import AzureServiceSelector, { detectServicesFromTdd } from "@/components/AzureServiceSelector";
 import { generateMultiServiceTerraform } from "@/lib/terraformGenerator";
@@ -964,6 +965,9 @@ ${articleEl.innerHTML}
                         const code = String(children).replace(/\n$/, "");
                         if (normalizedLang === "mermaid") {
                           return <MermaidDiagram code={code} />;
+                        }
+                        if (normalizedLang === "azurediagram") {
+                          return <AzureArchitectureDiagram code={code} />;
                         }
                         return (
                           <code className={className} {...props}>

@@ -5,6 +5,8 @@ import remarkGfm from "remark-gfm";
 import { ArrowLeft, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getApiBase } from "@/lib/api-base";
+import MermaidDiagram from "@/components/MermaidDiagram";
+import AzureArchitectureDiagram from "@/components/AzureArchitectureDiagram";
 
 interface CabSubmission {
   id: number;
@@ -108,7 +110,18 @@ export default function CabViewer() {
               prose-table:text-sm
               prose-th:bg-slate-50 prose-th:font-semibold
               prose-a:text-blue-600">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ className, children }) {
+                    const lang = /language-(\w+)/.exec(className ?? "")?.[1]?.toLowerCase();
+                    const code = String(children).replace(/\n$/, "");
+                    if (lang === "azurediagram") return <AzureArchitectureDiagram code={code} />;
+                    if (lang === "mermaid") return <MermaidDiagram code={code} />;
+                    return <code className={className}>{children}</code>;
+                  },
+                }}
+              >{content}</ReactMarkdown>
             </article>
           </div>
         </div>

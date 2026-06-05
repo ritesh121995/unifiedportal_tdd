@@ -765,52 +765,71 @@ function buildDeterministicArchitectureDiagram(data: {
   drEnabled?: boolean;
   azureRegions: string[];
 }): string {
-  // Sanitize the app label so it is safe inside a quoted Mermaid node label
-  const rawLabel = toMermaidNodeLabel(data.applicationName) || "Application";
-  // Strip parentheses and square brackets from the label to avoid Mermaid v11
-  // misinterpreting them as shape delimiters (e.g., ([]) = stadium, [()] = cylinder)
-  const appLabel = rawLabel.replace(/[()[\]]/g, "").trim() || "Application";
-  const regionLabel = data.azureRegions
-    .map((region) => (region === "canadacentral" ? "Canada Central" : "Canada East"))
-    .join(" and ");
-  const postureLabel =
-    data.networkPosture === "Internal-Only"
-      ? "Private access via shared enterprise edge"
-      : "Internet access via shared enterprise edge";
-  const drLabel = data.drEnabled ? "DR replication enabled" : "Single-region primary";
+  const appName = (data.applicationName || "Application")
+    .replace(/[<>&"]/g, "").trim().slice(0, 30) || "Application";
+  const region = data.azureRegions
+    .map((r) => r === "canadacentral" ? "Canada Central" : r === "canadaeast" ? "Canada East" : r)
+    .join(" + ") || "Canada Central";
+  const isInternal = data.networkPosture === "Internal-Only";
+  const isDR = !!data.drEnabled;
 
-  // Escape any double-quotes inside labels to avoid breaking Mermaid quoted strings
-  const esc = (s: string) => s.replace(/"/g, "'");
-  const safeApp = esc(appLabel) || "Application";
-  const safeRegion = esc(regionLabel) || "Canada Central";
-  const safePosture = esc(postureLabel);
-  const safeDR = esc(drLabel);
-
-  return [
-    "graph TD",
-    '    Users(["End Users"])',
-    '    Cloudflare["Cloudflare WAF"]',
-    `    Web["App Service - ${safeApp} Web"]`,
-    `    Api["App Service - ${safeApp} API"]`,
-    '    Pg[("PostgreSQL Database")]',
-    '    Blob[("Blob Storage")]',
-    '    KeyVault["Azure Key Vault"]',
-    '    Monitor["Azure Monitor"]',
-    `    Region["Region - ${safeRegion}"]`,
-    `    Posture["${safePosture}"]`,
-    `    DR["BCDR - ${safeDR}"]`,
-    "    Users --> Cloudflare",
-    "    Cloudflare --> Web",
-    "    Web --> Api",
-    "    Api --> Pg",
-    "    Api --> Blob",
-    "    Api --> KeyVault",
-    "    Api -.-> Monitor",
-    "    Web -.-> Monitor",
-    "    Web -.-> Region",
-    "    Api -.-> Posture",
-    "    Api -.-> DR",
-  ].join("\n");
+  // Return JSON config for the Azure architecture diagram renderer
+  return JSON.stringify({
+    applicationName: appName,
+    region,
+    networkPosture: isInternal ? "Internal" : "Internet-Facing",
+    drEnabled: isDR,
+    tiers: [
+      {
+        label: "Users",
+        services: [
+          { id: "users", name: "End Users", type: "users" },
+        ],
+      },
+      {
+        label: "Network & Security",
+        services: [
+          { id: "agw", name: "Application Gateway", sub: "WAF v2", type: "networking" },
+        ],
+      },
+      {
+        label: "Compute",
+        services: [
+          { id: "web", name: "App Service", sub: appName + " Frontend", type: "compute" },
+          { id: "api", name: "App Service", sub: appName + " API", type: "compute" },
+        ],
+      },
+      {
+        label: "Data",
+        services: [
+          { id: "db", name: "Azure Database", sub: "PostgreSQL Flexible", type: "database" },
+          { id: "blob", name: "Blob Storage", sub: "Azure Storage", type: "storage" },
+          { id: "kv", name: "Key Vault", sub: "Secrets & Certs", type: "security" },
+        ],
+      },
+      {
+        label: "Platform Services",
+        services: [
+          { id: "monitor", name: "Azure Monitor", sub: "App Insights", type: "monitor" },
+          { id: "aad", name: "Azure Active Directory", sub: "Identity & Access", type: "identity" },
+          { id: "devops", name: "Azure DevOps", sub: "CI/CD Pipelines", type: "devops" },
+          { id: "cost", name: "Cost Management", sub: "FinOps & Budgets", type: "finops" },
+          ...(isDR ? [{ id: "dr", name: "Azure Site Recovery", sub: "BCDR — DR Enabled", type: "bcdr" }] : []),
+        ],
+      },
+    ],
+    connections: [
+      ["users", "agw"],
+      ["agw", "web"],
+      ["web", "api"],
+      ["api", "db"],
+      ["api", "blob"],
+      ["api", "kv"],
+      ["api", "monitor", "dashed"],
+      ["web", "monitor", "dashed"],
+      ["api", "aad", "dashed"],
+    ],
+  });
 }
 
 /**
@@ -1426,7 +1445,7 @@ function upsertArchitectureDiagram(
 ): string {
   const diagramBlock = uploadedImageBase64
     ? `![Architecture Diagram](${uploadedImageBase64})\n\n> *Diagram uploaded by the architect — see the overview description in section 6.1.*`
-    : `\`\`\`mermaid\n${diagramCode}\n\`\`\``;
+    : `\`\`\`azurediagram\n${diagramCode}\n\`\`\``;
 
   // 1. Preferred: replace the explicit placeholder injected by the user prompt template
   if (markdown.includes("[ARCHITECTURE_DIAGRAM_PLACEHOLDER]")) {
